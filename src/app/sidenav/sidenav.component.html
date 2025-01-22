@@ -3,17 +3,28 @@
         <div class="sidenav-header-icons">
             <img src="./../../assets/img/devspace-logo.png" alt="Devspace Logo">
             <h1>Devspace</h1>
-            <img src="./../../assets/img/edit.png" alt="Edit">
+            <div class="edit-icon" (click)="toggleActive()" [class.active]="isActive">
+                <img src="assets/img/edit.png" alt="Edit" class="edit-default">
+                <img src="assets/img/edit-hover.png" alt="Edit" class="edit-hover">
+                <img src="assets/img/edit-active.png" alt="Edit" class="edit-active">
+            </div>
         </div>
         <div class="sidenav-body">
             <div class="channel-list">
-                <h2>Channel 1</h2>
                 <div class="channel-list-item">
-                    <p>Channel 1</p>
-                    <p>Channel 2</p>
-                    <p>Channel 3</p>
-                    <p>Channel 4</p>
+                    <mat-accordion>
+                        <mat-expansion-panel expanded="true" togglePosition="before" (opened)="panelOpenState.set(true)" (closed)="panelOpenState.set(false)">
+                            <mat-expansion-panel-header>
+                              <mat-panel-title> <img src="assets/img/workspaces.png" alt=""> Channel 1 </mat-panel-title>
+                              <mat-icon>add</mat-icon>
+                        </mat-expansion-panel-header>
+                        <p>channel 1</p>
+                        <p>channel 2</p>
+                        <p>channel 3</p>
+                        <p>channel 4</p>
                     <button>Channel hinzufügen</button>
+                      </mat-expansion-panel>
+                    </mat-accordion>
                 </div>
             </div>
         </div>

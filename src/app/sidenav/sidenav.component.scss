@@ -17,3 +17,59 @@
       justify-content: space-between;
     }
   }
+
+  .edit-icon {
+    position: relative;
+    cursor: pointer;
+
+    img {
+      transition: opacity 0.125s ease;
+      position: absolute;
+      top: -20px;
+      left: -24px;
+    }
+
+    .edit-default {
+      opacity: 1;
+    }
+
+    .edit-hover,
+    .edit-active {
+      opacity: 0;
+    }
+
+    &:hover {
+      .edit-default {
+        opacity: 0;
+      }
+      .edit-hover {
+        opacity: 1;
+      }
+    }
+
+    &:active {
+      .edit-default,
+      .edit-hover {
+        opacity: 0;
+      }
+      .edit-active {
+        opacity: 1;
+      }
+    }
+  }
+
+  .channel-list-item {
+
+    img {
+        margin-right: 8px;
+    }
+  }
+
+
+  ::ng-deep svg {
+    margin: 0 !important;
+  }
+
+  ::ng-deep .mat-expansion-panel-body {
+    padding: 0 65px 16px !important;
+  }
