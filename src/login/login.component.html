@@ -1,1 +1,6 @@
-<h1>testlogin</h1>
+<div class="startseite" ngStyle="{'background-color': backgroundColor}">
+    <div class="logo-container" [@moveAnimation]="animationState">
+      <img src="./../assets/img/logo-without-text.png" alt="Logo" class="logo" [@logoAnimation]="animationState" />
+      <span class="name" ngIf="animationState !== 'center'" [@nameFadeAnimation]="animationState">Dein Name</span>
+    </div>
+  </div>
