@@ -11,7 +11,7 @@ describe('SidenavComponent', () => {
       imports: [SidenavComponent]
     })
     .compileComponents();
-    
+
     fixture = TestBed.createComponent(SidenavComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
