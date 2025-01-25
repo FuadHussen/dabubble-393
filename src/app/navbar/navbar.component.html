@@ -1,0 +1,33 @@
+<mat-toolbar class="navbar">
+  <div class="navbar-left">
+    <span class="app-name">DABubble</span>
+  </div>
+
+  <div class="navbar-center">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput placeholder="Channel durchsuchen">
+    </mat-form-field>
+  </div>
+
+  <div class="navbar-right">
+    <div class="user-profile">
+      <span class="user-name">{{ userName }}</span>
+      <mat-icon class="profile-icon">account_circle</mat-icon>
+      <button mat-icon-button [matMenuTriggerFor]="menu">
+        <mat-icon>arrow_drop_down</mat-icon>
+      </button>
+    </div>
+
+    <mat-menu #menu="matMenu">
+      <button mat-menu-item>
+        <mat-icon>person</mat-icon>
+        <span>Profil</span>
+      </button>
+      <button mat-menu-item>
+        <mat-icon>logout</mat-icon>
+        <span>Log out</span>
+      </button>
+    </mat-menu>
+  </div>
+</mat-toolbar>
