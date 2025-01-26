@@ -6,5 +6,19 @@
     <mat-card-content class="chat-content">
       <!-- Hier kommen später die Chat-Nachrichten -->
     </mat-card-content>
+    <mat-card-actions class="chat-input-actions">
+      <mat-form-field class="chat-input-field" appearance="outline">
+        <button mat-icon-button matPrefix>
+          <mat-icon>sentiment_satisfied_alt</mat-icon>
+        </button>
+        <button mat-icon-button matPrefix>
+          <mat-icon>alternate_email</mat-icon>
+        </button>
+      <textarea matInput cdkTextareaAutosize cdkAutosizeMinRows="5" cdkAutosizeMaxRows="5" placeholder="Nachricht eingeben"></textarea>
+        <button class="send-button" mat-icon-button matSuffix>
+          <mat-icon>send</mat-icon>
+        </button>
+      </mat-form-field>
+    </mat-card-actions>
   </mat-card>
 </div>

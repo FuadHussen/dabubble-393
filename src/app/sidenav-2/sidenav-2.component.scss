@@ -1,8 +1,8 @@
 .sidenav-container {
-//   height: 100vh;
   height: calc(100vh - 80px);
   position: relative;
   overflow: hidden;
+  background-color: #ECEEFE;
 }
 
 .example-container {
@@ -192,13 +192,10 @@ mat-nav-list {
 ::ng-deep mat-drawer-container {
   .mat-drawer-content {
     overflow: unset;
+    background-color: #ECEEFE;
   }
 }
 
 .main-content.mat-drawer-content {
   overflow: unset;
-}
-
-.content-container {
-  background-color: #ECEEFE;
 }

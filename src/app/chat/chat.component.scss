@@ -8,9 +8,85 @@
   height: calc(100% - 48px);
   background-color: white;
   border-radius: 30px;
+  display: flex;
+  flex-direction: column;
 }
 
 .chat-content {
-  height: calc(100% - 80px);
+  flex: 1;
   overflow-y: auto;
+}
+
+.chat-input-actions {
+  padding: 24px;
+
+  .chat-input-field {
+    width: 100%;
+
+    ::ng-deep .mat-mdc-form-field-outline {
+      border-radius: 50px;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      transition: border-color 0.125s;
+
+      &:hover {
+        border-color: #444DF2;
+      }
+    }
+
+    textarea {
+      padding: 12px 48px 12px 24px;
+    }
+
+    .mat-mdc-form-field-icon-prefix {
+      padding: 12px;
+      color: rgba(0, 0, 0, 0.54);
+
+      &:first-child {
+        padding-right: 0;
+      }
+    }
+
+    .mat-mdc-form-field-icon-suffix {
+      padding: 12px;
+    }
+  }
+}
+
+::ng-deep {
+  .mat-mdc-notch-piece {
+    border-radius: 30px!important;
+  }
+
+   .mdc-notched-outline__leading {
+      position: absolute!important;
+      width: -webkit-fill-available!important;
+  }
+
+  .mat-mdc-form-field-icon-prefix {
+    display: flex!important;
+    align-self: flex-end!important;
+    padding: 16px!important;
+  }
+
+  .mat-mdc-form-field-icon-suffix {
+    align-self: flex-end!important;
+    padding: 16px!important;
+  }
+
+  .mat-mdc-icon-button:hover {
+    color: #444DF2!important;
+    transition: all 0.125s;
+    cursor: pointer;
+    transform: scale(1.05);
+  }
+}
+
+.send-button {
+  color: #444DF2!important;
+  transform: none;
+
+  &:hover {
+    opacity: 0.8;
+    transition: all 0.125s;
+  }
 }
