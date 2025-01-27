@@ -1,6 +1,79 @@
-<div class="startseite" ngStyle="{'background-color': backgroundColor}">
-    <div class="logo-container" [@moveAnimation]="animationState">
-      <img src="./../assets/img/logo-without-text.png" alt="Logo" class="logo" [@logoAnimation]="animationState" />
-      <span class="name" ngIf="animationState !== 'center'" [@nameFadeAnimation]="animationState">Dein Name</span>
-    </div>
+<!-- <div class="startseite" ngStyle="{'background-color': backgroundColor}">
+  <div class="logo-container" [@moveAnimation]="animationState">
+    <img
+      src="./../assets/img/logo-without-text.png"
+      alt="Logo"
+      class="logo"
+      [@logoAnimation]="animationState"
+    />
+    <span
+      class="name"
+      ngIf="animationState !== 'center'"
+      [@nameFadeAnimation]="animationState"
+      >Dein Name</span
+    >
   </div>
+</div> -->
+
+<div class="login-container">
+  <form>
+    <h2>Anmeldung</h2>
+    <h4>
+      Wir empfehlen dir, die E-Mail-Adresse zu nutzen, die du bei der Arbeit
+      verwendest.
+    </h4>
+    <!-- Email Input -->
+    <div class="inputs-container">
+      <div class="email-input">
+        <img src="../../assets/img/mail.png" alt="mail" />
+        <input
+          type="email"
+          id="email"
+          name="email"
+          required
+          email
+          placeholder="beispielname@email.com"
+        />
+      </div>
+      <div class="error-message">
+        <p>*Diese E-Mail-Adresse ist leider ungültig.</p>
+      </div>
+
+      <!-- Password Input -->
+      <div class="password-input">
+        <img src="../../assets/img/lock.png" alt="lock" />
+        <input
+          type="password"
+          id="password"
+          name="password"
+          required
+          minlength="6"
+          placeholder="Passwort"
+        />
+      </div>
+
+      <div class="error-message">
+        <p>Falsches Passwort oder E-Mail. Bitte noch einmal versuchen.</p>
+      </div>
+    </div>
+
+    <a class="link-text">Passwort vergessen?</a>
+
+    <div class="line-container">
+      <div class="gray-line"></div>
+      ODER
+      <div class="gray-line"></div>
+    </div>
+
+    <button class="google-btn">
+      <img src="" alt="" />
+      Anmelden mit Google
+    </button>
+
+    <!-- Buttons -->
+    <div class="buttons-container">
+      <button class="primary-btn">Anmelden</button>
+      <button class="secondary-btn">Gäste-Login</button>
+    </div>
+  </form>
+</div>
