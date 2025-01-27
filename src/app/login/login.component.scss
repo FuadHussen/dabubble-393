@@ -1,17 +1,17 @@
 /* startseite.component.css */
 .startseite {
+  padding: 20px 20px 0px 20px;
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  height: 100vh;
-  width: 100vw;
   overflow: hidden;
+  background-color: #eceefe;
 }
 
 .logo-container {
   display: flex;
   align-items: center;
-  transition: all 1s ease-in-out;
+  gap:15px
 }
 
 .logo {
@@ -20,33 +20,68 @@
 }
 
 .name {
-  font-size: 50px;
-  color: black;
-  opacity: 0;
-  transition: opacity 0.1s ease-in-out;
+  font-family: Nunito;
+  font-size: 46px;
+  font-weight: 700;
 }
+
+.signup-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  p {
+    font-family: Nunito;
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 24.55px;
+    text-align: right;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
+    color: #000000;
+  }
+}
+/* ende startseite.component.css */
 
 .login-container {
   display: flex;
   flex-direction: column;
   align-items: center;
+  background-color: #eceefe;
 
   form {
+    background-color: white;
     width: 100%;
     max-width: 500px;
     display: flex;
     flex-direction: column;
     align-items: center;
+    border-radius: 30px;
+    padding: 50px;
+
+    .head-container {
+      max-width: 480px;
+    }
 
     h2 {
-      font-size: 24px;
-      margin-bottom: 10px;
+      font-family: Nunito;
+      font-size: 46px;
+      font-weight: 700;
+      text-align: center;
+      text-underline-position: from-font;
+      text-decoration-skip-ink: none;
+      color: #444df2;
+      margin: 0px 0px 25px 0px;
     }
 
     h4 {
-      font-size: 16px;
-      margin-bottom: 20px;
-      color: #555;
+      font-family: Nunito;
+      font-size: 20px;
+      font-weight: 400;
+      text-align: center;
+      text-underline-position: from-font;
+      text-decoration-skip-ink: none;
+      color: #000000;
+      margin: 0;
     }
 
     .inputs-container {
@@ -66,61 +101,89 @@
         gap: 10px;
         border-radius: 100px;
         opacity: 0px;
-        background-color: #ECEEFE;
+        background-color: #eceefe;
         border: 1px solid transparent;
 
         &:hover {
-          border: 1px solid #ccc;
+          border: 1px solid #686868;
         }
-        
-        img {
-          margin-right: 10px;
-          width: 20px;
-          height: 20px;
+
+        &:focus-within {
+          border: 1px solid #535af1;
         }
 
         input {
           flex: 1;
           border: none;
           outline: none;
-          font-size: 14px;
-          background-color: #ECEEFE;
+          background-color: #eceefe;
+          font-family: Nunito;
+          font-size: 18px;
+          font-weight: 500;
+        }
+
+        img {
+          margin-right: 10px;
+          max-width: 24px;
+          max-height: 24px;
         }
       }
 
       .error-message {
         p {
-          color: red;
-          font-size: 12px;
-          margin: 0;
+          font-family: Nunito;
+          font-size: 14px;
+          font-weight: 400;
+          text-decoration-skip-ink: none;
+          color: #ed1e79;
+          margin-top: -5px;
         }
       }
     }
 
     .link-text {
-      color: #007bff;
-      font-size: 14px;
-      text-decoration: none;
-      margin: 10px 0;
-      text-align: right;
-      cursor: pointer;
+      font-family: Figtree;
+      font-size: 18px;
+      font-weight: 400;
+      border-radius: 30px;
+      text-decoration-skip-ink: none;
+      top: 200px;
+      left: 166px;
+      padding: 5px 15px 5px 15px;
+      gap: 10px;
+      opacity: 0px;
+      background-color: transparent;
+      color: #797ef3;
 
       &:hover {
-        text-decoration: underline;
+        background-color: #eceefe;
+        color: #444df2;
+        font-family: Figtree;
+        font-size: 18px;
+        font-weight: 500;
       }
     }
 
     .line-container {
       display: flex;
       align-items: center;
-      color: #888;
+      color: #000000;
       font-size: 14px;
       margin: 20px 0;
+      gap: 10px;
+      border-radius: 30px 0px 0px 0px;
+      opacity: 0px;
+      font-family: Nunito;
+      font-size: 18px;
+      font-weight: 400;
+      text-align: left;
+      text-underline-position: from-font;
+      text-decoration-skip-ink: none;
 
       .gray-line {
-        flex: 1;
+        width: 200px;
         height: 1px;
-        background-color: #ccc;
+        border-bottom: 1px solid #adb0d9;
       }
 
       &:before,
@@ -133,25 +196,30 @@
     }
 
     .google-btn {
+      width: 500px;
+      border-radius: 100px;
+      height: 60px;
+      background-color: #eceefe;
+      margin-bottom: 43px;
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      padding: 10px;
-      font-size: 14px;
-      cursor: pointer;
-      margin-bottom: 20px;
-      background-color: #fff;
+      border: none;
+      outline: none;
+      color: #444df2;
+      font-size: 18px;
+      font-weight: 400;
 
       img {
-        margin-right: 10px;
-        width: 20px;
-        height: 20px;
+        margin-right: 20px;
+        max-width: 38px;
+        max-height: 38px;
       }
 
       &:hover {
-        background-color: #f7f7f7;
+        border: 1px solid #535af1;
+        font-weight: 600;
+        color: #444df2;
       }
     }
 
@@ -161,23 +229,29 @@
 
       .primary-btn,
       .secondary-btn {
-        flex: 1;
-        padding: 10px;
-        border-radius: 5px;
-        font-size: 14px;
-        cursor: pointer;
-        text-align: center;
+        padding: 12px 25px 12px 25px;
+        gap: 10px;
+        border-radius: 25px;
+        opacity: 0px;
+        font-family: Nunito;
+        font-size: 18px;
+        font-weight: 700;
 
         &.primary-btn {
-          background-color: #007bff;
-          color: #fff;
+          background-color: #444df2;
+          color: #ffffff;
           border: none;
         }
 
         &.secondary-btn {
-          background-color: #f7f7f7;
-          color: #555;
-          border: 1px solid #ccc;
+          background-color: #ffffff;
+          color: #444df2;
+          border: 1px solid #797ef3;
+
+          &:hover {
+            background-color: #444df2;
+            color: #ffffff;
+          }
         }
 
         &:hover {
@@ -186,4 +260,33 @@
       }
     }
   }
+}
+
+.signup-footer {
+  color: #797ef3;
+  font-family: Figtree;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 21.6px;
+  text-align: left;
+  text-underline-position: from-font;
+  text-decoration-skip-ink: none;
+  padding: 10px 10px 10px 10px;
+  gap: 10px;
+  opacity: 0px;
+  border-radius: 25px;
+  border: 1px solid transparent;
+  transition: all 0.1s ease-in;
+  &:hover {
+    border: 1px solid #797ef3;
+    color: #444df2;
+  }
+}
+
+footer {
+  background-color: #eceefe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap:20px
 }

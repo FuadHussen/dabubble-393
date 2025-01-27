@@ -1,31 +1,38 @@
-<!-- <div class="startseite" ngStyle="{'background-color': backgroundColor}">
-  <div class="logo-container" [@moveAnimation]="animationState">
+<div class="startseite" ngStyle="{'background-color': backgroundColor}">
+  <div class="logo-container">
     <img
       src="./../assets/img/logo-without-text.png"
       alt="Logo"
       class="logo"
-      [@logoAnimation]="animationState"
     />
-    <span
-      class="name"
-      ngIf="animationState !== 'center'"
-      [@nameFadeAnimation]="animationState"
-      >Dein Name</span
-    >
+    <span class="name">DABubble</span>
   </div>
-</div> -->
+  <div class="signup-container">
+    <p>Neu bei DABubble?</p>
+    <span class="signup-footer">Konto erstellen</span>
+  </div>
+</div>
 
 <div class="login-container">
   <form>
-    <h2>Anmeldung</h2>
-    <h4>
-      Wir empfehlen dir, die E-Mail-Adresse zu nutzen, die du bei der Arbeit
-      verwendest.
-    </h4>
+    <div class="head-container">
+      <h2>Anmeldung</h2>
+      <h4>
+        Wir empfehlen dir, die E-Mail-Adresse zu nutzen, die du bei der Arbeit
+        verwendest.
+      </h4>
+    </div>
     <!-- Email Input -->
     <div class="inputs-container">
       <div class="email-input">
-        <img src="../../assets/img/mail.png" alt="mail" />
+        <img
+          [src]="
+            isEmailFocused
+              ? '../../assets/img/mail-active.png'
+              : '../../assets/img/mail.png'
+          "
+          alt="mail"
+        />
         <input
           type="email"
           id="email"
@@ -33,15 +40,23 @@
           required
           email
           placeholder="beispielname@email.com"
+          (focus)="onEmailFocus()"
+          (blur)="onEmailBlur()"
         />
       </div>
       <div class="error-message">
         <p>*Diese E-Mail-Adresse ist leider ungültig.</p>
       </div>
-
       <!-- Password Input -->
       <div class="password-input">
-        <img src="../../assets/img/lock.png" alt="lock" />
+        <img
+          [src]="
+            isPasswordFocused
+              ? '../../assets/img/lock-active.png'
+              : '../../assets/img/lock.png'
+          "
+          alt="lock"
+        />
         <input
           type="password"
           id="password"
@@ -49,6 +64,8 @@
           required
           minlength="6"
           placeholder="Passwort"
+          (focus)="onPasswordFocus()"
+          (blur)="onPasswordBlur()"
         />
       </div>
 
@@ -66,7 +83,7 @@
     </div>
 
     <button class="google-btn">
-      <img src="" alt="" />
+      <img src="../../assets/img/google-logo.png" alt="" />
       Anmelden mit Google
     </button>
 
@@ -77,3 +94,8 @@
     </div>
   </form>
 </div>
+
+<footer>
+    <span class="signup-footer">Impressum</span>
+    <span class="signup-footer">Datenschutz</span>
+</footer>

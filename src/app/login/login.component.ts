@@ -32,4 +32,24 @@ export class LoginComponent {
       this.animationState = 'moveToCorner';
     }, 60);
   }
+
+  isEmailFocused = false;
+  isPasswordFocused = false;
+
+  // Methoden zum Setzen des Fokusstatus
+  onEmailFocus() {
+    this.isEmailFocused = true;
+  }
+
+  onEmailBlur() {
+    this.isEmailFocused = false;
+  }
+
+  onPasswordFocus() {
+    this.isPasswordFocused = true;
+  }
+
+  onPasswordBlur() {
+    this.isPasswordFocused = false;
+  }
 }
