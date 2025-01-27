@@ -34,54 +34,50 @@
         <h1>Devspace</h1>
         <div
           class="edit-icon"
-          (click)="toggleActive()"
           [class.active]="isActive"
         >
-          <img src="assets/img/edit.png" alt="Edit" class="edit-default" />
-          <img src="assets/img/edit-hover.png" alt="Edit" class="edit-hover" />
-          <img
-            src="assets/img/edit-active.png"
-            alt="Edit"
-            class="edit-active"
-          />
+          <button class="new-chat-button" mat-icon-button>
+            <mat-icon class="bold material-symbols-outlined">edit_square</mat-icon>
+          </button>
         </div>
       </div>
 
       <div class="sidenav-body">
         <mat-accordion>
-          <mat-expansion-panel expanded="true" togglePosition="before">
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                <mat-icon>workspaces</mat-icon>
-                Channel 1
+          <mat-expansion-panel class="box-shadow" expanded="true" togglePosition="before">
+            <mat-expansion-panel-header class="title-hover">
+              <mat-panel-title class="title-hover">
+                <mat-icon class="material-symbols-outlined">workspaces</mat-icon>
+                <p class="fs-18">Channels</p>
               </mat-panel-title>
               <button
+                class="new-chat-button"
                 (click)="$event.stopPropagation(); openAddChannelDialog()"
                 mat-icon-button
               >
-                <mat-icon>add</mat-icon>
+                <mat-icon class="bold material-symbols-outlined">add</mat-icon>
               </button>
             </mat-expansion-panel-header>
             <mat-nav-list>
               <a
                 class="hover-btn"
                 mat-list-item
-                *ngFor="
-                  let channel of [
-                    'channel 1',
-                    'channel 2',
-                    'channel 3',
-                    'channel 4'
-                  ]
-                "
+                *ngFor="let channel of channels"
+                (click)="selectChannel(channel)"
+                [class.active]="selectedChannel === channel"
               >
-                <mat-icon matListItemIcon>tag</mat-icon>
-                <p>{{ channel }}</p>
+                <mat-icon class="material-symbols-outlined" matListItemIcon>tag</mat-icon>
+                <p class="fs-18">{{ channel }}</p>
               </a>
             </mat-nav-list>
-            <button (click)="openAddChannelDialog()" mat-button color="primary">
-              <mat-icon>add_circle</mat-icon>
-              Channel hinzufügen
+            <button 
+              class="new-channel-btn" 
+              (click)="openAddChannelDialog()" 
+              mat-button 
+              color="primary"
+            >
+              <mat-icon class="material-symbols-outlined">add_circle</mat-icon>
+              <p class="fs-18">Channel hinzufügen</p>
             </button>
           </mat-expansion-panel>
         </mat-accordion>
@@ -89,11 +85,11 @@
 
       <div class="direct-messages">
         <mat-accordion>
-          <mat-expansion-panel expanded="true" togglePosition="before">
+          <mat-expansion-panel class="box-shadow" expanded="true" togglePosition="before">
             <mat-expansion-panel-header>
-              <mat-panel-title>
-                <mat-icon>chat</mat-icon>
-                Direct Messages
+              <mat-panel-title class="title-hover">
+                <mat-icon class="material-symbols-outlined">account_circle</mat-icon>
+                <p class="fs-18">Direct Messages</p>
               </mat-panel-title>
             </mat-expansion-panel-header>
             <mat-nav-list>
@@ -103,7 +99,7 @@
                 *ngFor="let user of ['John Doe', 'Petra Doe', 'Julian Doe']"
               >
                 <mat-icon matListItemIcon>person</mat-icon>
-                <p>{{ user }}</p>
+                <p class="fs-18">{{ user }}</p>
               </a>
             </mat-nav-list>
           </mat-expansion-panel>
@@ -113,6 +109,6 @@
   </mat-drawer>
 
   <mat-drawer-content class="main-content">
-    <app-chat></app-chat>
+    <app-chat [selectedChannel]="selectedChannel"></app-chat>
   </mat-drawer-content>
 </mat-drawer-container>

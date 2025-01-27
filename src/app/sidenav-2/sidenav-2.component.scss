@@ -5,6 +5,54 @@
   background-color: #ECEEFE;
 }
 
+.bold {
+  font-weight: 600;
+}
+
+.new-chat-button {
+  color: #000;
+
+  &:hover {
+    transform: scale(1.1);
+  }
+
+  &:focus {
+    background-color: transparent !important;
+  }
+  
+  &:active {
+    background-color: transparent !important;
+  }
+
+  mat-icon {
+    &:focus {
+      background-color: transparent !important;
+    }
+  }
+}
+
+.new-channel-btn {
+  color: #000!important;
+  font-weight: 400!important;
+
+  mat-icon {
+    font-weight: 600!important;
+  }
+
+  &:hover {
+    color: #535AF1!important;
+  }
+
+  p {
+    font-weight: 300;
+  }
+}
+
+.italic-hasah {
+  font-style: italic;
+  font-weight: 600;
+}
+
 .example-container {
     width: 500px;
     height: 300px;
@@ -94,42 +142,7 @@ mat-nav-list {
 .edit-icon {
   position: relative;
   cursor: pointer;
-
-  img {
-    position: absolute;
-    top: 0;
-    left: 0;
-    transition: opacity 0.125s ease;
-  }
-
-  .edit-default {
-    position: relative;
-    opacity: 1;
-  }
-
-  .edit-hover,
-  .edit-active {
-    opacity: 0;
-  }
-
-  &:hover {
-    .edit-default {
-      opacity: 0;
-    }
-    .edit-hover {
-      opacity: 1;
-    }
-  }
-
-  &:active {
-    .edit-default,
-    .edit-hover {
-      opacity: 0;
-    }
-    .edit-active {
-      opacity: 1;
-    }
-  }
+  display: flex;
 }
 
 .toggle-sidenav {
@@ -235,6 +248,26 @@ mat-nav-list {
       color: #535AF1;
     }
   }
+
+  &.active {
+    background-color: #eceefe;
+
+     p, mat-icon {
+      color: #535af1;
+      font-weight: 500;
+    }
+  }
+}
+
+.title-hover {
+  
+  &:hover {
+    color: #535AF1;
+  }
+}
+
+.box-shadow {
+  box-shadow: none!important;
 }
 
 ::ng-deep .mat-expansion-panel-body {
@@ -248,4 +281,27 @@ mat-nav-list {
 ::ng-deep .mat-mdc-button {
   padding: 8px 24px !important;
   margin-left: 16px;
+}
+
+::ng-deep .mat-expansion-panel-header:hover {
+  background-color: transparent !important;
+}
+
+::ng-deep .mat-expansion-panel-header {
+  &.mat-expanded {
+    background-color: transparent !important;
+  }
+}
+
+.title-hover:hover {
+  background-color: transparent !important;
+}
+
+.material-symbols-outlined {
+  font-variation-settings:
+  'FILL' 0,
+  'wght' 400,
+  'GRAD' 0,
+  'opsz' 24,
+  'color' #000
 }

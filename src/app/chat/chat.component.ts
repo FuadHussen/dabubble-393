@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
@@ -21,5 +21,5 @@ import { TextFieldModule } from '@angular/cdk/text-field';
   styleUrls: ['./chat.component.scss']
 })
 export class ChatComponent {
-
+  @Input() selectedChannel: string = '';
 }

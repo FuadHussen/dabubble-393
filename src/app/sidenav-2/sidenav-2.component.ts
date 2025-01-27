@@ -29,12 +29,14 @@ import { MatExpansionPanel } from '@angular/material/expansion';
 })
 export class Sidenav2Component {
   readonly panelOpenState = signal(false);
-  isActive = false;
+  selectedChannel: string = '';
+  channels: string[] = ['channel 1', 'channel 2'];
+  isActive: boolean = false;
 
   constructor(private dialog: MatDialog) {}
 
-  toggleActive() {
-    this.isActive = !this.isActive;
+  selectChannel(channel: string) {
+    this.selectedChannel = channel;
   }
 
   openAddChannelDialog() {
@@ -43,9 +45,9 @@ export class Sidenav2Component {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        // Hier kannst du die Logik zum Erstellen eines neuen Channels implementieren
-        console.log('Neuer Channel:', result);
+      if (result?.name) {
+        this.channels.push(result.name);
+        this.selectChannel(result.name);
       }
     });
   }

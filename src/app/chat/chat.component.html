@@ -1,10 +1,16 @@
 <div class="chat-container">
   <mat-card class="chat-card">
-    <mat-card-header>
-      <mat-card-title>Chat</mat-card-title>
+    <mat-card-header class="chat-header">
+      <div class="channel-info">
+        <mat-icon class="material-symbols-outlined">tag</mat-icon>
+        <mat-card-title>{{ selectedChannel }}</mat-card-title>
+      </div>
     </mat-card-header>
     <mat-card-content class="chat-content">
-      <!-- Hier kommen später die Chat-Nachrichten -->
+      <div class="welcome-message" *ngIf="selectedChannel">
+        <h2 class="channel-title"># {{ selectedChannel }}</h2>
+        <p class="channel-description">Du hast diesen Channel heute erstellt. Das ist der Anfang des Channels <span> # {{ selectedChannel }} </span><p>
+      </div>
     </mat-card-content>
     <mat-card-actions class="chat-input-actions">
       <mat-form-field class="chat-input-field" appearance="outline">

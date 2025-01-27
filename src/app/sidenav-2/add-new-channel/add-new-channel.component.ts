@@ -31,4 +31,13 @@ export class AddNewChannelComponent {
   onClose(): void {
     this.dialogRef.close();
   }
+
+  onCreate(): void {
+    if (this.channelName.trim()) {
+      this.dialogRef.close({
+        name: this.channelName,
+        description: this.description
+      });
+    }
+  }
 }

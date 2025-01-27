@@ -15,6 +15,10 @@
 .chat-content {
   flex: 1;
   overflow-y: auto;
+
+  span {
+    color: #444DF2;
+  }
 }
 
 .chat-input-actions {
@@ -59,27 +63,27 @@
 
 ::ng-deep {
   .mat-mdc-notch-piece {
-    border-radius: 30px!important;
+    border-radius: 30px !important;
   }
 
-   .mdc-notched-outline__leading {
-      position: absolute!important;
-      width: -webkit-fill-available!important;
+  .mdc-notched-outline__leading {
+    position: absolute !important;
+    width: -webkit-fill-available !important;
   }
 
   .mat-mdc-form-field-icon-prefix {
-    display: flex!important;
-    align-self: flex-end!important;
-    padding: 16px!important;
+    display: flex !important;
+    align-self: flex-end !important;
+    padding: 16px !important;
   }
 
   .mat-mdc-form-field-icon-suffix {
-    align-self: flex-end!important;
-    padding: 16px!important;
+    align-self: flex-end !important;
+    padding: 16px !important;
   }
 
   .mat-mdc-icon-button:hover {
-    color: #444DF2!important;
+    color: #444DF2 !important;
     transition: all 0.125s;
     cursor: pointer;
     transform: scale(1.05);
@@ -91,11 +95,55 @@
 }
 
 .send-button {
-  color: #444DF2!important;
+  color: #444DF2 !important;
   transform: none;
 
   &:hover {
     opacity: 0.8;
     transition: all 0.125s;
+  }
+}
+
+.chat-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  
+
+  .channel-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    mat-card-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+    }
+  }
+}
+
+::ng-deep .mat-mdc-card-header {
+  padding: 0;
+}
+
+.welcome-message {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: -webkit-fill-available;
+
+  .channel-title {
+    font-weight: 700;
+    font-size: 24px;
+    margin-bottom: 0;
+  }
+
+  .channel-description {
+    color: #686868;
+    font-size: 20px;
+    font-weight: 400;
+    margin-bottom: 0;
   }
 }
