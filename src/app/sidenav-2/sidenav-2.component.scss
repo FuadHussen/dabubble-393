@@ -199,3 +199,53 @@ mat-nav-list {
 .main-content.mat-drawer-content {
   overflow: unset;
 }
+
+.add-icon {
+  color: #000;
+}
+
+.add-channel-button {
+  width: 100%;
+  padding-left: 16px !important;
+  text-align: left;
+  height: 48px;
+
+  .button-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    mat-icon {
+      margin: 0;
+    }
+
+    span {
+      margin: 0;
+    }
+  }
+}
+
+.hover-btn {
+
+  &:hover  {
+    background-color: #ECEEFE;
+    color: #535AF1;
+
+    p {
+      color: #535AF1;
+    }
+  }
+}
+
+::ng-deep .mat-expansion-panel-body {
+  padding: 8px !important;
+}
+
+::ng-deep .mdc-list {
+  padding: 8px 16px !important;
+}
+
+::ng-deep .mat-mdc-button {
+  padding: 8px 24px !important;
+  margin-left: 16px;
+}

@@ -35,6 +35,11 @@
 
     textarea {
       padding: 12px 48px 12px 24px;
+      position: absolute;
+      top: 8px;
+      left: -108px;
+      width: -webkit-fill-available;
+      box-sizing: border-box;
     }
 
     .mat-mdc-form-field-icon-prefix {
@@ -78,6 +83,10 @@
     transition: all 0.125s;
     cursor: pointer;
     transform: scale(1.05);
+  }
+
+  .mat-mdc-form-field-infix:nth-child(3) {
+    height: 144px;
   }
 }
 

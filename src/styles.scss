@@ -61,3 +61,13 @@
     padding: 0;
     margin: 0;
   }
+
+  .custom-dialog-container {
+    .mat-mdc-dialog-container {
+      border-radius: 30px;
+    }
+  }
+  
+  .dialog-backdrop {
+    background: rgba(0, 0, 0, 0.5);
+  }
