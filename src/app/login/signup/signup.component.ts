@@ -20,8 +20,10 @@ export class SignupComponent {
   userNameSrc: string = '../../assets/img/person.png';
   userEmailSrc: string = '../../assets/img/mail.png';
   userPasswordSrc: string = '../../assets/img/lock.png';
+  checkboxSrc: string = '../../assets/img/checkbox.png';
 
-  userNameError: boolean = false;
+  checkboxIsCkecked: boolean = false;
+  checkboxIsHovered: boolean = false;
 
   onFocus(field: string): void {
     if (field === 'userName' && !this.userName) {
@@ -60,6 +62,28 @@ export class SignupComponent {
       this.userPasswordSrc = value
         ? '../../assets/img/lock-active.png'
         : '../../assets/img/lock.png';
+    }
+  }
+
+  checkboxHover(hoverState: boolean): void {
+    this.checkboxIsHovered = hoverState;
+    this.checkboxChangeImage();
+  }
+
+  checkboxClick(): void {
+    this.checkboxIsCkecked = !this.checkboxIsCkecked;
+    this.checkboxChangeImage();
+  }
+
+  checkboxChangeImage(): void {
+    if (this.checkboxIsCkecked && this.checkboxIsHovered) {
+      this.checkboxSrc = '../../../assets/img/checkbox-checked-hovered.png';
+    } else if (this.checkboxIsCkecked) {
+      this.checkboxSrc = '../../../assets/img/checkbox-checked.png';
+    } else if (this.checkboxIsHovered) {
+      this.checkboxSrc = '../../../assets/img/checkbox-hovered.png';
+    } else {
+      this.checkboxSrc = '../../../assets/img/checkbox.png';
     }
   }
 
