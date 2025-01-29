@@ -1,1 +1,98 @@
-<p>signup works!</p>
+<div class="startseite" ngStyle="{'background-color': backgroundColor}">
+    <div class="logo-container">
+      <img src="./../assets/img/logo-without-text.png" alt="Logo" class="logo" />
+      <span class="name">DABubble</span>
+    </div>
+  </div>
+  
+  <div class="reset-password-container">
+    <div class="form">
+      <div class="arrow-back">
+        <img 
+        (click)="navigateToLogin()"
+      [src]="arrowBackSrc" 
+      alt="back"
+      (mouseover)="changeImage('hover')" 
+      (mouseout)="changeImage('default')" />
+      </div>
+      <div>
+        <h2>Konto erstellen</h2>
+        <h4>Mit deinem Namen und deiner E-Mail-Adresse hast du dein neues DABubble-Konto.</h4>
+      </div>
+  <!-- Input -->
+  <div class="inputs-container">
+     <!-- name Input -->
+    <div class="name-input">
+        <img
+          [src]="userNameSrc"
+          alt="name"
+        />
+        <input
+        placeholder="Name und Nachname"
+        type="text"
+        name="name"
+        (ngModel)="userName"
+        (focus)="onFocus('userName')"
+        (blur)="onBlur('userName')"
+        (input)="onInput('userName', $event)"
+        
+      />
+    </div>
+      <div class="error-message">
+        <p>*Bitte einen Vor und Nachname</p>
+      </div>
+ <!-- mail Input -->
+    <div class="email-input">
+      <img
+      [src]="userEmailSrc"
+        alt="mail"
+      />
+      <input
+        type="email"
+        id="email"
+        name="email"
+        required
+        email
+        placeholder="beispielname@email.com"
+        (ngModel)="userEmail"
+        (focus)="onFocus('userEmail')"
+        (blur)="onBlur('userEmail')"
+        (input)="onInput('userEmail', $event)"
+      />
+    </div>
+    <div class="error-message">
+      <p>*Diese E-Mail-Adresse ist leider ungültig.</p>
+    </div>
+    <!-- Password Input -->
+    <div class="password-input">
+      <img
+      [src]="userPasswordSrc"
+        alt="lock"
+      />
+      <input
+        type="password"
+        id="password"
+        name="password"
+        required
+        minlength="6"
+        placeholder="Passwort"
+        (ngModel)="userPassword"
+        (focus)="onFocus('userPassword')"
+        (blur)="onBlur('userPassword')"
+        (input)="onInput('userPassword', $event)"
+      />
+    </div>
+
+    <div class="error-message">
+      <p>Bitte geben Sie ein Password ein.</p>
+    </div>
+  </div>
+        <!-- Buttons -->
+        <div class="buttons-container">
+          <button class="primary-btn">Weiter</button>
+        </div>
+      </div>
+    </div>
+
+  <app-footer></app-footer>
+  
