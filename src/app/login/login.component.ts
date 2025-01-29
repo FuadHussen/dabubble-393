@@ -69,10 +69,10 @@ export class LoginComponent {
   }
 
   navigateToSignUp() {
-    this.router.navigate(['/signup']); // Hier kannst du den gewünschten Pfad angeben
+    this.router.navigate(['/signup']); 
   }
 
   navigateToForgotPassword() {
-    this.router.navigate(['/reset-password']); // Hier kannst du den gewünschten Pfad angeben
+    this.router.navigate(['/reset-password']);
   }
 }

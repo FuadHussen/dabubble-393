@@ -1,0 +1,31 @@
+<div class="startseite" ngStyle="{'background-color': backgroundColor}">
+  <div class="logo-container">
+    <img src="./../assets/img/logo-without-text.png" alt="Logo" class="logo" />
+    <span class="logo-name">DABubble</span>
+  </div>
+</div>
+
+<div class="choose-avatar-container">
+  <div class="form">
+    <div class="arrow-back">
+      <img
+        (click)="backToLogin()"
+        [src]="arrowBackSrc"
+        alt="back"
+        (mouseover)="arrowBack('hover')"
+        (mouseout)="arrowBack('default')"
+      />
+    </div>
+
+    <div class="content">
+      <h2>Impressum</h2>
+      <h4>[Student Names List]
+        [Address of the DABubble operator - e.g. one of the students]
+        [Postcode and city]</h4>
+      <h3>Contact</h3>
+      <h4>Email: [Dein email]</h4>
+    </div>
+  </div>
+</div>
+
+<app-footer></app-footer>
