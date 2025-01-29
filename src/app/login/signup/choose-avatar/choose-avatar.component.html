@@ -1,0 +1,47 @@
+<div class="startseite" ngStyle="{'background-color': backgroundColor}">
+  <div class="logo-container">
+    <img src="./../assets/img/logo-without-text.png" alt="Logo" class="logo" />
+    <span class="name">DABubble</span>
+  </div>
+</div>
+
+<div class="choose-avatar-container">
+  <div class="form">
+    <div class="arrow-back">
+      <img
+        (click)="backToRegister()"
+        [src]="arrowBackSrc"
+        alt="back"
+        (mouseover)="arrowBack('hover')"
+        (mouseout)="arrowBack('default')"
+      />
+    </div>
+
+    <h2>Wähle deinen Avatar</h2>
+
+    <!-- Input -->
+
+    <div class="current-avatar-container">
+      <img [src]="currentAvatarSrc" />
+    </div>
+    <div class="name">
+      <h3>Vorname Nachname</h3>
+      <h4>Aus der Liste wählen</h4>
+    </div>
+    <div class="avatar-bar">
+      <div *ngFor="let avatarImage of avatarImages">
+        <img
+          [src]="avatarImage"
+          alt="Avatar"
+          (click)="selectAvatar(avatarImage)"
+        />
+      </div>
+    </div>
+    <!-- Buttons -->
+    <div class="buttons-container">
+      <button class="primary-btn">Weiter</button>
+    </div>
+  </div>
+
+  <app-footer></app-footer>
+</div>

@@ -16,7 +16,6 @@ export class SignupComponent {
   userPassword: string = '';
 
   arrowBackSrc: string = '../../../assets/img/arrow-back.png';
-
   userNameSrc: string = '../../assets/img/person.png';
   userEmailSrc: string = '../../assets/img/mail.png';
   userPasswordSrc: string = '../../assets/img/lock.png';
@@ -24,6 +23,15 @@ export class SignupComponent {
 
   checkboxIsCkecked: boolean = false;
   checkboxIsHovered: boolean = false;
+
+
+  arrowBack(state: string) {
+    if (state === 'hover') {
+      this.arrowBackSrc = '../../../assets/img/arrow-back-active.png';
+    } else {
+      this.arrowBackSrc = '../../../assets/img/arrow-back.png';
+    }
+  }
 
   onFocus(field: string): void {
     if (field === 'userName' && !this.userName) {
@@ -91,11 +99,8 @@ export class SignupComponent {
     this.router.navigate(['/login']);
   }
 
-  changeImage(state: string) {
-    if (state === 'hover') {
-      this.arrowBackSrc = '../../../assets/img/arrow-back-active.png';
-    } else {
-      this.arrowBackSrc = '../../../assets/img/arrow-back.png';
-    }
+  navigateToChooseAvatar() {
+    this.router.navigate(['/choose-avatar']);
   }
+
 }

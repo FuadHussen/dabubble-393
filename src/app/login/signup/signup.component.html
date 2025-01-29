@@ -12,8 +12,8 @@
         (click)="navigateToLogin()"
         [src]="arrowBackSrc"
         alt="back"
-        (mouseover)="changeImage('hover')"
-        (mouseout)="changeImage('default')"
+        (mouseover)="arrowBack('hover')"
+        (mouseout)="arrowBack('default')"
       />
     </div>
     <div>
@@ -101,7 +101,7 @@
 
       <!-- Buttons -->
       <div class="buttons-container">
-        <button class="primary-btn">Weiter</button>
+        <button (click)="navigateToChooseAvatar()" class="primary-btn">Weiter</button>
       </div>
     </div>
   </div>
