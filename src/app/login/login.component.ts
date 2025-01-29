@@ -75,4 +75,10 @@ export class LoginComponent {
   navigateToForgotPassword() {
     this.router.navigate(['/reset-password']);
   }
+
+  loginSucess() {
+    this.router.navigate(['/sidenav-2']);
+  }
+
+
 }
