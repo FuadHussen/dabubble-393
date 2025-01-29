@@ -9,7 +9,7 @@
   </div>
   <div class="signup-container">
     <p>Neu bei DABubble?</p>
-    <span class="signup-footer">Konto erstellen</span>
+    <span (click)="navigateToSignUp()" class="signup-footer">Konto erstellen</span>
   </div>
 </div>
 
@@ -74,7 +74,7 @@
       </div>
     </div>
 
-    <a class="link-text">Passwort vergessen?</a>
+    <a (click)="navigateToForgotPassword()" class="link-text">Passwort vergessen?</a>
 
     <div class="line-container">
       <div class="gray-line"></div>
@@ -95,7 +95,4 @@
   </form>
 </div>
 
-<footer>
-    <span class="signup-footer">Impressum</span>
-    <span class="signup-footer">Datenschutz</span>
-</footer>
+<app-footer></app-footer>

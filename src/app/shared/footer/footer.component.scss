@@ -1,0 +1,34 @@
+body {
+  background-color: #eceefe;
+}
+
+div {
+  margin-top: 10px;
+  background-color: #eceefe;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: row;
+  gap: 20px;
+}
+
+.signup-footer {
+  color: #797ef3;
+  font-family: Figtree;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 21.6px;
+  text-align: left;
+  text-underline-position: from-font;
+  text-decoration-skip-ink: none;
+  padding: 10px 10px 10px 10px;
+  gap: 10px;
+  opacity: 0px;
+  border-radius: 25px;
+  border: 1px solid transparent;
+  transition: all 0.1s ease-in;
+  &:hover {
+    border: 1px solid #797ef3;
+    color: #444df2;
+  }
+}
