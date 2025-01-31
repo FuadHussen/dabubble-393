@@ -57,4 +57,8 @@ export class ResetPasswordComponent {
   navigateToLogin() {
     this.router.navigate(['/login']); // Hier kannst du den gewünschten Pfad angeben
   }
+
+  navigateToNewPassword() {
+    this.router.navigate(['/new-password']); 
+  }
 }
