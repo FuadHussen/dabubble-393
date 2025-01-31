@@ -9,7 +9,7 @@ import { PrivacyPolicyComponent } from './shared/privacy-policy/privacy-policy.c
 import { NewPasswordComponent } from './login/reset-password/new-password/new-password.component';
 
 export const routes: Routes = [
-    { path: 'login', component: LoginComponent },
+    { path: '', component: LoginComponent },
     { path: 'reset-password', component: ResetPasswordComponent },
     { path: 'new-password', component: NewPasswordComponent },
     { path: 'signup', component: SignupComponent },
