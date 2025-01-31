@@ -9,10 +9,11 @@ import {
 import { Router } from '@angular/router';
 import { FooterComponent } from '../shared/footer/footer.component';
 import { NgClass } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-login',
-  imports: [FooterComponent, NgClass],
+  imports: [FooterComponent, NgClass,FormsModule],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
   animations: [
