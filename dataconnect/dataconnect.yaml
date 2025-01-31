@@ -1,0 +1,12 @@
+specVersion: "v1beta"
+serviceId: "dabubble-393"
+location: "us-central1"
+schema:
+  source: "./schema"
+  datasource:
+    postgresql:
+      database: "fdcdb"
+      cloudSql:
+        instanceId: "dabubble-393-fdc"
+      # schemaValidation: "COMPATIBLE"
+connectorDirs: ["./connector"]
