@@ -11,7 +11,7 @@
 .logo-container {
   display: flex;
   align-items: center;
-  gap:15px
+  gap: 15px;
 }
 
 .logo {
@@ -103,6 +103,7 @@
         opacity: 0px;
         background-color: #eceefe;
         border: 1px solid transparent;
+        cursor: pointer;
 
         &:hover {
           border: 1px solid #686868;
@@ -120,6 +121,7 @@
           font-family: Nunito;
           font-size: 18px;
           font-weight: 500;
+          cursor: pointer;
         }
 
         img {
@@ -154,6 +156,7 @@
       opacity: 0px;
       background-color: transparent;
       color: #797ef3;
+      cursor: pointer;
 
       &:hover {
         background-color: #eceefe;
@@ -209,7 +212,7 @@
       color: #444df2;
       font-size: 18px;
       font-weight: 400;
-
+      cursor: pointer;
       img {
         margin-right: 20px;
         max-width: 38px;
@@ -228,7 +231,8 @@
       gap: 10px;
 
       .primary-btn,
-      .secondary-btn {
+      .secondary-btn,
+      .disabled-btn {
         padding: 12px 25px 12px 25px;
         gap: 10px;
         border-radius: 25px;
@@ -236,10 +240,18 @@
         font-family: Nunito;
         font-size: 18px;
         font-weight: 700;
+        cursor: pointer;
 
         &.primary-btn {
           background-color: #444df2;
           color: #ffffff;
+          border: none;
+        }
+
+        &.disabled-btn {
+          background-color: #686868;
+          color: #ffffff;
+          cursor: no-drop;
           border: none;
         }
 
@@ -262,7 +274,7 @@
   }
 }
 
-.signup-footer {
+.signup {
   color: #797ef3;
   font-family: Figtree;
   font-size: 18px;
@@ -276,21 +288,10 @@
   opacity: 0px;
   border-radius: 25px;
   border: 1px solid transparent;
+  cursor: pointer;
   transition: all 0.1s ease-in;
   &:hover {
     border: 1px solid #797ef3;
     color: #444df2;
   }
-}
-
-footer {
-  background-color: #eceefe;
-  position: fixed;
-  bottom: 15px;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: row;
-  gap:20px
 }

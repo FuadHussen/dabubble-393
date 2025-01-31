@@ -8,10 +8,11 @@ import {
 } from '@angular/animations';
 import { Router } from '@angular/router';
 import { FooterComponent } from '../shared/footer/footer.component';
+import { NgClass } from '@angular/common';
 
 @Component({
   selector: 'app-login',
-  imports: [FooterComponent],
+  imports: [FooterComponent, NgClass],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
   animations: [
@@ -48,25 +49,52 @@ export class LoginComponent {
     }, 60);
   }
 
-  isEmailFocused = false;
-  isPasswordFocused = false;
+  userEmail: string = '';
+  userPassword: string = '';
+  isFilled: boolean = false;
 
-  // Methoden zum Setzen des Fokusstatus
-  onEmailFocus() {
-    this.isEmailFocused = true;
+  userNameSrc: string = '../../assets/img/person.png';
+  userEmailSrc: string = '../../assets/img/mail.png';
+  userPasswordSrc: string = '../../assets/img/lock.png';
+
+
+
+  onFocus(field: string): void {
+    if (field === 'userEmail' && !this.userEmail) {
+      this.userEmailSrc = '../../assets/img/mail-active.png';
+    } else if (field === 'userPassword' && !this.userPassword) {
+      this.userPasswordSrc = '../../assets/img/lock-active.png';
+    }
   }
 
-  onEmailBlur() {
-    this.isEmailFocused = false;
+  onBlur(field: string): void {
+   if (field === 'userEmail' && !this.userEmail) {
+      this.userEmailSrc = '../../assets/img/mail.png';
+    } else if (field === 'userPassword' && !this.userPassword) {
+      this.userPasswordSrc = '../../assets/img/lock.png';
+    }
   }
 
-  onPasswordFocus() {
-    this.isPasswordFocused = true;
+  onInput(field: string, event: Event): void {
+    let value = (event.target as HTMLInputElement).value;
+    if (field === 'userEmail') {
+      this.userEmail = value;
+      this.userEmailSrc = value
+        ? '../../assets/img/mail-active.png'
+        : '../../assets/img/mail.png';
+    } else if (field === 'userPassword') {
+      this.userPassword = value;
+      this.userPasswordSrc = value
+        ? '../../assets/img/lock-active.png'
+        : '../../assets/img/lock.png';
+    }
+    this.enableButton();
   }
 
-  onPasswordBlur() {
-    this.isPasswordFocused = false;
+  enableButton(): void {
+    this.isFilled = this.userEmail.trim() !== '' && this.userPassword.trim() !== '';
   }
+
 
   navigateToSignUp() {
     this.router.navigate(['/signup']); 

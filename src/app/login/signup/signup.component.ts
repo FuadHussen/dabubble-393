@@ -1,10 +1,11 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { FooterComponent } from '../../shared/footer/footer.component';
+import { NgClass } from '@angular/common';
 
 @Component({
   selector: 'app-signup',
-  imports: [FooterComponent],
+  imports: [FooterComponent, NgClass],
   templateUrl: './signup.component.html',
   styleUrl: './signup.component.scss',
 })
@@ -23,6 +24,7 @@ export class SignupComponent {
 
   checkboxIsCkecked: boolean = false;
   checkboxIsHovered: boolean = false;
+  isFilled: boolean = false;
 
 
   arrowBack(state: string) {
@@ -71,6 +73,7 @@ export class SignupComponent {
         ? '../../assets/img/lock-active.png'
         : '../../assets/img/lock.png';
     }
+    this.enableButton();
   }
 
   checkboxHover(hoverState: boolean): void {
@@ -81,6 +84,11 @@ export class SignupComponent {
   checkboxClick(): void {
     this.checkboxIsCkecked = !this.checkboxIsCkecked;
     this.checkboxChangeImage();
+    this.enableButton();
+  }
+
+  enableButton(){
+    this.isFilled = this.userName !== '' && this.userEmail !== '' && this.userPassword !== '' && this.checkboxIsCkecked;
   }
 
   checkboxChangeImage(): void {

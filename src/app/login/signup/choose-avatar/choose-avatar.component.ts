@@ -1,11 +1,11 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { FooterComponent } from '../../../shared/footer/footer.component';
-import { NgFor } from '@angular/common';
+import { NgClass, NgFor } from '@angular/common';
 
 @Component({
   selector: 'app-choose-avatar',
-  imports: [FooterComponent, NgFor],
+  imports: [FooterComponent, NgFor,NgClass],
   templateUrl: './choose-avatar.component.html',
   styleUrl: './choose-avatar.component.scss'
 })
@@ -15,6 +15,8 @@ export class ChooseAvatarComponent {
   
   arrowBackSrc: string = '../../../assets/img/arrow-back.png';
   currentAvatarSrc: string = '../../../assets/img/default-avatar.png';
+
+  isFilled: boolean = false;
 
   avatarImages: string[] = [
     '../../../assets/img/avatars/frederik-beck-avatar.png',
@@ -35,6 +37,11 @@ export class ChooseAvatarComponent {
 
   selectAvatar(avatarImage: string): void {
     this.currentAvatarSrc = avatarImage;
+    this.enableButton();
+  }
+
+  enableButton(){
+    this.isFilled = this.currentAvatarSrc !== '../../../assets/img/default-avatar.png';
   }
 
 

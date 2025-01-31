@@ -12,7 +12,7 @@ div {
   gap: 20px;
 }
 
-.signup-footer {
+span {
   color: #797ef3;
   font-family: Figtree;
   font-size: 18px;
@@ -27,6 +27,7 @@ div {
   border-radius: 25px;
   border: 1px solid transparent;
   transition: all 0.1s ease-in;
+  cursor: pointer;
   &:hover {
     border: 1px solid #797ef3;
     color: #444df2;

@@ -49,6 +49,7 @@
       justify-content: center;
       width: 100%;
       position: relative;
+      cursor: pointer;
     }
 
     .arrow-back img {
@@ -103,6 +104,7 @@
       opacity: 0px;
       background-color: #eceefe;
       border: 1px solid transparent;
+      cursor: pointer;
 
       &:hover {
         border: 1px solid #686868;
@@ -120,6 +122,7 @@
         font-family: Nunito;
         font-size: 18px;
         font-weight: 500;
+        cursor: pointer;
       }
 
       img {
@@ -261,7 +264,7 @@
     justify-content: flex-end;
 
     .primary-btn,
-    .secondary-btn {
+    .disabled-btn {
       padding: 12px 25px 12px 25px;
       gap: 10px;
       border-radius: 25px;
@@ -269,10 +272,18 @@
       font-family: Nunito;
       font-size: 18px;
       font-weight: 700;
+      cursor: pointer;
 
       &.primary-btn {
         background-color: #444df2;
         color: #ffffff;
+        border: none;
+      }
+
+      &.disabled-btn {
+        background-color: #686868;
+        color: #ffffff;
+        cursor: no-drop;
         border: none;
       }
 

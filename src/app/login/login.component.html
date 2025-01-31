@@ -9,7 +9,7 @@
   </div>
   <div class="signup-container">
     <p>Neu bei DABubble?</p>
-    <span (click)="navigateToSignUp()" class="signup-footer">Konto erstellen</span>
+    <span (click)="navigateToSignUp()" class="signup">Konto erstellen</span>
   </div>
 </div>
 
@@ -25,14 +25,7 @@
     <!-- Email Input -->
     <div class="inputs-container">
       <div class="email-input">
-        <img
-          [src]="
-            isEmailFocused
-              ? '../../assets/img/mail-active.png'
-              : '../../assets/img/mail.png'
-          "
-          alt="mail"
-        />
+        <img [src]="userEmailSrc" alt="mail" />
         <input
           type="email"
           id="email"
@@ -40,8 +33,10 @@
           required
           email
           placeholder="beispielname@email.com"
-          (focus)="onEmailFocus()"
-          (blur)="onEmailBlur()"
+          (ngModel)="(userEmail)"
+          (focus)="onFocus('userEmail')"
+          (blur)="onBlur('userEmail')"
+          (input)="onInput('userEmail', $event)"
         />
       </div>
       <div class="error-message">
@@ -49,14 +44,7 @@
       </div>
       <!-- Password Input -->
       <div class="password-input">
-        <img
-          [src]="
-            isPasswordFocused
-              ? '../../assets/img/lock-active.png'
-              : '../../assets/img/lock.png'
-          "
-          alt="lock"
-        />
+        <img [src]="userPasswordSrc" alt="lock" />
         <input
           type="password"
           id="password"
@@ -64,8 +52,10 @@
           required
           minlength="6"
           placeholder="Passwort"
-          (focus)="onPasswordFocus()"
-          (blur)="onPasswordBlur()"
+          (ngModel)="(userPassword)"
+          (focus)="onFocus('userPassword')"
+          (blur)="onBlur('userPassword')"
+          (input)="onInput('userPassword', $event)"
         />
       </div>
 
@@ -89,7 +79,7 @@
 
     <!-- Buttons -->
     <div class="buttons-container">
-      <button (click)="loginSucess()" class="primary-btn">Anmelden</button>
+      <button (click)="loginSucess()" [disabled]="!isFilled" [ngClass]="{ 'primary-btn': isFilled, 'disabled-btn': !isFilled }">Anmelden</button>
       <button class="secondary-btn">Gäste-Login</button>
     </div>
   </form>

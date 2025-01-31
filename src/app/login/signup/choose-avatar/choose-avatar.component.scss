@@ -49,6 +49,7 @@
       justify-content: center;
       width: 100%;
       position: relative;
+      cursor: pointer;
     }
 
     .arrow-back img {
@@ -129,6 +130,7 @@
       border-radius: 100px;
       border: 4px solid transparent;
       transition: border-color 0.13s ease-in-out;
+      cursor: pointer;
     }
 
     .avatar-bar img:hover {
@@ -144,7 +146,7 @@
     justify-content: flex-end;
 
     .primary-btn,
-    .secondary-btn {
+    .disabled-btn {
       padding: 12px 25px 12px 25px;
       gap: 10px;
       border-radius: 25px;
@@ -152,6 +154,7 @@
       font-family: Nunito;
       font-size: 18px;
       font-weight: 700;
+      cursor: pointer;
 
       &.primary-btn {
         background-color: #444df2;
@@ -159,19 +162,11 @@
         border: none;
       }
 
-      &.secondary-btn {
-        background-color: #ffffff;
-        color: #444df2;
-        border: 1px solid #797ef3;
-
-        &:hover {
-          background-color: #444df2;
-          color: #ffffff;
-        }
-      }
-
-      &:hover {
-        opacity: 0.9;
+      &.disabled-btn {
+        background-color: #686868;
+        color: #ffffff;
+        cursor: no-drop;
+        border: none;
       }
     }
   }
