@@ -1,9 +1,28 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, importProvidersFrom } from '@angular/core';
 import { provideRouter } from '@angular/router';
-
 import { routes } from './app.routes';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
+import { provideFirestore, getFirestore } from '@angular/fire/firestore';
+import { provideAnalytics, getAnalytics } from '@angular/fire/analytics';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAY4uKh4z8g8tqAl4_zW_qfsH6UuXoXVUs",
+  authDomain: "dabubble-393-d15c3.firebaseapp.com",
+  databaseURL: "https://dabubble-393-d15c3-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "dabubble-393-d15c3",
+  storageBucket: "dabubble-393-d15c3.firebasestorage.app",
+  messagingSenderId: "974960848717",
+  appId: "1:974960848717:web:598350bc20868158aed104",
+  measurementId: "G-ZTEZRLYJMM"
+};
 
 export const appConfig: ApplicationConfig = {
-  providers: [provideZoneChangeDetection({ eventCoalescing: true }), provideRouter(routes), provideAnimationsAsync(), provideAnimationsAsync(), provideAnimationsAsync()]
+  providers: [
+    provideRouter(routes),
+    provideAnimationsAsync(),
+    provideFirebaseApp(() => initializeApp(firebaseConfig)),
+    provideFirestore(() => getFirestore()),
+    provideAnalytics(() => getAnalytics())
+  ]
 };
