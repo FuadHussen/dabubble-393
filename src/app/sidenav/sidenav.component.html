@@ -1,46 +1,114 @@
-<div class="sidenav">
-    <div class="sidenav-header">
-        <div class="sidenav-header-icons">
-            <img src="./../../assets/img/devspace-logo.png" alt="Devspace Logo">
-            <h1>Devspace</h1>
-            <div class="edit-icon" (click)="toggleActive()" [class.active]="isActive">
-                <img src="assets/img/edit.png" alt="Edit" class="edit-default">
-                <img src="assets/img/edit-hover.png" alt="Edit" class="edit-hover">
-                <img src="assets/img/edit-active.png" alt="Edit" class="edit-active">
-            </div>
-        </div>
-        <div class="sidenav-body">
-            <div class="channel-list">
-                <div class="channel-list-item">
-                    <mat-accordion>
-                        <mat-expansion-panel expanded="true" togglePosition="before" (opened)="panelOpenState.set(true)" (closed)="panelOpenState.set(false)">
-                            <mat-expansion-panel-header>
-                              <mat-panel-title> <img src="assets/img/workspaces.png" alt=""> Channel 1 </mat-panel-title>
-                              <mat-icon>add</mat-icon>
-                        </mat-expansion-panel-header>
-                        <p>channel 1</p>
-                        <p>channel 2</p>
-                        <p>channel 3</p>
-                        <p>channel 4</p>
-                    <button>Channel hinzufügen</button>
-                      </mat-expansion-panel>
-                    </mat-accordion>
-                </div>
-            </div>
-        </div>
-
-        <div class="direct-messages">
-            <h2>Direct Messages</h2>
-            <div class="direct-messages-list">
-                <div class="direct-messages-list-item">
-                    <p>John Doe</p>
-                    <p>Petra Doe</p>
-                    <p>Julian Doe</p>
-                    <p>John Doe</p>
-                    <p>Petra Doe</p>
-                    <p>Julian Doe</p>
-                </div>
-            </div>
-        </div>
-    </div>
+<div
+  class="toggle-sidenav"
+  (click)="drawer.toggle()"
+  [class.closed]="!drawer.opened"
+>
+  <img
+    src="assets/img/open-sidenav.png"
+    alt="Toggle Sidenav"
+    class="open-default"
+  />
+  <img
+    src="assets/img/open-sidenav-hover.png"
+    alt="Toggle Sidenav"
+    class="open-hover"
+  />
+  <img
+    src="assets/img/close-sidenav.png"
+    alt="Toggle Sidenav"
+    class="close-default"
+  />
+  <img
+    src="assets/img/close-sidenav-hover.png"
+    alt="Toggle Sidenav"
+    class="close-hover"
+  />
 </div>
+<app-navbar></app-navbar>
+
+<mat-drawer-container class="sidenav-container">
+  <mat-drawer #drawer class="sidenav" mode="side" opened>
+    <div class="sidenav-header">
+      <div class="sidenav-header-icons">
+        <img src="assets/img/devspace-logo.png" alt="Devspace Logo" />
+        <h1>Devspace</h1>
+        <div
+          class="edit-icon"
+          [class.active]="isActive"
+        >
+          <button class="new-chat-button" mat-icon-button>
+            <mat-icon class="bold material-symbols-outlined">edit_square</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="sidenav-body">
+        <mat-accordion>
+          <mat-expansion-panel class="box-shadow" expanded="true" togglePosition="before">
+            <mat-expansion-panel-header class="title-hover">
+              <mat-panel-title class="title-hover">
+                <mat-icon class="material-symbols-outlined">workspaces</mat-icon>
+                <p class="fs-18">Channels</p>
+              </mat-panel-title>
+              <button
+                class="new-chat-button"
+                (click)="$event.stopPropagation(); openAddChannelDialog()"
+                mat-icon-button
+              >
+                <mat-icon class="bold material-symbols-outlined">add</mat-icon>
+              </button>
+            </mat-expansion-panel-header>
+            <mat-nav-list>
+              <a
+                class="hover-btn"
+                mat-list-item
+                *ngFor="let channel of channels"
+                (click)="selectChannel(channel)"
+                [class.active]="selectedChannel === channel"
+              >
+                <mat-icon class="material-symbols-outlined" matListItemIcon>tag</mat-icon>
+                <p class="fs-18">{{ channel }}</p>
+              </a>
+            </mat-nav-list>
+            <button 
+              class="new-channel-btn" 
+              (click)="openAddChannelDialog()" 
+              mat-button 
+              color="primary"
+            >
+              <mat-icon class="material-symbols-outlined">add_circle</mat-icon>
+              <p class="fs-18">Channel hinzufügen</p>
+            </button>
+          </mat-expansion-panel>
+        </mat-accordion>
+      </div>
+
+      <div class="direct-messages">
+        <mat-accordion>
+          <mat-expansion-panel class="box-shadow" expanded="true" togglePosition="before">
+            <mat-expansion-panel-header>
+              <mat-panel-title class="title-hover">
+                <mat-icon class="material-symbols-outlined">account_circle</mat-icon>
+                <p class="fs-18">Direct Messages</p>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <mat-nav-list>
+              <a
+                class="hover-btn"
+                mat-list-item
+                *ngFor="let user of ['John Doe', 'Petra Doe', 'Julian Doe']"
+              >
+                <mat-icon matListItemIcon>person</mat-icon>
+                <p class="fs-18">{{ user }}</p>
+              </a>
+            </mat-nav-list>
+          </mat-expansion-panel>
+        </mat-accordion>
+      </div>
+    </div>
+  </mat-drawer>
+
+  <mat-drawer-content class="main-content">
+    <app-chat [selectedChannel]="selectedChannel"></app-chat>
+  </mat-drawer-content>
+</mat-drawer-container>
