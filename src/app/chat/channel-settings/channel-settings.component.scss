@@ -1,0 +1,99 @@
+.settings-overlay {
+    position: fixed;
+
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 64px;
+    z-index: 9999;
+  }
+
+  .settings-card {
+    background: white;
+    width: 600px;
+    max-width: 600px;
+    border-radius: 0 30px 30px 30px;
+    padding: 32px;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+    top: 12%;
+    z-index: 10000;
+
+
+
+  }
+
+  .settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+    }
+  }
+
+  .info-card {
+    margin-bottom: 16px;
+    padding: 16px;
+    border-radius: 20px;
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+
+      h3 {
+        margin: 0;
+        font-size: 14px;
+        color: #666;
+        font-weight: 500;
+      }
+
+      button {
+        padding: 0 8px;
+        
+        mat-icon {
+          font-size: 18px;
+          height: 18px;
+          width: 18px;
+          margin-right: 4px;
+        }
+      }
+    }
+
+    p {
+      margin: 0;
+      font-size: 16px;
+      color: #333;
+    }
+  }
+
+  mat-divider {
+    margin: 24px 0;
+  }
+
+  .settings-actions {
+    margin-top: 24px;
+    text-align: right;
+
+    .leave-channel {
+      color: #444DF2;
+    }
+  }
+
+  :host ::ng-deep {
+    .mat-mdc-card {
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    }
+  }

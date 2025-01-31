@@ -1,0 +1,51 @@
+<div class="settings-overlay" *ngIf="isOpen" (click)="close($event)">
+    <div class="settings-card" (click)="$event.stopPropagation()">
+      <div class="settings-header">
+        <h1>{{ channelName }}</h1>
+        <button mat-icon-button (click)="close($event)">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <mat-card class="info-card">
+        <div class="card-header">
+          <h3>Channel Name</h3>
+          <button mat-button color="primary">
+            <mat-icon>edit</mat-icon>
+            Bearbeiten
+          </button>
+        </div>
+        <p>{{ channelName }}</p>
+      </mat-card>
+
+      <mat-card class="info-card">
+        <div class="card-header">
+          <h3>Beschreibung</h3>
+          <button mat-button color="primary">
+            <mat-icon>edit</mat-icon>
+            Bearbeiten
+          </button>
+        </div>
+        <p>{{ channelDescription }}</p>
+      </mat-card>
+
+      <mat-divider></mat-divider>
+
+      <mat-card class="info-card">
+        <div class="card-header">
+          <h3>Erstellt von</h3>
+          <button mat-button color="primary">
+            <mat-icon>edit</mat-icon>
+            Bearbeiten
+          </button>
+        </div>
+        <p>{{ createdBy }}</p>
+      </mat-card>
+
+      <div class="settings-actions">
+        <button mat-button color="primary" class="leave-channel" (click)="leaveChannel()">
+          Channel verlassen
+        </button>
+      </div>
+    </div>
+  </div>

@@ -146,3 +146,13 @@
     margin-bottom: 0;
   }
 }
+
+.channel-info {
+  mat-card-title {
+    cursor: pointer;
+    
+    &:hover {
+      color: #444DF2;
+    }
+  }
+}
