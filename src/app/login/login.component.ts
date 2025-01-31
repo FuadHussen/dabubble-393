@@ -10,6 +10,7 @@ import { Router } from '@angular/router';
 import { FooterComponent } from '../shared/footer/footer.component';
 import { NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { UserService } from '../services/user.service';
 
 @Component({
   selector: 'app-login',
@@ -40,7 +41,7 @@ import { FormsModule } from '@angular/forms';
   ],
 })
 export class LoginComponent {
-  constructor(private router: Router) {}
+  constructor(private router: Router, private userService: UserService) {}
   animationState = 'center';
   backgroundColor = 'blue';
 
@@ -106,8 +107,26 @@ export class LoginComponent {
   }
 
   loginSucess() {
-    this.router.navigate(['/sidenav-2']);
+    this.userService.login(this.userEmail, this.userPassword)
+      .then(() => {
+        this.router.navigate(['/sidenav']); // Erfolgreicher Login
+      })
+      .catch(error => {
+        console.error('Login fehlgeschlagen', error);
+        alert('Fehler beim Login: ' + error.message); // Fehler anzeigen
+      });
   }
+ 
 
+  guestSucess() {
+    this.userService.login('gäste@login.login', 'gästelogin')
+      .then(() => {
+        this.router.navigate(['/sidenav']); // Erfolgreicher Login
+      })
+      .catch(error => {
+        console.error('Login fehlgeschlagen', error);
+        alert('Fehler beim Login: ' + error.message); // Fehler anzeigen
+      });
+  }
 
 }

@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { FooterComponent } from '../../shared/footer/footer.component';
 import { Router } from '@angular/router';
 import { NgClass } from '@angular/common';
+import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-reset-password',
@@ -10,7 +11,7 @@ import { NgClass } from '@angular/common';
   styleUrl: './reset-password.component.scss',
 })
 export class ResetPasswordComponent {
-  constructor(private router: Router) {}
+  constructor(private router: Router, private userService: UserService) {}
 
   userEmail: string = '';
 
@@ -50,7 +51,7 @@ export class ResetPasswordComponent {
     this.enableButton();
   }
 
-  enableButton(){
+  enableButton() {
     this.isFilled = this.userEmail !== '';
   }
 
@@ -58,7 +59,11 @@ export class ResetPasswordComponent {
     this.router.navigate(['/login']); // Hier kannst du den gewünschten Pfad angeben
   }
 
-  navigateToNewPassword() {
-    this.router.navigate(['/new-password']); 
+  async navigateToNewPassword() {
+    await this.userService.sendPasswordResetEmail(this.userEmail);
+    alert('Passwort-Reset-Link wurde an die E-Mail gesendet.');
   }
-}
+  }
+
+
+

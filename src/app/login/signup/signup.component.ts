@@ -1,7 +1,18 @@
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
 import { FooterComponent } from '../../shared/footer/footer.component';
 import { NgClass } from '@angular/common';
+import { Auth } from '@angular/fire/auth';
+import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
+import { inject } from '@angular/core';
+import {
+  Firestore,
+  collection,
+  addDoc,
+  doc,
+  setDoc,
+} from '@angular/fire/firestore';
+import { Router } from '@angular/router';
+import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-signup',
@@ -10,6 +21,10 @@ import { NgClass } from '@angular/common';
   styleUrl: './signup.component.scss',
 })
 export class SignupComponent {
+  private auth: Auth = inject(Auth);
+  private userService: UserService = inject(UserService);
+  private firestore: Firestore = inject(Firestore); // Firestore injizieren
+
   constructor(private router: Router) {}
 
   userName: string = '';
@@ -25,7 +40,6 @@ export class SignupComponent {
   checkboxIsCkecked: boolean = false;
   checkboxIsHovered: boolean = false;
   isFilled: boolean = false;
-
 
   arrowBack(state: string) {
     if (state === 'hover') {
@@ -87,8 +101,40 @@ export class SignupComponent {
     this.enableButton();
   }
 
-  enableButton(){
-    this.isFilled = this.userName !== '' && this.userEmail !== '' && this.userPassword !== '' && this.checkboxIsCkecked;
+  enableButton() {
+    this.isFilled =
+      this.userName !== '' &&
+      this.userEmail !== '' &&
+      this.userPassword !== '' &&
+      this.checkboxIsCkecked;
+  }
+
+  async createUser() {
+    if (this.isFilled) {
+      try {
+        // Benutzer erstellen
+        const auth = getAuth();
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          this.userEmail,
+          this.userPassword
+        );
+
+        // Benutzer zu Firestore hinzufügen mit UID als Dokumenten-ID
+        const userId = userCredential.user.uid;
+        const userDocRef = doc(this.firestore, 'users', userId);
+        await setDoc(userDocRef, {
+          uid: userId,
+          username: this.userName,
+          email: this.userEmail,
+        });
+
+        this.userService.loadUser();
+        this.router.navigate(['/choose-avatar']);
+      } catch (error) {
+        console.error('Fehler beim Erstellen des Benutzers:', error);
+      }
+    }
   }
 
   checkboxChangeImage(): void {
@@ -106,9 +152,4 @@ export class SignupComponent {
   navigateToLogin() {
     this.router.navigate(['/login']);
   }
-
-  navigateToChooseAvatar() {
-    this.router.navigate(['/choose-avatar']);
-  }
-
 }

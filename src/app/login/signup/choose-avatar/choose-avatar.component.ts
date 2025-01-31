@@ -2,17 +2,23 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { FooterComponent } from '../../../shared/footer/footer.component';
 import { NgClass, NgFor } from '@angular/common';
+import { Firestore, doc, setDoc } from '@angular/fire/firestore';
+import { inject } from '@angular/core';
+import { Auth } from '@angular/fire/auth';
+import { getAuth } from 'firebase/auth';
+import { UserService } from '../../../services/user.service';
 
 @Component({
   selector: 'app-choose-avatar',
-  imports: [FooterComponent, NgFor,NgClass],
+  imports: [FooterComponent, NgFor, NgClass],
   templateUrl: './choose-avatar.component.html',
-  styleUrl: './choose-avatar.component.scss'
+  styleUrl: './choose-avatar.component.scss',
 })
 export class ChooseAvatarComponent {
-  constructor(private router: Router) {}
+  constructor(private router: Router, private userService: UserService) {}
+  private firestore: Firestore = inject(Firestore); // Firestore importieren
+  private auth: Auth = inject(Auth); // Firebase Auth importieren
 
-  
   arrowBackSrc: string = '../../../assets/img/arrow-back.png';
   currentAvatarSrc: string = '../../../assets/img/default-avatar.png';
 
@@ -40,10 +46,20 @@ export class ChooseAvatarComponent {
     this.enableButton();
   }
 
-  enableButton(){
-    this.isFilled = this.currentAvatarSrc !== '../../../assets/img/default-avatar.png';
+  enableButton() {
+    this.isFilled =
+      this.currentAvatarSrc !== '../../../assets/img/default-avatar.png';
   }
 
+  async saveAvatar() {
+    // Den Avatar über den UserService speichern
+    if (this.isFilled) {
+      const avatarFileName = this.currentAvatarSrc.substring(
+        this.currentAvatarSrc.lastIndexOf('/') + 1
+      );
+      await this.userService.saveAvatar(avatarFileName);
+    }
+  }
 
   backToRegister(): void {
     this.router.navigate(['/signup']);
@@ -52,5 +68,4 @@ export class ChooseAvatarComponent {
   navigateToLogin() {
     this.router.navigate(['/login']);
   }
-
 }
