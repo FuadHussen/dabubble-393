@@ -8,6 +8,8 @@ import { TextFieldModule } from '@angular/cdk/text-field';
 import { ChatService } from '../services/chat.service';
 import { ChannelSettingsComponent } from './channel-settings/channel-settings.component';
 import { FormsModule } from '@angular/forms';
+import { Firestore } from '@angular/fire/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from '@firebase/firestore';
 
 @Component({
   selector: 'app-chat',
@@ -27,16 +29,76 @@ import { FormsModule } from '@angular/forms';
 })
 
 export class ChatComponent implements OnInit {
-  selectedChannel: string = '';
-  isDirectMessage: boolean = false;
-  selectedUser: string = '';
-  showSettings = false;
+  isSettingsOpen = false;
+  currentChannelId = '';
+  channelName = '';
+  channelDescription = '';
+  createdBy = '';
+  selectedChannel: string | null = null;
+  selectedUser: string | null = null;
+  isDirectMessage = false;
 
-  constructor(private chatService: ChatService) {}
+  constructor(
+    private firestore: Firestore,
+    private chatService: ChatService
+  ) {
+    this.chatService.selectedChannel$.subscribe(channelName => {
+      if (channelName) {
+        this.loadChannelDetails(channelName);
+      }
+    });
+  }
+
+  async loadChannelDetails(channelName: string) {
+    try {
+      const channelsRef = collection(this.firestore, 'channels');
+      const q = query(channelsRef, where('name', '==', channelName));
+      
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        const channelDoc = querySnapshot.docs[0];
+        const channelData = channelDoc.data();
+        
+        console.log('Channel Data:', channelData);
+        
+        this.currentChannelId = channelDoc.id;
+        this.channelName = channelData['name'];
+        this.channelDescription = channelData['description'] || '';
+        
+        // Hole den Benutzernamen aus der users Collection
+        if (channelData['createdByUserId']) {
+          const userId = channelData['createdByUserId'];
+          console.log('User ID gefunden:', userId);
+          
+          // Direkter Zugriff auf das User-Dokument mit der ID
+          const userRef = doc(this.firestore, 'users', userId);
+          const userSnap = await getDoc(userRef);
+          
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            console.log('User Data:', userData);
+            this.createdBy = userData['username'] || 'Unbekannt';
+          } else {
+            this.createdBy = 'Benutzer nicht gefunden';
+            console.log('Kein Benutzer mit dieser ID gefunden');
+          }
+        } else {
+          console.log('Keine User ID im Channel gefunden');
+          this.createdBy = 'Kein Ersteller zugewiesen';
+        }
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden der Channel-Details:', error);
+      this.createdBy = 'Fehler beim Laden';
+    }
+  }
 
   ngOnInit() {
     this.chatService.selectedChannel$.subscribe(channel => {
       this.selectedChannel = channel;
+      this.chatService.getCurrentChannelId().subscribe(id => {
+        this.currentChannelId = id;
+      });
     });
 
     this.chatService.isDirectMessage$.subscribe(isDM => {
@@ -49,25 +111,22 @@ export class ChatComponent implements OnInit {
   }
 
   getPlaceholderText(): string {
-    if (this.isDirectMessage) {
-      return `Nachricht an @${this.selectedUser}`;
-    } else {
-      return `Nachricht an #${this.selectedChannel}`;
-    }
+    return this.isDirectMessage 
+      ? `Nachricht an @${this.selectedUser}`
+      : `Nachricht an #${this.selectedChannel}`;
   }
 
   openSettings() {
-    console.log('Opening settings...'); // Debug-Log
-    this.showSettings = true;
+    this.isSettingsOpen = true;
   }
 
-  closeSettings() {
-    this.showSettings = false;
+  onCloseSettings() {
+    this.isSettingsOpen = false;
   }
 
   saveSettings(settings: {name: string, description: string}) {
     console.log('Neue Einstellungen:', settings);
-    this.showSettings = false;
+    this.isSettingsOpen = false;
   }
 }
 

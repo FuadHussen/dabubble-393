@@ -45,9 +45,10 @@
 
 <!-- Channel Settings am Ende des Templates -->
 <app-channel-settings
-  [isOpen]="showSettings"
-  [channelName]="selectedChannel"
-  [channelDescription]="''"
-  (closeSettings)="closeSettings()"
-  (saveSettings)="saveSettings($event)">
-</app-channel-settings>
+  [isOpen]="isSettingsOpen"
+  [channelId]="currentChannelId"
+  [channelName]="channelName"
+  [channelDescription]="channelDescription"
+  [createdBy]="createdBy"
+  (closeSettings)="onCloseSettings()"
+></app-channel-settings>

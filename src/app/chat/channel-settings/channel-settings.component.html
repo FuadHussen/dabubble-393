@@ -7,40 +7,74 @@
         </button>
       </div>
 
-      <mat-card class="info-card">
+      <mat-card class="info-card" *ngIf="!isEditingName" [@fadeInOut]>
         <div class="card-header">
           <h3>Channel Name</h3>
-          <button mat-button color="primary">
+          <button mat-button color="primary" (click)="startEditingName()">
             <mat-icon>edit</mat-icon>
             Bearbeiten
           </button>
         </div>
-        <p>{{ channelName }}</p>
+        <div class="mat-icon-channel-name p-18">
+          <span><mat-icon>tag</mat-icon></span>{{ channelName }}
+        </div>
       </mat-card>
 
-      <mat-card class="info-card">
+      <div class="form-field-container" *ngIf="isEditingName" [@fadeInOut]>
+        <div class="card-header">
+          <h3>Channel Name</h3>
+          <div class="edit-actions">
+            <button mat-button color="primary" (click)="saveChannelName()">
+              <mat-icon>save</mat-icon>
+              Speichern
+            </button>
+            <button mat-button color="warn" (click)="cancelEdit('name')">
+              <mat-icon>close</mat-icon>
+              Abbrechen
+            </button>
+          </div>
+        </div>
+        <div class="form-field">
+          <input [(ngModel)]="editedName" placeholder="Channel Name">
+        </div>
+      </div>
+
+      <mat-card class="info-card" *ngIf="!isEditingDescription" [@fadeInOut]>
         <div class="card-header">
           <h3>Beschreibung</h3>
-          <button mat-button color="primary">
+          <button mat-button color="primary" (click)="startEditingDescription()">
             <mat-icon>edit</mat-icon>
             Bearbeiten
           </button>
         </div>
-        <p>{{ channelDescription }}</p>
-      </mat-card>
+        <p class="p-18">{{ channelDescription }}</p>
 
-      <mat-divider></mat-divider>
+        <mat-divider></mat-divider>
 
-      <mat-card class="info-card">
         <div class="card-header">
           <h3>Erstellt von</h3>
-          <button mat-button color="primary">
-            <mat-icon>edit</mat-icon>
-            Bearbeiten
-          </button>
         </div>
-        <p>{{ createdBy }}</p>
+        <p class="created-by">{{ createdBy }}</p>
       </mat-card>
+
+      <div class="form-field-container" *ngIf="isEditingDescription" [@fadeInOut]>
+        <div class="card-header">
+          <h3>Beschreibung</h3>
+          <div class="edit-actions">
+            <button mat-button color="primary" (click)="saveChannelDescription()">
+              <mat-icon>save</mat-icon>
+              Speichern
+            </button>
+            <button mat-button color="warn" (click)="cancelEdit('description')">
+              <mat-icon>close</mat-icon>
+              Abbrechen
+            </button>
+          </div>
+        </div>
+        <div class="form-field">
+          <input [(ngModel)]="editedDescription" placeholder="Worum geht es in diesem Channel?">
+        </div>
+      </div>
 
       <div class="settings-actions">
         <button mat-button color="primary" class="leave-channel" (click)="leaveChannel()">
@@ -49,3 +83,4 @@
       </div>
     </div>
   </div>
+

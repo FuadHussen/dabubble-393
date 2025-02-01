@@ -14,6 +14,8 @@ import { Firestore, collection, addDoc, collectionData } from '@angular/fire/fir
 import { Observable } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { ChatService } from '../services/chat.service';
+import { getAuth } from '@angular/fire/auth';
+import { Auth } from '@angular/fire/auth';
 
 interface Channel {
   name: string;
@@ -57,7 +59,8 @@ export class SidenavComponent implements OnInit {
   constructor(
     private dialog: MatDialog,
     private firestore: Firestore,
-    private chatService: ChatService
+    private chatService: ChatService,
+    private auth: Auth
   ) {
     // Channels aus Firestore laden
     const channelsCollection = collection(this.firestore, 'channels');
@@ -100,6 +103,10 @@ export class SidenavComponent implements OnInit {
     this.loadChannels();
     // Initialer Load der Users
     this.loadUsers();
+    // Abonniere den selectedChannel vom ChatService
+    this.chatService.selectedChannel$.subscribe(channel => {
+      this.selectedChannel = channel;
+    });
   }
 
   loadChannels() {
@@ -139,17 +146,34 @@ export class SidenavComponent implements OnInit {
     dialogRef.afterClosed().subscribe(async (result) => {
       if (result?.name) {
         try {
+          const currentUser = this.auth.currentUser;
+          console.log('Current User:', currentUser); // Debug log
+          
+          if (!currentUser) {
+            console.error('Kein User eingeloggt');
+            return;
+          }
+
           const channelsCollection = collection(this.firestore, 'channels');
-          await addDoc(channelsCollection, {
+          const channelData = {
             name: result.name,
             description: result.description || '',
-            createdAt: new Date()
-          });
+            createdAt: new Date(),
+            createdByUserId: currentUser.uid  // Speichere die User-ID
+          };
+          
+          console.log('Saving channel with data:', channelData); // Debug log
+          
+          await addDoc(channelsCollection, channelData);
           this.selectChannel(result.name);
         } catch (error) {
           console.error('Error adding channel:', error);
         }
       }
     });
+  }
+
+  isChannelActive(channelName: string): boolean {
+    return this.selectedChannel === channelName;
   }
 }
