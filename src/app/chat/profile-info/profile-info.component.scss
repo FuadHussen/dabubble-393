@@ -1,0 +1,141 @@
+.profile-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.profile-card {
+  background: white;
+  border-radius: 30px;
+  width: 400px;
+  max-width: 90%;
+  padding: 24px;
+}
+
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+
+  h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+  }
+}
+
+.profile-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.avatar-container {
+  margin-bottom: 24px;
+
+  .avatar-icon {
+    font-size: 200px;
+    width: 200px;
+    height: 200px;
+    color: #444DF2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: auto;
+  }
+}
+
+.user-info {
+  width: 100%;
+
+  .username {
+    margin: 0 0 12px 0;
+    font-size: 32px;
+    font-weight: 700;
+  }
+
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+    font-size: 20px;
+
+    .status-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+
+      &.online {
+        background-color: #92C83E;
+      }
+    }
+
+    &.online {
+      color: #92C83E;
+    }
+  }
+
+  .email-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 24px;
+
+    .email-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+
+      mat-icon {
+        font-size: 30px;
+        width: 30px;
+        height: 30px;
+      }
+
+      .email-label {
+        font-size: 20px;
+      }
+    }
+
+    .email-link {
+      color: #1381FF;
+      text-decoration: none;
+      margin-left: 40px;
+      font-size: 18px;
+      
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  .message-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 auto;
+    padding: 8px 24px;
+    color: white;
+    background-color: #444DF2;
+    border-radius: 20px;
+
+    &:hover {
+      background-color: darken(#444DF2, 10%);
+    }
+
+    mat-icon {
+      font-size: 20px;
+      transform: scaleX(-1);
+    }
+  }
+}

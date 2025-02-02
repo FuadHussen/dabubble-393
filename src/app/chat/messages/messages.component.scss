@@ -1,0 +1,38 @@
+.messages-container {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.message {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  .message-content {
+    flex: 1;
+
+    .message-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+
+      .username {
+        font-weight: 600;
+        color: #000;
+      }
+
+      .timestamp {
+        font-size: 12px;
+        color: #666;
+      }
+    }
+
+    .message-text {
+      color: #333;
+      line-height: 1.4;
+    }
+  }
+}

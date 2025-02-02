@@ -1,0 +1,38 @@
+<div class="profile-overlay" *ngIf="isOpen" (click)="close($event)">
+  <div class="profile-card" (click)="$event.stopPropagation()" [@fadeInOut]>
+    <div class="profile-header">
+      <h1>Profil</h1>
+      <button mat-icon-button (click)="close($event)">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="profile-content">
+      <div class="avatar-container">
+        <mat-icon class="avatar-icon">account_circle</mat-icon>
+      </div>
+
+      <div class="user-info">
+        <h2 class="username">{{ username }}</h2>
+        
+        <div class="status online">
+          <span class="status-dot online"></span>
+          Aktiv
+        </div>
+
+        <div class="email-container">
+          <div class="email-header">
+            <mat-icon>mail_outline</mat-icon>
+            <span class="email-label">E-Mail-Adresse</span>
+          </div>
+          <a [href]="'mailto:' + email" class="email-link">{{ email }}</a>
+        </div>
+
+        <button mat-button class="message-button" (click)="sendMessage()">
+          <mat-icon>chat_bubble_outline</mat-icon>
+          Nachricht
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

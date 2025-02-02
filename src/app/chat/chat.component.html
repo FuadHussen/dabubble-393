@@ -2,22 +2,38 @@
   <mat-card class="chat-card">
     <mat-card-header class="chat-header">
       <div class="channel-info" (click)="openSettings()">
-        <mat-icon class="material-symbols-outlined">tag</mat-icon>
-        <mat-card-title>{{ selectedChannel }}</mat-card-title>
+        <mat-icon class="material-symbols-outlined" *ngIf="!isDirectMessage">tag</mat-icon>
+        <mat-icon class="material-symbols-outlined" *ngIf="isDirectMessage">account_circle</mat-icon>
+        
+        <mat-card-title>
+          <ng-container *ngIf="!isDirectMessage">
+            {{ selectedChannel }}
+          </ng-container>
+          <ng-container *ngIf="isDirectMessage">
+            {{ selectedUser }}
+          </ng-container>
+        </mat-card-title>
       </div>
     </mat-card-header>
     <mat-card-content class="chat-content">
-      <!-- Channel Message -->
-      <div class="welcome-message" *ngIf="selectedChannel && !isDirectMessage">
-        <h2 class="channel-title"># {{ selectedChannel }}</h2>
-        <p class="channel-description">Du hast diesen Channel heute erstellt. Das ist der Anfang des Channels <span># {{ selectedChannel }}</span></p>
-      </div>
+      <!-- Welcome message nur anzeigen, wenn keine Nachrichten vorhanden sind -->
+      <ng-container *ngIf="!hasMessages">
+        <!-- Channel Message -->
+        <div class="welcome-message" *ngIf="selectedChannel && !isDirectMessage">
+          <h2 class="channel-title"># {{ selectedChannel }}</h2>
+          <p class="channel-description">Du hast diesen Channel heute erstellt. Das ist der Anfang des Channels <span># {{ selectedChannel }}</span></p>
+        </div>
 
-      <!-- Direct Message -->
-      <div class="welcome-message" *ngIf="selectedUser && isDirectMessage">
-        <h2 class="channel-title">{{ selectedUser }}</h2>
-        <p class="channel-description">Diese Unterhaltung findet nur zwischen <span>&#64;{{ selectedUser }}</span> und dir statt.</p>
-      </div>
+        <!-- Direct Message -->
+        <div class="welcome-message" *ngIf="selectedUser && isDirectMessage">
+          <h2 class="channel-title">{{ selectedUser }}</h2>
+          <p class="channel-description">Diese Unterhaltung findet nur zwischen <span>&#64;{{ selectedUser }}</span> und dir statt.</p>
+        </div>
+      </ng-container>
+
+      <!-- Messages Component -->
+      <app-messages></app-messages>
+      
     </mat-card-content>
 
     <mat-card-actions class="chat-input-actions">
@@ -34,8 +50,10 @@
           cdkAutosizeMinRows="5" 
           cdkAutosizeMaxRows="5" 
           [placeholder]="getPlaceholderText()"
+          [(ngModel)]="messageText"
+          (keyup.enter)="sendMessage()"
         ></textarea>
-        <button class="send-button" mat-icon-button matSuffix>
+        <button class="send-button" mat-icon-button matSuffix (click)="sendMessage()">
           <mat-icon>send</mat-icon>
         </button>
       </mat-form-field>
@@ -52,3 +70,11 @@
   [createdBy]="createdBy"
   (closeSettings)="onCloseSettings()"
 ></app-channel-settings>
+
+<app-profile-info
+  [isOpen]="isProfileOpen"
+  [username]="selectedUser"
+  [email]="selectedUserEmail"
+  [isOnline]="true"
+  (closeInfo)="closeProfile()"
+></app-profile-info>

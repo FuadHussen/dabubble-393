@@ -9,20 +9,24 @@ import { ChatService } from '../services/chat.service';
 import { ChannelSettingsComponent } from './channel-settings/channel-settings.component';
 import { FormsModule } from '@angular/forms';
 import { Firestore } from '@angular/fire/firestore';
-import { collection, query, where, getDocs, doc, getDoc } from '@firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, addDoc } from '@firebase/firestore';
+import { ProfileInfoComponent } from './profile-info/profile-info.component';
+import { MessagesComponent } from './messages/messages.component';
 
 @Component({
   selector: 'app-chat',
   standalone: true,
   imports: [
     CommonModule,
+    ProfileInfoComponent,
     MatCardModule,
     MatInputModule,
     MatIconModule,
     MatButtonModule,
     TextFieldModule,
     ChannelSettingsComponent,
-    FormsModule
+    FormsModule,
+    MessagesComponent
   ],
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.scss']
@@ -35,8 +39,13 @@ export class ChatComponent implements OnInit {
   channelDescription = '';
   createdBy = '';
   selectedChannel: string | null = null;
-  selectedUser: string | null = null;
+  selectedUser: string = '';
   isDirectMessage = false;
+  isProfileOpen = false;
+  selectedUserEmail = '';
+  isSelectedUserOnline = false;
+  messageText: string = '';
+  hasMessages: boolean = false;
 
   constructor(
     private firestore: Firestore,
@@ -47,6 +56,11 @@ export class ChatComponent implements OnInit {
         this.loadChannelDetails(channelName);
       }
     });
+
+    // Subscribe to hasMessages updates
+    this.chatService.hasMessages$.subscribe(
+      hasMessages => this.hasMessages = hasMessages
+    );
   }
 
   async loadChannelDetails(channelName: string) {
@@ -96,9 +110,6 @@ export class ChatComponent implements OnInit {
   ngOnInit() {
     this.chatService.selectedChannel$.subscribe(channel => {
       this.selectedChannel = channel;
-      this.chatService.getCurrentChannelId().subscribe(id => {
-        this.currentChannelId = id;
-      });
     });
 
     this.chatService.isDirectMessage$.subscribe(isDM => {
@@ -108,6 +119,10 @@ export class ChatComponent implements OnInit {
     this.chatService.selectedUser$.subscribe(user => {
       this.selectedUser = user;
     });
+
+    this.chatService.hasMessages$.subscribe(
+      hasMessages => this.hasMessages = hasMessages
+    );
   }
 
   getPlaceholderText(): string {
@@ -116,8 +131,30 @@ export class ChatComponent implements OnInit {
       : `Nachricht an #${this.selectedChannel}`;
   }
 
-  openSettings() {
-    this.isSettingsOpen = true;
+  async openSettings() {
+    if (this.isDirectMessage) {
+      // Hole die User-Daten wenn es eine DM ist
+      const usersRef = collection(this.firestore, 'users');
+      const q = query(usersRef, where('username', '==', this.selectedUser));
+      
+      try {
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          const userData = querySnapshot.docs[0].data();
+          this.selectedUserEmail = userData['email'];
+        }
+      } catch (error) {
+        console.error('Fehler beim Laden der User-Daten:', error);
+      }
+      
+      this.isProfileOpen = true;
+    } else {
+      this.isSettingsOpen = true;
+    }
+  }
+
+  closeProfile() {
+    this.isProfileOpen = false;
   }
 
   onCloseSettings() {
@@ -127,6 +164,43 @@ export class ChatComponent implements OnInit {
   saveSettings(settings: {name: string, description: string}) {
     console.log('Neue Einstellungen:', settings);
     this.isSettingsOpen = false;
+  }
+
+  openProfile() {
+    if (this.isDirectMessage && this.selectedUser) {
+      this.isProfileOpen = true;
+    }
+  }
+
+  async sendMessage(event?: KeyboardEvent) {
+    if (event && (event.key !== 'Enter' || event.shiftKey)) {
+      return;
+    }
+
+    if (event) {
+      event.preventDefault();
+    }
+
+    if (!this.messageText.trim()) return;
+
+    const messagesRef = collection(this.firestore, 'messages');
+    const currentUser = await this.chatService.getCurrentUser();
+
+    const messageData = {
+      text: this.messageText.trim(),
+      timestamp: new Date(),
+      userId: currentUser.uid,
+      username: currentUser.username,
+      channelId: this.isDirectMessage ? null : this.selectedChannel,
+      recipientId: this.isDirectMessage ? this.selectedUser : null
+    };
+
+    try {
+      await addDoc(messagesRef, messageData);
+      this.messageText = '';
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
   }
 }
 
