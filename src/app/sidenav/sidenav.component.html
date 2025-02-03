@@ -64,15 +64,13 @@
                 mat-list-item
                 *ngFor="let channel of channels"
                 (click)="selectChannel(channel.name)"
-                [class.active]="selectedChannel === channel.name"
+                [ngClass]="{'active': isChannelActive(channel.name)}"
               >
                 <mat-icon class="material-symbols-outlined" matListItemIcon>tag</mat-icon>
-
                 <p class="fs-18">{{ channel.name }}</p>
               </a>
             </mat-nav-list>
             <button 
-
               class="new-channel-btn" 
               (click)="openAddChannelDialog()" 
               mat-button 
@@ -100,12 +98,10 @@
                 mat-list-item
                 *ngFor="let user of users"
                 (click)="selectUser(user)"
-                [class.active]="selectedUser === user.username"
+                [ngClass]="{'active': isUserActive(user)}"
               >
                 <mat-icon matListItemIcon>person</mat-icon>
-
-                <p class="fs-18">{{ user.username }}</p>
-
+                <p class="fs-18">{{ user.displayName || user.username }}</p>
               </a>
             </mat-nav-list>
           </mat-expansion-panel>

@@ -10,12 +10,12 @@
             {{ selectedChannel }}
           </ng-container>
           <ng-container *ngIf="isDirectMessage">
-            {{ selectedUser }}
+            {{ selectedUserDisplayName }}
           </ng-container>
         </mat-card-title>
       </div>
     </mat-card-header>
-    <mat-card-content class="chat-content">
+    <mat-card-content class="chat-content" #chatContent>
       <!-- Welcome message nur anzeigen, wenn keine Nachrichten vorhanden sind -->
       <ng-container *ngIf="!hasMessages">
         <!-- Channel Message -->
@@ -25,9 +25,9 @@
         </div>
 
         <!-- Direct Message -->
-        <div class="welcome-message" *ngIf="selectedUser && isDirectMessage">
-          <h2 class="channel-title">{{ selectedUser }}</h2>
-          <p class="channel-description">Diese Unterhaltung findet nur zwischen <span>&#64;{{ selectedUser }}</span> und dir statt.</p>
+        <div class="welcome-message" *ngIf="selectedUserDisplayName && isDirectMessage">
+          <h2 class="channel-title">{{ selectedUserDisplayName }}</h2>
+          <p class="channel-description">Diese Unterhaltung findet nur zwischen <span>&#64;{{ selectedUserDisplayName }}</span> und dir statt.</p>
         </div>
       </ng-container>
 
@@ -73,7 +73,7 @@
 
 <app-profile-info
   [isOpen]="isProfileOpen"
-  [username]="selectedUser"
+  [username]="selectedUserDisplayName"
   [email]="selectedUserEmail"
   [isOnline]="true"
   (closeInfo)="closeProfile()"

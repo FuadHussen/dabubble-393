@@ -16,6 +16,7 @@ import { take } from 'rxjs/operators';
 import { ChatService } from '../services/chat.service';
 import { getAuth } from '@angular/fire/auth';
 import { Auth } from '@angular/fire/auth';
+import { UserService } from '../services/user.service';
 
 interface Channel {
   name: string;
@@ -25,6 +26,8 @@ interface Channel {
 interface User {
   id: string;
   username: string;
+  displayName?: string;
+  uid?: string;
 }
 
 @Component({
@@ -60,7 +63,8 @@ export class SidenavComponent implements OnInit {
     private dialog: MatDialog,
     private firestore: Firestore,
     private chatService: ChatService,
-    private auth: Auth
+    private auth: Auth,
+    private userService: UserService
   ) {
     // Channels aus Firestore laden
     const channelsCollection = collection(this.firestore, 'channels');
@@ -103,9 +107,23 @@ export class SidenavComponent implements OnInit {
     this.loadChannels();
     // Initialer Load der Users
     this.loadUsers();
-    // Abonniere den selectedChannel vom ChatService
+    // Subscribe to chatService to keep track of selected states
     this.chatService.selectedChannel$.subscribe(channel => {
       this.selectedChannel = channel;
+    });
+
+    this.chatService.selectedUser$.subscribe(async userId => {
+      // Wenn eine userId vorhanden ist, hole den displayName
+      if (userId) {
+        const user = await this.userService.getUserById(userId);
+        this.selectedUser = user?.displayName || user?.username || '';
+      } else {
+        this.selectedUser = '';
+      }
+    });
+
+    this.chatService.isDirectMessage$.subscribe(isDM => {
+      this.isDirectMessage = isDM;
     });
   }
 
@@ -119,7 +137,12 @@ export class SidenavComponent implements OnInit {
   loadUsers() {
     const usersCollection = collection(this.firestore, 'users');
     collectionData(usersCollection, { idField: 'id' }).subscribe(users => {
-      this.users = users as User[];
+      this.users = users.map(user => ({
+        ...user,
+        username: user['displayName'] || user['username'] || 'Unnamed User',
+      })) as User[];
+      
+      console.log('Loaded users with mapping:', this.users); // Debug log
     });
   }
 
@@ -127,15 +150,15 @@ export class SidenavComponent implements OnInit {
     this.selectedChannel = channelName;
     this.selectedUser = '';
     this.isDirectMessage = false;
-    localStorage.setItem('lastSelectedChannel', channelName);
     this.chatService.selectChannel(channelName);
   }
 
   selectUser(user: User) {
-    this.selectedUser = user.username;
+    const userIdentifier = user.displayName || user.username || '';
+    this.selectedUser = userIdentifier;
     this.selectedChannel = '';
     this.isDirectMessage = true;
-    this.chatService.selectUser(user.username);
+    this.chatService.selectUser(user.uid || '');
   }
 
   async openAddChannelDialog() {
@@ -174,6 +197,11 @@ export class SidenavComponent implements OnInit {
   }
 
   isChannelActive(channelName: string): boolean {
-    return this.selectedChannel === channelName;
+    return this.selectedChannel === channelName && !this.isDirectMessage;
+  }
+
+  isUserActive(user: User): boolean {
+    const userIdentifier = user.displayName || user.username || '';
+    return this.selectedUser === userIdentifier && this.isDirectMessage;
   }
 }

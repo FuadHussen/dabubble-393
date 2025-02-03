@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import {
   trigger,
   state,
@@ -11,6 +11,7 @@ import { FooterComponent } from '../shared/footer/footer.component';
 import { NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../services/user.service';
+import { Firestore, collection, addDoc, query, where, getDocs } from '@angular/fire/firestore';
 
 @Component({
   selector: 'app-login',
@@ -41,6 +42,8 @@ import { UserService } from '../services/user.service';
   ],
 })
 export class LoginComponent {
+  private firestore: Firestore = inject(Firestore);
+
   constructor(private router: Router, private userService: UserService) {}
   animationState = 'center';
   backgroundColor = 'blue';
@@ -120,13 +123,95 @@ export class LoginComponent {
 
   guestSucess() {
     this.userService.login('gäste@login.login', 'gästelogin')
-      .then(() => {
-        this.router.navigate(['/sidenav']); // Erfolgreicher Login
+      .then(async () => {
+        await this.initializeGuestChat();
+        this.router.navigate(['/sidenav']); 
       })
       .catch(error => {
         console.error('Login fehlgeschlagen', error);
-        alert('Fehler beim Login: ' + error.message); // Fehler anzeigen
+        alert('Fehler beim Login: ' + error.message);
       });
+  }
+
+  private async initializeGuestChat() {
+    try {
+      const messagesRef = collection(this.firestore, 'messages');
+      const currentTime = new Date();
+      
+      // Hole zuerst die aktuelle User-ID des Gäste-Logins
+      const currentUser = await this.userService.getCurrentUser();
+      if (!currentUser) {
+        console.error('No user found');
+        return;
+      }
+      
+      const guestUserId = currentUser.uid;
+
+      // Prüfe ob bereits Nachrichten für den Gast existieren
+      const existingMessagesQuery = query(
+        messagesRef,
+        where('userId', '==', guestUserId)
+      );
+      
+      const existingMessages = await getDocs(existingMessagesQuery);
+      
+      // Wenn bereits Nachrichten existieren, nicht neu erstellen
+      if (!existingMessages.empty) {
+        console.log('Chat already initialized for guest user');
+        return;
+      }
+
+      // Channel-Nachrichten für "Front-End-Team"
+      const channelMessages = [
+        {
+          text: "Willkommen im Front-End-Team! Hier besprechen wir alle Themen rund um die Benutzeroberfläche.",
+          userId: "a4QeEY8CNEd6CZ2KwQZVCBhlJ2z1",
+          username: "Sofia Weber",
+          timestamp: new Date(currentTime.getTime() - 30 * 60000),
+          channelId: "Front-End-Team",
+          recipientId: null
+        },
+        {
+          text: "Danke für die Einladung! Ich freue mich darauf, mehr über das Projekt zu erfahren.",
+          userId: guestUserId,
+          username: "Gäste Login",
+          timestamp: new Date(currentTime.getTime() - 25 * 60000),
+          channelId: "Front-End-Team",
+          recipientId: null
+        }
+      ];
+
+      // Direct Messages mit Sascha Lenz
+      const dmMessagesSascha = [
+        {
+          text: "Hi! Ich bin Sascha aus dem Design-Team. Hast du schon unsere neuen UI-Komponenten gesehen?",
+          userId: "NbMgkSxq3fULESFz01t7Sk7jDxw2",
+          username: "Sascha Lenz",
+          timestamp: new Date(currentTime.getTime() - 20 * 60000),
+          channelId: null,
+          recipientId: guestUserId
+        },
+        {
+          text: "Ja, die sehen super aus! Besonders die neue Navigation gefällt mir sehr gut.",
+          userId: guestUserId,
+          username: "Gäste Login",
+          timestamp: new Date(currentTime.getTime() - 15 * 60000),
+          channelId: null,
+          recipientId: "NbMgkSxq3fULESFz01t7Sk7jDxw2"
+        }
+      ];
+
+      // Alle Nachrichten in Firestore speichern
+      const allMessages = [...channelMessages, ...dmMessagesSascha];
+      
+      for (const message of allMessages) {
+        await addDoc(messagesRef, message);
+      }
+
+      console.log('Chat initialized for guest user');
+    } catch (error) {
+      console.error('Error initializing guest chat:', error);
+    }
   }
 
 }

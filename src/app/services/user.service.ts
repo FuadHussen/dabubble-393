@@ -8,10 +8,11 @@ import {
   sendPasswordResetEmail,
   User,
 } from '@angular/fire/auth';
-import { Firestore, doc, getDoc, setDoc } from '@angular/fire/firestore';
+import { DocumentData, Firestore, doc, getDoc, setDoc, collection, query, where, getDocs, DocumentData as FirestoreDocumentData } from '@angular/fire/firestore';
 import { inject } from '@angular/core';
 import { User as FirebaseUser } from 'firebase/auth';
 import { Router } from '@angular/router';
+import { User as UserModel } from '../models/user.model';  // Importiere das Interface
 
 @Injectable({
   providedIn: 'root',
@@ -101,6 +102,27 @@ export class UserService {
       this.router.navigate(['/login']);
     } catch (error) {
       console.error('Fehler beim Abmelden:', error);
+    }
+  }
+
+  async getUserById(userId: string): Promise<UserModel | null> {
+    try {
+      const userDoc = await getDoc(doc(this.firestore, 'users', userId));
+      if (userDoc.exists()) {
+        const userData = userDoc.data() as DocumentData;
+        return {
+          uid: userData['uid'],
+          displayName: userData['displayName'],
+          email: userData['email'],
+          photoURL: userData['photoURL'],
+          username: userData['username']
+        };
+      }
+      console.log('No user found with ID:', userId);
+      return null;
+    } catch (error) {
+      console.error('Error getting user by ID:', error);
+      return null;
     }
   }
 }

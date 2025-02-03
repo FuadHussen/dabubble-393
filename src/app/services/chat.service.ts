@@ -4,6 +4,7 @@ import { switchMap, map, take } from 'rxjs/operators';
 import { collection, query, where, collectionData, getDocs } from '@angular/fire/firestore';
 import { Firestore } from '@angular/fire/firestore';
 import { Auth, getAuth } from '@angular/fire/auth';
+import { User } from '../models/user.model';
 
 @Injectable({
   providedIn: 'root'
@@ -26,29 +27,26 @@ export class ChatService {
     private auth: Auth
   ) {}
 
-  async getCurrentUser() {
-    const auth = getAuth();
-    const currentUser = auth.currentUser;
-
-    if (!currentUser) {
-      throw new Error('No user logged in');
-    }
-
-    // Hole zusätzliche User-Daten aus Firestore
-    const usersRef = collection(this.firestore, 'users');
-    const q = query(usersRef, where('uid', '==', currentUser.uid));
-    const querySnapshot = await getDocs(q);
-
-    if (querySnapshot.empty) {
-      throw new Error('User data not found in Firestore');
-    }
-
-    const userData = querySnapshot.docs[0].data();
-    return {
-      uid: currentUser.uid,
-      username: userData['username'] || 'Unbekannter Benutzer',
-      email: userData['email']
-    };
+  async getCurrentUser(): Promise<User> {
+    return new Promise((resolve, reject) => {
+      const unsubscribe = this.auth.onAuthStateChanged(user => {
+        unsubscribe();
+        if (user) {
+          resolve({
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName,
+            photoURL: user.photoURL,
+            emailVerified: user.emailVerified,
+            isOnline: true,  // Default Wert
+            lastSeen: new Date(),  // Aktuelles Datum
+            username: user.displayName || user.email  // Fallback zum Email
+          } as User);
+        } else {
+          reject(new Error('No user logged in'));
+        }
+      }, reject);
+    });
   }
 
   getCurrentChannelId() {
@@ -68,14 +66,17 @@ export class ChatService {
   }
 
   selectChannel(channelName: string) {
+    console.log('Selecting channel:', channelName);
     this.selectedChannelSubject.next(channelName);
-    this.setIsDirectMessage(false);
+    this.selectedUserSubject.next('');
+    this.isDirectMessageSubject.next(false);
   }
 
-  selectUser(userName: string) {
-    this.selectedUserSubject.next(userName);
+  selectUser(userId: string) {
+    console.log('Selecting user:', userId);
+    this.selectedUserSubject.next(userId);
+    this.selectedChannelSubject.next('');
     this.isDirectMessageSubject.next(true);
-    this.currentChannelIdSubject.next('');
   }
 
   selectNextAvailableChannel() {
@@ -100,5 +101,52 @@ export class ChatService {
 
   setHasMessages(hasMessages: boolean) {
     this.hasMessagesSubject.next(hasMessages);
+  }
+
+  get selectedUser(): string {
+    return this.selectedUserSubject.value;
+  }
+
+  get selectedChannel(): string {
+    return this.selectedChannelSubject.value;
+  }
+
+  async getUserByDisplayName(displayName: string) {
+    try {
+      console.log('Searching for user with displayName:', displayName);
+      const usersRef = collection(this.firestore, 'users');
+      const q = query(usersRef, where('displayName', '==', displayName));
+      const querySnapshot = await getDocs(q);
+      
+      console.log('Query results:', querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        data: doc.data()
+      })));
+      
+      if (!querySnapshot.empty) {
+        return querySnapshot.docs[0];
+      }
+      console.error('No user found with displayName:', displayName);
+      return null;
+    } catch (error) {
+      console.error('Error getting user by display name:', error);
+      return null;
+    }
+  }
+
+  async getUserId(displayNameOrId: string): Promise<string | null> {
+    if (displayNameOrId.length > 20) {
+      return displayNameOrId;
+    }
+    
+    const userDoc = await this.getUserByDisplayName(displayNameOrId);
+    return userDoc?.id || null;
+  }
+
+  createChatId(uid1: string, uid2: string): string {
+    console.log('Creating chat ID for users:', uid1, uid2);
+    const chatId = [uid1, uid2].sort().join('_');
+    console.log('Generated chat ID:', chatId);
+    return chatId;
   }
 } 
