@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { FooterComponent } from '../../shared/footer/footer.component';
-import { NgClass } from '@angular/common';
+import { CommonModule, NgClass } from '@angular/common';
 import { Auth } from '@angular/fire/auth';
 import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
 import { inject } from '@angular/core';
@@ -16,7 +16,7 @@ import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-signup',
-  imports: [FooterComponent, NgClass],
+  imports: [FooterComponent, NgClass, CommonModule],
   templateUrl: './signup.component.html',
   styleUrl: './signup.component.scss',
 })
@@ -40,6 +40,10 @@ export class SignupComponent {
   checkboxIsCkecked: boolean = false;
   checkboxIsHovered: boolean = false;
   isFilled: boolean = false;
+
+  isNameFilled: boolean = false;
+  isEmailFilled: boolean = false;
+  isPasswordFilled: boolean = false;
 
   arrowBack(state: string) {
     if (state === 'hover') {
@@ -76,16 +80,20 @@ export class SignupComponent {
       this.userNameSrc = value
         ? '../../assets/img/person-active.png'
         : '../../assets/img/person.png';
+      this.isNameFilled = this.userName.trim().split(' ').length >= 2;
     } else if (field === 'userEmail') {
       this.userEmail = value;
       this.userEmailSrc = value
         ? '../../assets/img/mail-active.png'
         : '../../assets/img/mail.png';
+      const emailPattern = /\S+@\S+\.\S+/;
+      this.isEmailFilled = emailPattern.test(this.userEmail);
     } else if (field === 'userPassword') {
       this.userPassword = value;
       this.userPasswordSrc = value
         ? '../../assets/img/lock-active.png'
         : '../../assets/img/lock.png';
+      this.isPasswordFilled = this.userPassword.length >= 6;
     }
     this.enableButton();
   }
@@ -106,7 +114,10 @@ export class SignupComponent {
       this.userName !== '' &&
       this.userEmail !== '' &&
       this.userPassword !== '' &&
-      this.checkboxIsCkecked;
+      this.checkboxIsCkecked &&
+      this.isPasswordFilled &&
+      this.isNameFilled &&
+      this.isEmailFilled; 
   }
 
   async createUser() {

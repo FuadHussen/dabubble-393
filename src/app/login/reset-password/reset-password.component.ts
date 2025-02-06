@@ -20,6 +20,8 @@ export class ResetPasswordComponent {
 
   isFilled: boolean = false;
 
+  isEmailFilled:boolean = false;
+
   arrowBack(state: string) {
     if (state === 'hover') {
       this.arrowBackSrc = '../../../assets/img/arrow-back-active.png';
@@ -47,12 +49,14 @@ export class ResetPasswordComponent {
       this.userEmailSrc = value
         ? '../../assets/img/mail-active.png'
         : '../../assets/img/mail.png';
+        const emailPattern = /\S+@\S+\.\S+/;
+        this.isEmailFilled = emailPattern.test(this.userEmail);
     }
     this.enableButton();
   }
 
   enableButton() {
-    this.isFilled = this.userEmail !== '';
+    this.isFilled = this.isEmailFilled;
   }
 
   navigateToLogin() {

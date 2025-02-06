@@ -6,6 +6,7 @@ import {
   getAuth,
   onAuthStateChanged,
   sendPasswordResetEmail,
+  fetchSignInMethodsForEmail,
   User,
 } from '@angular/fire/auth';
 import { DocumentData, Firestore, doc, getDoc, setDoc, collection, query, where, getDocs, DocumentData as FirestoreDocumentData } from '@angular/fire/firestore';

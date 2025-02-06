@@ -8,14 +8,21 @@ import {
 } from '@angular/animations';
 import { Router } from '@angular/router';
 import { FooterComponent } from '../shared/footer/footer.component';
-import { NgClass } from '@angular/common';
+import { CommonModule, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../services/user.service';
-import { Firestore, collection, addDoc, query, where, getDocs } from '@angular/fire/firestore';
+import {
+  Firestore,
+  collection,
+  addDoc,
+  query,
+  where,
+  getDocs,
+} from '@angular/fire/firestore';
 
 @Component({
   selector: 'app-login',
-  imports: [FooterComponent, NgClass,FormsModule],
+  imports: [FooterComponent, NgClass, FormsModule, CommonModule],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
   animations: [
@@ -57,12 +64,12 @@ export class LoginComponent {
   userEmail: string = '';
   userPassword: string = '';
   isFilled: boolean = false;
+  emailNotExist: boolean = false;
+  passwordNotExist: boolean = false;
 
   userNameSrc: string = '../../assets/img/person.png';
   userEmailSrc: string = '../../assets/img/mail.png';
   userPasswordSrc: string = '../../assets/img/lock.png';
-
-
 
   onFocus(field: string): void {
     if (field === 'userEmail' && !this.userEmail) {
@@ -73,7 +80,7 @@ export class LoginComponent {
   }
 
   onBlur(field: string): void {
-   if (field === 'userEmail' && !this.userEmail) {
+    if (field === 'userEmail' && !this.userEmail) {
       this.userEmailSrc = '../../assets/img/mail.png';
     } else if (field === 'userPassword' && !this.userPassword) {
       this.userPasswordSrc = '../../assets/img/lock.png';
@@ -97,12 +104,13 @@ export class LoginComponent {
   }
 
   enableButton(): void {
-    this.isFilled = this.userEmail.trim() !== '' && this.userPassword.trim() !== '';
+    const emailPattern = /\S+@\S+\.\S+/;
+    this.isFilled =
+      emailPattern.test(this.userEmail) && this.userPassword.length >= 6;
   }
 
-
   navigateToSignUp() {
-    this.router.navigate(['/signup']); 
+    this.router.navigate(['/signup']);
   }
 
   navigateToForgotPassword() {
@@ -110,24 +118,26 @@ export class LoginComponent {
   }
 
   loginSucess() {
-    this.userService.login(this.userEmail, this.userPassword)
+    this.userService
+      .login(this.userEmail, this.userPassword)
       .then(() => {
         this.router.navigate(['/sidenav']); // Erfolgreicher Login
       })
-      .catch(error => {
-        console.error('Login fehlgeschlagen', error);
-        alert('Fehler beim Login: ' + error.message); // Fehler anzeigen
+      .catch((error) => {
+        if (error.code) {
+          this.passwordNotExist = true; // Fehlermeldung für daten
+        }
       });
   }
- 
 
   guestSucess() {
-    this.userService.login('gäste@login.login', 'gästelogin')
+    this.userService
+      .login('gäste@login.login', 'gästelogin')
       .then(async () => {
         await this.initializeGuestChat();
-        this.router.navigate(['/sidenav']); 
+        this.router.navigate(['/sidenav']);
       })
-      .catch(error => {
+      .catch((error) => {
         console.error('Login fehlgeschlagen', error);
         alert('Fehler beim Login: ' + error.message);
       });
@@ -137,14 +147,14 @@ export class LoginComponent {
     try {
       const messagesRef = collection(this.firestore, 'messages');
       const currentTime = new Date();
-      
+
       // Hole zuerst die aktuelle User-ID des Gäste-Logins
       const currentUser = await this.userService.getCurrentUser();
       if (!currentUser) {
         console.error('No user found');
         return;
       }
-      
+
       const guestUserId = currentUser.uid;
 
       // Prüfe ob bereits Nachrichten für den Gast existieren
@@ -152,9 +162,9 @@ export class LoginComponent {
         messagesRef,
         where('userId', '==', guestUserId)
       );
-      
+
       const existingMessages = await getDocs(existingMessagesQuery);
-      
+
       // Wenn bereits Nachrichten existieren, nicht neu erstellen
       if (!existingMessages.empty) {
         console.log('Chat already initialized for guest user');
@@ -164,46 +174,46 @@ export class LoginComponent {
       // Channel-Nachrichten für "Front-End-Team"
       const channelMessages = [
         {
-          text: "Willkommen im Front-End-Team! Hier besprechen wir alle Themen rund um die Benutzeroberfläche.",
-          userId: "a4QeEY8CNEd6CZ2KwQZVCBhlJ2z1",
-          username: "Sofia Weber",
+          text: 'Willkommen im Front-End-Team! Hier besprechen wir alle Themen rund um die Benutzeroberfläche.',
+          userId: 'a4QeEY8CNEd6CZ2KwQZVCBhlJ2z1',
+          username: 'Sofia Weber',
           timestamp: new Date(currentTime.getTime() - 30 * 60000),
-          channelId: "Front-End-Team",
-          recipientId: null
+          channelId: 'Front-End-Team',
+          recipientId: null,
         },
         {
-          text: "Danke für die Einladung! Ich freue mich darauf, mehr über das Projekt zu erfahren.",
+          text: 'Danke für die Einladung! Ich freue mich darauf, mehr über das Projekt zu erfahren.',
           userId: guestUserId,
-          username: "Gäste Login",
+          username: 'Gäste Login',
           timestamp: new Date(currentTime.getTime() - 25 * 60000),
-          channelId: "Front-End-Team",
-          recipientId: null
-        }
+          channelId: 'Front-End-Team',
+          recipientId: null,
+        },
       ];
 
       // Direct Messages mit Sascha Lenz
       const dmMessagesSascha = [
         {
-          text: "Hi! Ich bin Sascha aus dem Design-Team. Hast du schon unsere neuen UI-Komponenten gesehen?",
-          userId: "NbMgkSxq3fULESFz01t7Sk7jDxw2",
-          username: "Sascha Lenz",
+          text: 'Hi! Ich bin Sascha aus dem Design-Team. Hast du schon unsere neuen UI-Komponenten gesehen?',
+          userId: 'NbMgkSxq3fULESFz01t7Sk7jDxw2',
+          username: 'Sascha Lenz',
           timestamp: new Date(currentTime.getTime() - 20 * 60000),
           channelId: null,
-          recipientId: guestUserId
+          recipientId: guestUserId,
         },
         {
-          text: "Ja, die sehen super aus! Besonders die neue Navigation gefällt mir sehr gut.",
+          text: 'Ja, die sehen super aus! Besonders die neue Navigation gefällt mir sehr gut.',
           userId: guestUserId,
-          username: "Gäste Login",
+          username: 'Gäste Login',
           timestamp: new Date(currentTime.getTime() - 15 * 60000),
           channelId: null,
-          recipientId: "NbMgkSxq3fULESFz01t7Sk7jDxw2"
-        }
+          recipientId: 'NbMgkSxq3fULESFz01t7Sk7jDxw2',
+        },
       ];
 
       // Alle Nachrichten in Firestore speichern
       const allMessages = [...channelMessages, ...dmMessagesSascha];
-      
+
       for (const message of allMessages) {
         await addDoc(messagesRef, message);
       }
@@ -213,5 +223,4 @@ export class LoginComponent {
       console.error('Error initializing guest chat:', error);
     }
   }
-
 }

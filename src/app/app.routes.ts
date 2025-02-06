@@ -10,6 +10,7 @@ import { NewPasswordComponent } from './login/reset-password/new-password/new-pa
 
 export const routes: Routes = [
     { path: '', component: LoginComponent },
+    { path: 'login', component: LoginComponent },
     { path: 'reset-password', component: ResetPasswordComponent },
     { path: 'new-password', component: NewPasswordComponent },
     { path: 'signup', component: SignupComponent },
