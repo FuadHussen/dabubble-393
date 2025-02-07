@@ -26,39 +26,69 @@ import {
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
   animations: [
-    trigger('moveAnimation', [
-      state('center', style({ transform: 'translate(0, 0)' })),
-      state(
-        'moveToCorner',
-        style({ transform: 'translate(-40vw, -40vh) scale(0.5)' })
-      ),
+    trigger('fadeBackground', [
+      state('visible', style({ opacity: 1, visibility: 'visible' })),
+      state('hidden', style({ opacity: 0, visibility: 'hidden' })),
+      transition('visible => hidden', [
+        animate('1s ease-in-out')
+      ])
     ]),
-    trigger('logoFadeAnimation', [
-      state('center', style({ opacity: 0, scale: 0.5 })), //start
-      state('moveToCorner', style({ opacity: 1, scale: 1.5 })), //ende
-      transition('center => moveToCorner', animate('2s ease')), //zeit dazwischen
+  
+    trigger('logoAnimation', [
+      state('start', style({ transform: 'translateX(200%)' })), // Start ganz rechts
+      state('end', style({ transform: 'translateX(0)' })), // Endposition normal
+      transition('start => end', [
+        animate('1s ease-in-out')
+      ])
     ]),
-    trigger('nameFadeAnimation', [
-      state('center', style({ opacity: 0 })),
-      state(
-        'moveToCorner',
-        style({ opacity: 1, transform: 'translate(24px, 0)' })
-      ),
-      transition('center => moveToCorner', animate('1s ease-in-out')), // Delay of 1s
+  
+    trigger('textTypingAnimation', [
+      transition(':enter', [
+        style({ width: '0', overflow: 'hidden' }), // Start: Kein Text sichtbar
+        animate('2s steps(10, end)', style({ width: '100%' })) // Schrittweises Tippen
+      ])
     ]),
+  
+    trigger('logoContainerAnimation', [
+      state('start', style({
+        scale:1,
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)'
+      })),
+      state('end', style({
+        scale:1,
+        top: '20px', // Zielposition (anpassen!)
+        left: '20px',
+        transform: 'translate(0, 0)'
+      })),
+      transition('start => end', [
+        animate('1s ease-in-out')
+      ])
+    ])
   ],
 })
 export class LoginComponent {
   private firestore: Firestore = inject(Firestore);
 
   constructor(private router: Router, private userService: UserService) {}
-  animationState = 'center';
-  backgroundColor = 'blue';
-
+  bgState = 'visible';
+  logoState = 'start';
+  textTypingAnimation = 'start';
+  containerState = 'start';
   ngOnInit() {
     setTimeout(() => {
-      this.animationState = 'moveToCorner';
-    }, 60);
+      this.logoState = 'end'; // Logo-Bild bewegt sich rein
+    }, 500);
+  
+    setTimeout(() => {
+      this.textTypingAnimation = 'end'; // Logo-Name Schreibanimation startet erst jetzt
+    }, 3000); // Verzögerung angepasst: erst nach der Logo-Animation starten
+  
+    setTimeout(() => {
+      this.bgState = 'hidden'; // Hintergrund ausblenden
+      this.containerState = 'end'; // Logo-Container bewegt sich an Zielposition
+    }, 3000);
   }
 
   userEmail: string = '';

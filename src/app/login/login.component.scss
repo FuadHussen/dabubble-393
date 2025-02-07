@@ -1,29 +1,46 @@
-/* startseite.component.css */
 .startseite {
   padding: 20px 20px 0px 20px;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   overflow: hidden;
   background-color: #eceefe;
 }
 
+.background-fade {
+  width: 100vw;
+  height: 100vh;
+  background-color: blue;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
 .logo-container {
+  position: absolute;
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 10px;
+  z-index: 20; // Über dem Hintergrund
 }
 
 .logo {
   width: 100px;
   height: 100px;
+  z-index: 19;
 }
 
 .logo-name {
   font-family: Nunito;
   font-size: 46px;
   font-weight: 700;
-}
+  z-index: 18;
+ 
+    display: inline-block;
+    border-right: 2px solid white; /* Cursor-Effekt */
+    overflow: hidden;
+  }
+
 
 .signup-container {
   display: flex;
