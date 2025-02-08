@@ -9,6 +9,11 @@
     <div *ngFor="let message of group.messages" 
          class="message" 
          [class.guest]="isCurrentUser(message.userId)">
+      <div class="avatar-container" *ngIf="message.avatar">
+        <img [src]="'assets/img/avatars/' + message.avatar" 
+             [alt]="message.username + ' avatar'"
+             class="user-avatar">
+      </div>
       <div class="message-content">
         <div class="message-header">
           <span class="username">{{ message.username }}</span>

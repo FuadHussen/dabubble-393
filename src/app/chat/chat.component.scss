@@ -118,6 +118,25 @@
     gap: 8px;
     cursor: pointer;
 
+    .avatar-container {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      overflow: hidden;
+
+      .user-avatar {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
+
+    mat-icon {
+      width: 32px;
+      height: 32px;
+      font-size: 32px;
+    }
+
     mat-card-title {
       margin: 0;
       font-size: 18px;

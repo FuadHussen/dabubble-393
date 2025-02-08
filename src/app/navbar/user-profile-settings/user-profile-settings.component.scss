@@ -1,0 +1,10 @@
+@import './../../chat/profile-info/profile-info.component.scss';
+
+.profile-image {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+

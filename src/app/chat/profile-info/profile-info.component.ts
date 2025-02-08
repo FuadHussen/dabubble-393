@@ -42,6 +42,7 @@ export class ProfileInfoComponent {
   @Input() username: string | null = '';
   @Input() email: string = '';
   @Input() isOnline = true;
+  @Input() avatar: string | null = null;
   @Output() closeInfo = new EventEmitter<void>();
 
   close(event: MouseEvent) {

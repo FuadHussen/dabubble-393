@@ -8,4 +8,5 @@ export interface User {
   emailVerified?: boolean;
   isOnline?: boolean;
   lastSeen?: any;
+  avatar?: string;
 } 

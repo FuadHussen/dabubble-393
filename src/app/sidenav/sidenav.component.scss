@@ -244,6 +244,8 @@ mat-nav-list {
 
   &:hover  {
     background-color: #ECEEFE;
+
+
     color: #535AF1;
 
     p {
@@ -261,9 +263,24 @@ mat-nav-list {
   }
 }
 
+.user-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .title-hover {
+
   
   &:hover {
+
+
     color: #535AF1;
   }
 }
@@ -306,4 +323,11 @@ mat-nav-list {
   'GRAD' 0,
   'opsz' 24,
   'color' #000
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
 }

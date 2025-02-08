@@ -2,8 +2,16 @@
   <mat-card class="chat-card">
     <mat-card-header class="chat-header">
       <div class="channel-info" (click)="openSettings()">
+        <!-- Channel Icon -->
         <mat-icon class="material-symbols-outlined" *ngIf="!isDirectMessage">tag</mat-icon>
-        <mat-icon class="material-symbols-outlined" *ngIf="isDirectMessage">account_circle</mat-icon>
+        
+        <!-- User Avatar oder Default Icon -->
+        <div class="avatar-container" *ngIf="isDirectMessage">
+          <img *ngIf="selectedUserAvatar" 
+               [src]="'assets/img/avatars/' + selectedUserAvatar" 
+               [alt]="selectedUserDisplayName + ' avatar'"
+               class="user-avatar">
+        </div>
         
         <mat-card-title>
           <ng-container *ngIf="!isDirectMessage">
@@ -59,6 +67,16 @@
       </mat-form-field>
     </mat-card-actions>
   </mat-card>
+
+  <!-- Profile Info Component -->
+  <app-profile-info
+    [isOpen]="isProfileOpen"
+    [username]="selectedUserDisplayName"
+    [email]="selectedUserEmail"
+    [avatar]="selectedUserAvatar"
+    [isOnline]="isSelectedUserOnline"
+    (closeInfo)="closeProfile()">
+  </app-profile-info>
 </div>
 
 <!-- Channel Settings am Ende des Templates -->
@@ -70,11 +88,3 @@
   [createdBy]="createdBy"
   (closeSettings)="onCloseSettings()"
 ></app-channel-settings>
-
-<app-profile-info
-  [isOpen]="isProfileOpen"
-  [username]="selectedUserDisplayName"
-  [email]="selectedUserEmail"
-  [isOnline]="true"
-  (closeInfo)="closeProfile()"
-></app-profile-info>

@@ -33,9 +33,26 @@
 
 .message {
   display: flex;
+  align-items: flex-start;
   gap: 12px;
-  align-self: flex-start;
-  width: 100%;
+
+  &.guest {
+    flex-direction: row-reverse;
+  }
+
+  .avatar-container {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+
+    img.user-avatar {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
 
   .message-content {
     flex: 1;

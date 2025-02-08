@@ -9,7 +9,11 @@
 
     <div class="profile-content">
       <div class="avatar-container">
-        <mat-icon class="avatar-icon">account_circle</mat-icon>
+        <img *ngIf="avatar" 
+             [src]="'assets/img/avatars/' + avatar" 
+             [alt]="username + ' avatar'"
+             class="user-avatar">
+        <mat-icon *ngIf="!avatar" class="avatar-icon">account_circle</mat-icon>
       </div>
 
       <div class="user-info">

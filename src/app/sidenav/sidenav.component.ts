@@ -28,6 +28,7 @@ interface User {
   username: string;
   displayName?: string;
   uid?: string;
+  avatar?: string;
 }
 
 @Component({
@@ -73,8 +74,12 @@ export class SidenavComponent implements OnInit {
     // Users aus Firestore laden mit ID
     const usersCollection = collection(this.firestore, 'users');
     collectionData(usersCollection, { idField: 'id' }).subscribe(users => {
-      this.users = users as User[];
-      console.log('Loaded users:', users); // Debug-Log
+      this.users = users.map(user => ({
+        ...user,
+        avatar: user['avatar'] || null
+      })) as User[];
+      
+      console.log('Loaded users with mapping:', this.users); // Debug log
     });
     
     // Neue Users Collection laden
@@ -98,7 +103,7 @@ export class SidenavComponent implements OnInit {
     });
     
     this.chatService.selectedUser$.subscribe(user => {
-      this.selectedUser = user;
+      this.selectedUser = user || '';
     });
   }
 

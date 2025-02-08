@@ -92,7 +92,7 @@
                 <p class="fs-18">Direct Messages</p>
               </mat-panel-title>
             </mat-expansion-panel-header>
-            <mat-nav-list>
+            <mat-nav-list class="user-list">
               <a
                 class="hover-btn"
                 mat-list-item
@@ -100,9 +100,12 @@
                 (click)="selectUser(user)"
                 [ngClass]="{'active': isUserActive(user)}"
               >
-                <mat-icon matListItemIcon>person</mat-icon>
-                <p class="fs-18">{{ user.displayName || user.username }}</p>
+                <div class="user-info">
+                  <img [src]="'assets/img/avatars/' + user.avatar" alt="User Avatar" class="user-avatar">
+                  <p class="fs-18">{{ user.displayName || user.username }}</p>
+                </div>
               </a>
+
             </mat-nav-list>
           </mat-expansion-panel>
         </mat-accordion>

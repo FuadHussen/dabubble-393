@@ -1,57 +1,82 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Firestore, collection, addDoc, query, where, orderBy, onSnapshot, collectionData, Timestamp, serverTimestamp } from '@angular/fire/firestore';
+import { Firestore, collection, query, where, orderBy, onSnapshot, collectionData, Timestamp, serverTimestamp, addDoc } from '@angular/fire/firestore';
 import { ChatService } from '../../services/chat.service';
-import { User } from '../../models/user.model';
 import { UserService } from '../../services/user.service';
-import { combineLatest, map, take } from 'rxjs';
+import { FormsModule } from '@angular/forms';
 
 interface Message {
+  id: string;
   text: string;
-  timestamp: Date;
+  timestamp: any;
   userId: string;
   username: string;
+  avatar?: string;
   channelId?: string;
   recipientId?: string;
+}
+
+interface User {
+  id: string;
+  username: string;
+  displayName?: string;
+  uid?: string;
+  avatar?: string;
 }
 
 @Component({
   selector: 'app-messages',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './messages.component.html',
   styleUrl: './messages.component.scss'
 })
 export class MessagesComponent implements OnInit {
   currentUser: any;
-  messages: any[] = [];
-  messageGroups: { date: string, messages: any[] }[] = [];
+  messages: Message[] = [];
+  messageGroups: { date: string, messages: Message[], showDateDivider: boolean }[] = [];
   selectedChannel: string = '';
   isDirectMessage: boolean = false;
   selectedUserDisplayName: string = '';
   hasMessages: boolean = false;
-  messagesSubscription: any;
+  private messagesSubscription: (() => void) | undefined;
+  users: User[] = [];
   messageText: string = '';
-
+  
   constructor(
     private firestore: Firestore,
     private chatService: ChatService,
     private userService: UserService
   ) {
+    // Users aus Firestore laden mit ID
+    const usersCollection = collection(this.firestore, 'users');
+    collectionData(usersCollection, { idField: 'id' }).subscribe(users => {
+      this.users = users.map(user => ({
+        ...user,
+        avatar: user['avatar'] || null
+      })) as User[];
+      console.log('Loaded users:', this.users);
+    });
+
+    // Subscribe to channel changes
     this.chatService.selectedChannel$.subscribe(channel => {
       this.selectedChannel = channel;
+      this.isDirectMessage = false;
+      if (channel) {
+        this.loadMessages();
+      }
+    });
+
+    // Subscribe to direct message changes
+    this.chatService.selectedUser$.subscribe(userId => {
+      if (userId) {
+        this.isDirectMessage = true;
+        this.loadMessages();
+      }
     });
 
     this.chatService.isDirectMessage$.subscribe(isDM => {
       this.isDirectMessage = isDM;
-      this.loadMessages();
-    });
-
-    this.chatService.selectedUser$.subscribe(user => {
-      this.selectedUserDisplayName = user;
-      if (this.isDirectMessage) {
-        this.loadMessages();
-      }
     });
   }
 
@@ -62,93 +87,90 @@ export class MessagesComponent implements OnInit {
   async loadMessages() {
     try {
       this.currentUser = await this.chatService.getCurrentUser();
-      console.log('Current user:', this.currentUser);
+      console.log('Loading messages for:', this.isDirectMessage ? 'DM' : 'Channel', 
+                 this.isDirectMessage ? this.chatService.selectedUser : this.selectedChannel);
 
-      this.chatService.isDirectMessage$.subscribe(async (isDirectMessage) => {
-        console.log('Is direct message:', isDirectMessage);
-        this.isDirectMessage = isDirectMessage;
+      if (this.isDirectMessage) {
+        const selectedUserId = this.chatService.selectedUser;
+        if (selectedUserId && this.currentUser) {
+          const messagesRef = collection(this.firestore, 'messages');
+          const q = query(
+            messagesRef,
+            where('recipientId', 'in', [selectedUserId, this.currentUser.uid]),
+            where('userId', 'in', [selectedUserId, this.currentUser.uid]),
+            orderBy('timestamp', 'asc')
+          );
 
-        if (isDirectMessage) {
-          // Direct Messages
-          const selectedUserId = this.chatService.selectedUser;
-          console.log('Loading DMs for selected user:', selectedUserId);
-          
-          if (selectedUserId && this.currentUser) {
-            const messagesRef = collection(this.firestore, 'messages');
-            
-            // Query für beide Richtungen der Konversation
-            const q = query(
-              messagesRef,
-              where('channelId', '==', null),
-              orderBy('timestamp', 'asc'),
-              where('recipientId', 'in', [selectedUserId, this.currentUser.uid]),
-              where('userId', 'in', [selectedUserId, this.currentUser.uid])
-            );
-            
-            if (this.messagesSubscription) {
-              this.messagesSubscription.unsubscribe();
-            }
-            
-            this.messagesSubscription = collectionData(q).pipe(
-              map(messages => {
-                console.log('Raw DM messages:', messages);
-                return messages.filter(msg => 
-                  (msg['userId'] === this.currentUser?.uid && msg['recipientId'] === selectedUserId) ||
-                  (msg['userId'] === selectedUserId && msg['recipientId'] === this.currentUser?.uid)
-                );
-              })
-            ).subscribe(messages => {
-              console.log('Filtered DM messages:', messages);
-              if (messages.length > 0) {
-                this.messages = messages;
-                this.groupMessagesByDate();
-                this.chatService.setHasMessages(true);
-              } else {
-                this.messages = [];
-                this.messageGroups = [];
-                this.chatService.setHasMessages(false);
-              }
-            });
+          if (this.messagesSubscription) {
+            this.messagesSubscription();
           }
-        } else {
-          // Channel Messages
-          this.chatService.selectedChannel$.pipe(take(1)).subscribe(channelName => {
-            if (channelName) {
-              console.log('Loading channel messages for:', channelName);
-              const messagesRef = collection(this.firestore, 'messages');
-              const q = query(
-                messagesRef,
-                where('channelId', '==', channelName),
-                orderBy('timestamp', 'asc')
-              );
+
+          this.messagesSubscription = onSnapshot(q, (querySnapshot) => {
+            const messages: Message[] = [];
+            querySnapshot.docs.forEach(doc => {
+              const messageData = doc.data();
+              const user = this.users.find(u => u.uid === messageData['userId']);
               
-              if (this.messagesSubscription) {
-                this.messagesSubscription.unsubscribe();
-              }
-              
-              this.messagesSubscription = collectionData(q).subscribe(messages => {
-                console.log('Channel messages:', messages);
-                if (messages.length > 0) {
-                  this.messages = messages;
-                  this.groupMessagesByDate();
-                  this.chatService.setHasMessages(true);
-                } else {
-                  this.messages = [];
-                  this.messageGroups = [];
-                  this.chatService.setHasMessages(false);
-                }
-              });
-            }
+              messages.push({
+                id: doc.id,
+                ...messageData,
+                avatar: user?.avatar || 'sofia-mueller-avatar.png'
+
+              } as Message);
+            });
+
+            console.log('Loaded DM messages:', messages);
+            this.messages = messages;
+            this.groupMessagesByDate();
+            this.chatService.setHasMessages(this.messages.length > 0);
           });
         }
-      });
+      } else {
+        if (this.selectedChannel) {
+          const messagesRef = collection(this.firestore, 'messages');
+          const q = query(
+            messagesRef,
+            where('channelId', '==', this.selectedChannel),
+            orderBy('timestamp', 'asc')
+          );
+
+          if (this.messagesSubscription) {
+            this.messagesSubscription();
+          }
+
+          this.messagesSubscription = onSnapshot(q, (querySnapshot) => {
+            const messages: Message[] = [];
+            querySnapshot.docs.forEach(doc => {
+              const messageData = doc.data();
+              const user = this.users.find(u => u.uid === messageData['userId']);
+              
+              messages.push({
+                id: doc.id,
+                ...messageData,
+                avatar: user?.avatar || 'sofia-mueller-avatar.png'
+              } as Message);
+            });
+
+            console.log('Loaded channel messages:', messages);
+            this.messages = messages;
+            this.groupMessagesByDate();
+            this.chatService.setHasMessages(this.messages.length > 0);
+          });
+        }
+      }
     } catch (error) {
       console.error('Error loading messages:', error);
     }
   }
 
+  ngOnDestroy() {
+    if (this.messagesSubscription) {
+      this.messagesSubscription();
+    }
+  }
+
   groupMessagesByDate() {
-    const groups = new Map<string, any[]>();
+    const groups = new Map<string, Message[]>();
     
     this.messages.forEach(message => {
       let date: Date;
@@ -174,7 +196,8 @@ export class MessagesComponent implements OnInit {
 
     this.messageGroups = Array.from(groups.entries()).map(([date, messages]) => ({
       date,
-      messages
+      messages,
+      showDateDivider: this.isSameDay(new Date(date), new Date())
     }));
   }
 
@@ -207,44 +230,33 @@ export class MessagesComponent implements OnInit {
     return userId === 'a4QeEY8CNEd6CZ2KwQZVCBhlJ2z1';
   }
 
-  async sendMessage() {
-    if (this.messageText.trim() && this.currentUser) {
-      try {
-        const timestamp = serverTimestamp();
-        const messageData = {
-          text: this.messageText,
-          userId: this.currentUser.uid,
-          username: this.currentUser.displayName || 'Anonymous',
-          timestamp: timestamp
-        };
+  async sendMessage(event?: KeyboardEvent) {
+    if (event && (event.key !== 'Enter' || event.shiftKey)) {
+      return;
+    }
 
-        if (this.isDirectMessage) {
-          // Direct Message
-          const selectedUserId = this.chatService.selectedUser$;
-          if (selectedUserId) {
-            await addDoc(collection(this.firestore, 'messages'), {
-              ...messageData,
-              recipientId: selectedUserId,
-              channelId: null
-            });
-          }
-        } else {
-          // Channel Message
-          const channelName = this.chatService.selectedChannel$;
-          if (channelName) {
-            await addDoc(collection(this.firestore, 'messages'), {
-              ...messageData,
-              channelId: channelName,
-              recipientId: null
-            });
-          }
-        }
+    if (event) {
+      event.preventDefault();
+    }
 
-        this.messageText = '';
-        this.scrollToBottom();
-      } catch (error) {
-        console.error('Error sending message:', error);
-      }
+    if (!this.messageText.trim() || !this.currentUser) return;
+
+    try {
+      const messagesRef = collection(this.firestore, 'messages');
+      
+      const messageData = {
+        text: this.messageText.trim(),
+        timestamp: new Date(),
+        userId: this.currentUser.uid,
+        username: this.currentUser.username || 'Unbekannt',
+        channelId: this.isDirectMessage ? null : this.selectedChannel,
+        recipientId: this.isDirectMessage ? this.chatService.selectedUser : null
+      };
+
+      await addDoc(messagesRef, messageData);
+      this.messageText = '';
+    } catch (error) {
+      console.error('Error sending message:', error);
     }
   }
 

@@ -44,28 +44,60 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   createdBy = '';
   selectedChannel: string | null = null;
   selectedUserDisplayName: string = '';
+  selectedUserAvatar: string | null = null;
   isDirectMessage = false;
   isProfileOpen = false;
   selectedUserEmail = '';
   isSelectedUserOnline = false;
   messageText: string = '';
   hasMessages: boolean = false;
+  currentUserId: string | null = null;
 
   constructor(
     private firestore: Firestore,
-    private chatService: ChatService,
+    public chatService: ChatService,
     private userService: UserService
   ) {
+    // Aktuellen User ID speichern
+    this.userService.currentUser$.subscribe(user => {
+      if (user) {
+        this.currentUserId = user.uid;
+      }
+    });
+
+    // Channel Subscription
     this.chatService.selectedChannel$.subscribe(channelName => {
       if (channelName) {
         this.loadChannelDetails(channelName);
       }
     });
 
-    // Subscribe to hasMessages updates
+    // Direct Message Subscription
+    this.chatService.selectedUser$.subscribe(async (userId) => {
+      if (userId) {
+        const usersRef = collection(this.firestore, 'users');
+        const q = query(usersRef, where('uid', '==', userId));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          const userData = querySnapshot.docs[0].data();
+          this.selectedUserDisplayName = userData['username'] || 'Unbekannt';
+          this.selectedUserEmail = userData['email'] || '';
+          this.selectedUserAvatar = userData['avatar'] || 'default-avatar.png';
+          console.log('Loaded DM user data:', userData);
+        }
+      }
+    });
+
+    // Messages Status Subscription
     this.chatService.hasMessages$.subscribe(
       hasMessages => this.hasMessages = hasMessages
     );
+
+    // Direct Message Status Subscription
+    this.chatService.isDirectMessage$.subscribe(isDM => {
+      this.isDirectMessage = isDM;
+    });
   }
 
   async loadChannelDetails(channelName: string) {
@@ -143,20 +175,22 @@ export class ChatComponent implements OnInit, AfterViewChecked {
 
   async openSettings() {
     if (this.isDirectMessage) {
-      // Hole die User-Daten wenn es eine DM ist
-      const usersRef = collection(this.firestore, 'users');
-      const q = query(usersRef, where('username', '==', this.selectedUserDisplayName));
-      
-      try {
-        const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-          const userData = querySnapshot.docs[0].data();
-          this.selectedUserEmail = userData['email'];
+      const selectedUserId = this.chatService.selectedUser;
+      if (selectedUserId) {
+        const usersRef = collection(this.firestore, 'users');
+        const q = query(usersRef, where('uid', '==', selectedUserId));
+        
+        try {
+          const querySnapshot = await getDocs(q);
+          if (!querySnapshot.empty) {
+            const userData = querySnapshot.docs[0].data();
+            this.selectedUserEmail = userData['email'] || '';
+            this.selectedUserAvatar = userData['avatar'] || 'default-avatar.png';
+          }
+        } catch (error) {
+          console.error('Fehler beim Laden der User-Daten:', error);
         }
-      } catch (error) {
-        console.error('Fehler beim Laden der User-Daten:', error);
       }
-      
       this.isProfileOpen = true;
     } else {
       this.isSettingsOpen = true;
@@ -241,6 +275,11 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     } catch (err) {
       console.error('Fehler beim Scrollen:', err);
     }
+  }
+
+  // Neue Methode zum Prüfen, ob der User der aktuelle User ist
+  isCurrentUser(userId: string): boolean {
+    return this.currentUserId === userId;
   }
 }
 
