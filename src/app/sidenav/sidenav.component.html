@@ -102,10 +102,14 @@
               >
                 <div class="user-info">
                   <img [src]="'assets/img/avatars/' + user.avatar" alt="User Avatar" class="user-avatar">
-                  <p class="fs-18">{{ user.displayName || user.username }}</p>
+                  <p class="fs-18">
+                    {{ user.displayName || user.username }}
+                    <span class="current-user" *ngIf="user.uid === currentUserId">
+                      (Du)
+                    </span>
+                  </p>
                 </div>
               </a>
-
             </mat-nav-list>
           </mat-expansion-panel>
         </mat-accordion>

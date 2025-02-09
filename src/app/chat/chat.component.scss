@@ -46,7 +46,7 @@
       box-sizing: border-box;
 
       &::placeholder {
-        color: #686868!important;
+        color: #686868 !important;
       }
     }
 
@@ -108,11 +108,21 @@
   }
 }
 
+.channel-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .chat-header {
   padding: 16px 24px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-  
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
   .channel-info {
+    flex: 1;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -142,16 +152,6 @@
       font-size: 18px;
       font-weight: 700;
     }
-
-    &:hover {
-      mat-card-title {
-        color: #444DF2;
-      }
-      
-      mat-icon {
-        color: #444DF2;
-      }
-    }
   }
 }
 
@@ -170,6 +170,10 @@
     font-weight: 700;
     font-size: 24px;
     margin-bottom: 0;
+
+    span {
+      color: #000;
+    }
   }
 
   .channel-description {
@@ -183,9 +187,64 @@
 .channel-info {
   mat-card-title {
     cursor: pointer;
-    
+    display: flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 50px;
+    gap: 8px;
+
     &:hover {
       color: #444DF2;
+      background-color: #eceefe;
+    }
+  }
+}
+
+
+.user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+// Neue Container-Klasse für Channel-Members
+.channel-members-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .member-avatars {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &:hover {
+      cursor: pointer;
+      background-color: #eceefe;
+      border-radius: 50px;
+    }
+
+    .avatar-stack {
+      display: flex;
+
+      .member-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 2px solid white;
+        margin-left: -8px;
+        
+        &:first-child {
+          margin-left: 0;
+        }
+      }
+    }
+
+    .member-count {
+      font-size: 14px;
+      font-weight: 800;
+      color: rgba(0, 0, 0);
     }
   }
 }

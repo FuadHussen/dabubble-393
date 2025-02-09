@@ -1,0 +1,51 @@
+<div class="dialog-overlay" *ngIf="isOpen" (click)="close()">
+    <mat-card class="dialog-card" (click)="$event.stopPropagation()">
+      <mat-card-header>
+        <mat-card-title>Leute hinzufügen</mat-card-title>
+        <button mat-icon-button class="close-button" (click)="close()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <p class="channel-name"># {{ channelName }}</p>
+        
+        <div class="search-container">
+          <div class="selected-user" *ngIf="selectedUser">
+            <img [src]="'assets/img/avatars/' + selectedUser.avatar" [alt]="selectedUser.username" class="user-avatar">
+            <span class="username">{{ selectedUser.username }}</span>
+            <button class="remove-user" (click)="removeSelectedUser($event)">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+          <input 
+            type="text" 
+            class="search-input"
+            [class.has-selected]="selectedUser"
+            placeholder="Nach Personen suchen"
+            [(ngModel)]="searchText"
+            (input)="onSearch()"
+            [disabled]="selectedUser">
+          <mat-icon class="search-icon">search</mat-icon>
+        </div>
+
+        <div class="search-results" *ngIf="searchResults.length > 0 && !selectedUser">
+          <div class="user-item" 
+               *ngFor="let user of searchResults" 
+               (click)="selectUser(user)">
+            <img [src]="'assets/img/avatars/' + user.avatar" [alt]="user.username + ' avatar'" class="user-avatar">
+            <span class="username">{{ user.username }}</span>
+          </div>
+        </div>
+      </mat-card-content>
+      
+      <mat-card-actions>
+        <button mat-flat-button 
+                color="primary" 
+                [disabled]="!selectedUser"
+                (click)="addMember()">
+          Hinzufügen
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </div>

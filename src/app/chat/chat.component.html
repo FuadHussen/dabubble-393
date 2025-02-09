@@ -1,26 +1,44 @@
 <div class="chat-container">
   <mat-card class="chat-card">
     <mat-card-header class="chat-header">
-      <div class="channel-info" (click)="openSettings()">
-        <!-- Channel Icon -->
-        <mat-icon class="material-symbols-outlined" *ngIf="!isDirectMessage">tag</mat-icon>
-        
-        <!-- User Avatar oder Default Icon -->
-        <div class="avatar-container" *ngIf="isDirectMessage">
-          <img *ngIf="selectedUserAvatar" 
-               [src]="'assets/img/avatars/' + selectedUserAvatar" 
-               [alt]="selectedUserDisplayName + ' avatar'"
-               class="user-avatar">
-        </div>
-        
-        <mat-card-title>
-          <ng-container *ngIf="!isDirectMessage">
-            {{ selectedChannel }}
-          </ng-container>
-          <ng-container *ngIf="isDirectMessage">
-            {{ selectedUserDisplayName }}
-          </ng-container>
+      <div class="channel-info">
+        <mat-card-title class="channel-title-container">
+          <!-- Channel/DM Icon und Name -->
+          <div class="channel-name" (click)="openSettings()">
+            <mat-icon class="material-symbols-outlined" *ngIf="!isDirectMessage">tag</mat-icon>
+            <div class="avatar-container" *ngIf="isDirectMessage">
+              <img *ngIf="selectedUserAvatar" 
+                   [src]="'assets/img/avatars/' + selectedUserAvatar" 
+                   [alt]="selectedUserDisplayName + ' avatar'"
+                   class="user-avatar">
+            </div>
+            <ng-container *ngIf="!isDirectMessage">
+              {{ selectedChannel }}
+            </ng-container>
+            <ng-container *ngIf="isDirectMessage">
+              {{ selectedUserDisplayName }}
+            </ng-container>
+          </div>
         </mat-card-title>
+      </div>
+
+      <!-- Channel Members (nur für Channels) nach rechts verschieben -->
+      <div class="channel-members-container" *ngIf="!isDirectMessage">
+        <div class="member-avatars">
+          <div class="avatar-stack">
+            <img *ngFor="let member of channelMembers.slice(0, 3)" 
+                 [src]="'assets/img/avatars/' + member.avatar" 
+                 [alt]="member.username + ' avatar'"
+                 class="member-avatar"
+                 [matTooltip]="member.username">
+          </div>
+          <span class="member-count" *ngIf="channelMembers.length > 0">
+            {{ channelMembers.length }}
+          </span>
+        </div>
+        <button mat-icon-button (click)="openAddMemberDialog()" matTooltip="Mitglied hinzufügen">
+          <mat-icon>person_add</mat-icon>
+        </button>
       </div>
     </mat-card-header>
     <mat-card-content class="chat-content" #chatContent>
@@ -34,8 +52,18 @@
 
         <!-- Direct Message -->
         <div class="welcome-message" *ngIf="selectedUserDisplayName && isDirectMessage">
-          <h2 class="channel-title">{{ selectedUserDisplayName }}</h2>
-          <p class="channel-description">Diese Unterhaltung findet nur zwischen <span>&#64;{{ selectedUserDisplayName }}</span> und dir statt.</p>
+          <h2 class="channel-title">
+            {{ selectedUserDisplayName }}
+            <span *ngIf="isCurrentUser">(Du)</span>
+          </h2>
+          <p class="channel-description" *ngIf="isCurrentUser; else normalDM">
+            Dieser Raum ist nur für dich da. Mache dir Notizen, liste deine To-dos auf oder bewahre Links und Dateien griffbereit auf. Du kannst hier auch gerne Dinge mit dir selbst besprechen.
+          </p>
+          <ng-template #normalDM>
+            <p class="channel-description">
+              Diese Unterhaltung findet nur zwischen <span>&#64;{{ selectedUserDisplayName }}</span> und dir statt.
+            </p>
+          </ng-template>
         </div>
       </ng-container>
 
@@ -88,3 +116,13 @@
   [createdBy]="createdBy"
   (closeSettings)="onCloseSettings()"
 ></app-channel-settings>
+
+<!-- Am Ende des Templates hinzufügen -->
+<app-add-member-dialog
+  [isOpen]="isAddMemberDialogOpen"
+  [channelName]="selectedChannel || ''"
+  [channelId]="currentChannelId"
+  [currentMembers]="channelMemberIds"
+  (closeDialog)="closeAddMemberDialog()"
+  (memberAdded)="onMemberAdded()">
+</app-add-member-dialog>

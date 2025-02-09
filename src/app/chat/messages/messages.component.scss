@@ -108,10 +108,30 @@
         background-color: #797EF3;
       }
     }
+
     &:not(.guest) {
       .message-content .message-text {
         background-color: #ECEEFE;
       }
     }
+  }
+
+  &.highlighted {
+    background-color: rgba(255, 223, 0, 0.3);
+  }
+
+  &.highlight-animation {
+    animation: highlight 2s ease-out;
+  }
+}
+
+@keyframes highlight {
+  0% {
+    background-color: rgba(255, 223, 0, 0.5);
+    transform: scale(1.02);
+  }
+  100% {
+    background-color: transparent;
+    transform: scale(1);
   }
 }

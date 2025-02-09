@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import {
   Auth,
@@ -10,7 +10,6 @@ import {
   User,
 } from '@angular/fire/auth';
 import { DocumentData, Firestore, doc, getDoc, setDoc, collection, query, where, getDocs, DocumentData as FirestoreDocumentData } from '@angular/fire/firestore';
-import { inject } from '@angular/core';
 import { User as FirebaseUser } from 'firebase/auth';
 import { Router } from '@angular/router';
 import { User as UserModel } from '../models/user.model';  // Importiere das Interface
@@ -26,6 +25,10 @@ export class UserService {
   private currentUserSubject: BehaviorSubject<FirebaseUser | null> =
     new BehaviorSubject<FirebaseUser | null>(null);
   currentUser$ = this.currentUserSubject.asObservable();
+
+  // Neuer BehaviorSubject für den Username
+  private usernameSubject = new BehaviorSubject<string>('');
+  username$ = this.usernameSubject.asObservable();
 
   constructor() {
     this.loadUser();
@@ -106,23 +109,90 @@ export class UserService {
     }
   }
 
-  async getUserById(userId: string): Promise<UserModel | null> {
+  async getUserById(userId: string): Promise<any> {
     try {
+      console.log('Getting user by ID:', userId);
       const userDoc = await getDoc(doc(this.firestore, 'users', userId));
+      
       if (userDoc.exists()) {
-        const userData = userDoc.data() as DocumentData;
+        const userData = userDoc.data();
         return {
-          uid: userData['uid'],
-          displayName: userData['displayName'],
+          uid: userId,
+          username: userData['username'] || 'Unbekannt',
+          avatar: userData['avatar'] || 'default-avatar.png',
           email: userData['email'],
-          photoURL: userData['photoURL'],
-          username: userData['username']
+          isOnline: userData['isOnline'] || false
         };
       }
-      console.log('No user found with ID:', userId);
       return null;
     } catch (error) {
-      console.error('Error getting user by ID:', error);
+      console.error('Error getting user:', error);
+      return null;
+    }
+  }
+
+  // Neue Methode zum Aktualisieren des Usernames
+  updateUsername(newUsername: string) {
+    this.usernameSubject.next(newUsername);
+  }
+
+  async createUserIfNotExists(userId: string, userData: any): Promise<void> {
+    try {
+      const userDoc = await getDoc(doc(this.firestore, 'users', userId));
+      
+      if (!userDoc.exists()) {
+        console.log('Creating new user:', userId);
+        await setDoc(doc(this.firestore, 'users', userId), {
+          uid: userId,
+          username: 'Sofia Weber',  // oder userData.username
+          email: 'sofia.weber@example.com',  // oder userData.email
+          avatar: 'sofia-weber-avatar.png',  // oder ein Default-Avatar
+        });
+        console.log('User created successfully');
+      }
+    } catch (error) {
+      console.error('Error creating user:', error);
+    }
+  }
+
+  async searchUsers(searchText: string, excludeUserIds: string[] = []): Promise<any[]> {
+    try {
+      const usersRef = collection(this.firestore, 'users');
+      const q = query(
+        usersRef,
+        where('username', '>=', searchText),
+        where('username', '<=', searchText + '\uf8ff')
+      );
+      
+      const querySnapshot = await getDocs(q);
+      const users = querySnapshot.docs
+        .map(doc => ({
+          uid: doc.id,
+          ...doc.data()
+        }))
+        // Filtere User aus, die bereits Mitglied sind
+        .filter(user => !excludeUserIds.includes(user.uid));
+      
+      console.log('Search results:', users);
+      return users;
+    } catch (error) {
+      console.error('Error searching users:', error);
+      return [];
+    }
+  }
+
+  async getCurrentUserId(): Promise<string | null> {
+    try {
+      const userString = localStorage.getItem('user');
+      if (userString) {
+        const user = JSON.parse(userString);
+        const uid = user.uid || null;
+        console.log('getCurrentUserId returning:', uid); // Debug log
+        return uid;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting current user ID:', error);
       return null;
     }
   }

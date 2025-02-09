@@ -4,9 +4,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatInputModule } from '@angular/material/input';
+import { FormsModule } from '@angular/forms';
 import { trigger, state, style, animate, transition } from '@angular/animations';
 import { Auth } from '@angular/fire/auth';
-import { Firestore, collection, query, where, getDocs } from '@angular/fire/firestore';
+import { Firestore, collection, query, where, getDocs, doc, updateDoc } from '@angular/fire/firestore';
 import { UserService } from '../../services/user.service';
 
 @Component({
@@ -18,6 +20,8 @@ import { UserService } from '../../services/user.service';
     MatIconModule,
     MatCardModule,
     MatDividerModule,
+    MatInputModule,
+    FormsModule
   ],
   templateUrl: './user-profile-settings.component.html',
   styleUrl: './user-profile-settings.component.scss',
@@ -48,25 +52,26 @@ export class UserProfileSettingsComponent implements OnInit {
   email: string = '';
   userAvatar: string | null = null;
   isOnline = true;
+  isEditing = false;
+  newUsername: string = '';
+  userId: string = '';
 
   constructor(
     private auth: Auth,
     private firestore: Firestore,
     private userService: UserService
   ) {
-    // Subscribe to user changes
     this.userService.currentUser$.subscribe(async user => {
       if (user) {
-        // Direkt aus der users Collection laden
+        this.userId = user.uid;
         const usersRef = collection(this.firestore, 'users');
         const q = query(usersRef, where('uid', '==', user.uid));
         const querySnapshot = await getDocs(q);
         
         if (!querySnapshot.empty) {
           const userData = querySnapshot.docs[0].data();
-          console.log('Profile Settings - Loaded user data:', userData);
-          
           this.username = userData['username'] || 'Unbekannt';
+          this.newUsername = this.username;
           this.email = userData['email'] || '';
           this.userAvatar = userData['avatar'] || 'default-avatar.png';
         }
@@ -74,25 +79,48 @@ export class UserProfileSettingsComponent implements OnInit {
     });
   }
 
-  ngOnInit() {
-    // Initial user data load
-    const currentUser = this.auth.currentUser;
-    if (currentUser) {
-      const usersRef = collection(this.firestore, 'users');
-      const q = query(usersRef, where('uid', '==', currentUser.uid));
-      getDocs(q).then(querySnapshot => {
-        if (!querySnapshot.empty) {
-          const userData = querySnapshot.docs[0].data();
-          this.username = userData['username'];
-          this.email = userData['email'];
-          this.userAvatar = userData['avatar'];
-        }
-      });
+  toggleEdit() {
+    this.isEditing = !this.isEditing;
+    if (this.isEditing) {
+      this.newUsername = this.username;
     }
+  }
+
+  async saveUsername() {
+    if (this.newUsername.trim() && this.newUsername !== this.username) {
+      try {
+        const usersRef = collection(this.firestore, 'users');
+        const q = query(usersRef, where('uid', '==', this.userId));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          const userDoc = querySnapshot.docs[0];
+          await updateDoc(doc(this.firestore, 'users', userDoc.id), {
+            username: this.newUsername
+          });
+          
+          this.username = this.newUsername;
+          this.userService.updateUsername(this.newUsername);
+          console.log('Username updated successfully');
+        }
+      } catch (error) {
+        console.error('Error updating username:', error);
+      }
+    }
+    this.isEditing = false;
+  }
+
+  cancelEdit() {
+    this.isEditing = false;
+    this.newUsername = this.username;
   }
 
   close(event: MouseEvent) {
     event.stopPropagation();
     this.closeInfo.emit();
+  }
+
+  ngOnInit() {
+
   }
 }

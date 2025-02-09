@@ -5,15 +5,16 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { TextFieldModule } from '@angular/cdk/text-field';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ChatService } from '../services/chat.service';
 import { ChannelSettingsComponent } from './channel-settings/channel-settings.component';
 import { FormsModule } from '@angular/forms';
 import { Firestore } from '@angular/fire/firestore';
-import { collection, query, where, getDocs, doc, getDoc, addDoc } from '@firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, addDoc, setDoc } from '@firebase/firestore';
 import { ProfileInfoComponent } from './profile-info/profile-info.component';
 import { MessagesComponent } from './messages/messages.component';
 import { UserService } from '../services/user.service';
-import { User } from '../models/user.model';  // Importiere das Interface
+import { AddMemberDialogComponent } from './add-member-dialog/add-member-dialog.component';
 
 @Component({
   selector: 'app-chat',
@@ -26,9 +27,11 @@ import { User } from '../models/user.model';  // Importiere das Interface
     MatIconModule,
     MatButtonModule,
     TextFieldModule,
+    MatTooltipModule,
     ChannelSettingsComponent,
     FormsModule,
-    MessagesComponent
+    MessagesComponent,
+    AddMemberDialogComponent
   ],
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.scss']
@@ -52,6 +55,11 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   messageText: string = '';
   hasMessages: boolean = false;
   currentUserId: string | null = null;
+  channelMembers: any[] = [];  // Array für Channel-Mitglieder
+  isAddMemberDialogOpen = false;
+  channelMemberIds: string[] = []; // Neue Property für Member IDs
+  currentUser: any;
+  isCurrentUser = false;
 
   constructor(
     private firestore: Firestore,
@@ -83,8 +91,9 @@ export class ChatComponent implements OnInit, AfterViewChecked {
           const userData = querySnapshot.docs[0].data();
           this.selectedUserDisplayName = userData['username'] || 'Unbekannt';
           this.selectedUserEmail = userData['email'] || '';
-          this.selectedUserAvatar = userData['avatar'] || 'default-avatar.png';
+          this.selectedUserAvatar = userData['avatar'];
           console.log('Loaded DM user data:', userData);
+          this.isCurrentUser = userId === this.currentUserId;
         }
       }
     });
@@ -114,17 +123,49 @@ export class ChatComponent implements OnInit, AfterViewChecked {
         this.channelName = channelData['name'];
         this.channelDescription = channelData['description'] || '';
         
+        // Lade Channel-Mitglieder
+        await this.loadChannelMembers(channelDoc.id);
+        
         if (channelData['createdByUserId']) {
           const userId = channelData['createdByUserId'];
           const user = await this.userService.getUserById(userId);
           this.createdBy = user?.username || user?.displayName || 'Unbekannt';
-        } else {
-          this.createdBy = 'Kein Ersteller zugewiesen';
         }
       }
     } catch (error) {
       console.error('Fehler beim Laden der Channel-Details:', error);
-      this.createdBy = 'Fehler beim Laden';
+    }
+  }
+
+  async loadChannelMembers(channelId: string) {
+    try {
+      console.log('Loading members for channel:', channelId);
+      const membersRef = collection(this.firestore, 'channelMembers');
+      const q = query(membersRef, where('channelId', '==', channelId));
+      const querySnapshot = await getDocs(q);
+      
+      const memberPromises = querySnapshot.docs.map(async (doc) => {
+        const memberData = doc.data();
+        const userId = memberData['userId'];
+        const user = await this.userService.getUserById(userId);
+        
+        if (user) {
+          return {
+            uid: userId,
+            username: user.username,
+            avatar: user.avatar
+          };
+        }
+        return null;
+      });
+
+      const members = await Promise.all(memberPromises);
+      this.channelMembers = members.filter(member => member !== null);
+      // Aktualisiere die Member IDs
+      this.channelMemberIds = this.channelMembers.map(member => member.uid);
+      console.log('Final channel members:', this.channelMembers);
+    } catch (error) {
+      console.error('Error loading channel members:', error);
     }
   }
 
@@ -141,7 +182,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       if (userId) {
         const user = await this.userService.getUserById(userId);
         if (user) {
-          this.selectedUserDisplayName = user.username || 'Unbekannt';
+          this.selectedUserDisplayName = user.username;
         }
       }
     });
@@ -149,6 +190,22 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     this.chatService.hasMessages$.subscribe(
       hasMessages => this.hasMessages = hasMessages
     );
+
+    // Füge existierende Nachrichtenautoren als Mitglieder hinzu
+    await this.addExistingMessageAuthorsAsMembers();
+
+    // Channel Subscription
+    this.chatService.selectedChannel$.subscribe(async channelName => {
+      if (channelName) {
+        await this.loadChannelDetails(channelName);
+        // Füge existierende Nachrichtenautoren als Mitglieder hinzu
+        await this.addExistingMessageAuthorsAsMembers();
+        // Lade die Channel-Mitglieder nach dem Hinzufügen
+        if (this.currentChannelId) {
+          await this.loadChannelMembers(this.currentChannelId);
+        }
+      }
+    });
   }
 
   getPlaceholderText(): string {
@@ -184,8 +241,8 @@ export class ChatComponent implements OnInit, AfterViewChecked {
           const querySnapshot = await getDocs(q);
           if (!querySnapshot.empty) {
             const userData = querySnapshot.docs[0].data();
-            this.selectedUserEmail = userData['email'] || '';
-            this.selectedUserAvatar = userData['avatar'] || 'default-avatar.png';
+            this.selectedUserEmail = userData['email'];
+            this.selectedUserAvatar = userData['avatar'];
           }
         } catch (error) {
           console.error('Fehler beim Laden der User-Daten:', error);
@@ -238,12 +295,37 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       const userDoc = await this.userService.getUserById(currentUser.uid);
       console.log('User doc:', userDoc);
 
-      // Verwende nur den username
+      // Prüfe und füge User als Channel-Mitglied hinzu, falls noch nicht vorhanden
+      if (!this.isDirectMessage && this.currentChannelId) {
+        console.log('Checking membership for channel:', this.currentChannelId);
+        const channelMembersRef = collection(this.firestore, 'channelMembers');
+        
+        const q = query(channelMembersRef, 
+          where('channelId', '==', this.currentChannelId),
+          where('userId', '==', currentUser.uid)
+        );
+        
+        const memberSnapshot = await getDocs(q);
+        console.log('Member snapshot empty?', memberSnapshot.empty);
+        
+        if (memberSnapshot.empty) {
+          console.log('Adding user to channel members:', currentUser.uid);
+          await addDoc(channelMembersRef, {
+            channelId: this.currentChannelId,
+            userId: currentUser.uid,
+            joinedAt: new Date()
+          });
+          
+          // Aktualisiere die Mitgliederliste
+          await this.loadChannelMembers(this.currentChannelId);
+        }
+      }
+
       const messageData = {
         text: this.messageText.trim(),
         timestamp: new Date(),
         userId: currentUser.uid,
-        username: userDoc?.username || 'Unbekannt',  // Nur username verwenden
+        username: userDoc?.username || 'Unbekannt',
         channelId: this.isDirectMessage ? null : this.selectedChannel,
         recipientId: this.isDirectMessage ? this.chatService.selectedUser : null
       };
@@ -251,14 +333,17 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       console.log('Sending message with data:', messageData);
       await addDoc(messagesRef, messageData);
       this.messageText = '';
-      this.shouldScroll = true;  // Setze Flag nach dem Senden
+      this.shouldScroll = true;
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('Error in sendMessage:', error);
     }
   }
 
-  getDisplayName(user: any): string {
-    return user.displayName;
+  getUserDisplayName(user: any): string {
+    if (user.uid === this.currentUser?.uid) {
+      return `${user.username} (Du)`;
+    }
+    return user.username;
   }
 
   ngAfterViewChecked() {
@@ -277,9 +362,63 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     }
   }
 
-  // Neue Methode zum Prüfen, ob der User der aktuelle User ist
-  isCurrentUser(userId: string): boolean {
-    return this.currentUserId === userId;
+  async addExistingMessageAuthorsAsMembers() {
+    if (!this.currentChannelId) return;
+
+    try {
+      console.log('Adding existing message authors as members');
+      const messagesRef = collection(this.firestore, 'messages');
+      const q = query(messagesRef, where('channelId', '==', this.selectedChannel));
+      const messageSnapshot = await getDocs(q);
+
+      const channelMembersRef = collection(this.firestore, 'channelMembers');
+      
+      for (const messageDoc of messageSnapshot.docs) {
+        const messageData = messageDoc.data();
+        const userId = messageData['userId'];
+        
+        if (userId) {
+          // Prüfe ob User bereits Mitglied ist
+          const memberQuery = query(channelMembersRef, 
+            where('channelId', '==', this.currentChannelId),
+            where('userId', '==', userId)
+          );
+          const memberSnapshot = await getDocs(memberQuery);
+          
+          if (memberSnapshot.empty) {
+            console.log('Adding existing message author as member:', userId);
+            await addDoc(channelMembersRef, {
+              channelId: this.currentChannelId,
+              userId: userId,
+              joinedAt: new Date()
+            });
+          }
+        }
+      }
+      
+      // Aktualisiere die Mitgliederliste
+      await this.loadChannelMembers(this.currentChannelId);
+    } catch (error) {
+      console.error('Error adding existing message authors:', error);
+    }
+  }
+
+  async onMemberAdded() {
+    // Aktualisiere die Mitgliederliste
+    await this.loadChannelMembers(this.currentChannelId);
+  }
+
+  async loadDirectMessageUser(userId: string) {
+    // ... bestehender Code
+    this.isCurrentUser = userId === this.currentUserId;
+  }
+
+  async openAddMemberDialog() {
+    this.isAddMemberDialogOpen = true;
+  }
+
+  closeAddMemberDialog() {
+    this.isAddMemberDialogOpen = false;
   }
 }
 

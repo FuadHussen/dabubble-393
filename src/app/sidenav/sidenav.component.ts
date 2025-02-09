@@ -17,6 +17,7 @@ import { ChatService } from '../services/chat.service';
 import { getAuth } from '@angular/fire/auth';
 import { Auth } from '@angular/fire/auth';
 import { UserService } from '../services/user.service';
+import { Router } from '@angular/router';
 
 interface Channel {
   name: string;
@@ -59,13 +60,15 @@ export class SidenavComponent implements OnInit {
   channels$: Observable<Channel[]>;
   users: User[] = [];
   users$: Observable<User[]>;
+  currentUserId: string | null = null;
 
   constructor(
     private dialog: MatDialog,
     private firestore: Firestore,
     private chatService: ChatService,
     private auth: Auth,
-    private userService: UserService
+    private userService: UserService,
+    private router: Router
   ) {
     // Channels aus Firestore laden
     const channelsCollection = collection(this.firestore, 'channels');
@@ -107,7 +110,7 @@ export class SidenavComponent implements OnInit {
     });
   }
 
-  ngOnInit() {
+  async ngOnInit() {
     // Initialer Load der Channels
     this.loadChannels();
     // Initialer Load der Users
@@ -130,6 +133,16 @@ export class SidenavComponent implements OnInit {
     this.chatService.isDirectMessage$.subscribe(isDM => {
       this.isDirectMessage = isDM;
     });
+
+    // Direkt die Auth UID verwenden
+    this.currentUserId = this.auth.currentUser?.uid || null;
+    console.log('Current User ID from Auth:', this.currentUserId);
+
+    // Falls die ID sich ändert
+    this.auth.onAuthStateChanged((user) => {
+      this.currentUserId = user?.uid || null;
+      console.log('Updated Current User ID:', this.currentUserId);
+    });
   }
 
   loadChannels() {
@@ -142,12 +155,20 @@ export class SidenavComponent implements OnInit {
   loadUsers() {
     const usersCollection = collection(this.firestore, 'users');
     collectionData(usersCollection, { idField: 'id' }).subscribe(users => {
-      this.users = users.map(user => ({
-        ...user,
-        username: user['displayName'] || user['username'] || 'Unnamed User',
-      })) as User[];
+      this.users = users.map(user => {
+        const mappedUser = {
+          id: user['id'],
+          uid: user['uid'], // Wichtig: Wir brauchen beide IDs
+          username: user['displayName'] || user['username'] || 'Unnamed User',
+          displayName: user['displayName'],
+          avatar: user['avatar'] || 'default-avatar.png'
+        };
+        console.log('Mapped User:', mappedUser); // Debug log für jeden User
+        return mappedUser;
+      }) as User[];
       
-      console.log('Loaded users with mapping:', this.users); // Debug log
+      console.log('All Users:', this.users);
+      console.log('Comparing with currentUserId:', this.currentUserId);
     });
   }
 

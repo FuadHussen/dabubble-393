@@ -13,9 +13,24 @@
             class="profile-image">
         </div>
 
-
         <div class="user-info">
-          <h2 class="username">{{ username }}</h2>
+          <div class="username-container">
+            <div *ngIf="!isEditing" class="username-display">
+              <h2 class="username">{{ username }}</h2>
+              <button mat-button color="primary" class="edit-button" (click)="toggleEdit()">
+                Bearbeiten
+              </button>
+            </div>
+            <div *ngIf="isEditing" class="username-edit">
+              <mat-form-field appearance="outline">
+                <input matInput [(ngModel)]="newUsername" placeholder="Neuer Username">
+              </mat-form-field>
+              <div class="edit-buttons">
+                <button mat-stroked-button (click)="cancelEdit()">Abbrechen</button>
+                <button mat-flat-button (click)="saveUsername()">Speichern</button>
+              </div>
+            </div>
+          </div>
           
           <div class="status online">
             <span class="status-dot online"></span>

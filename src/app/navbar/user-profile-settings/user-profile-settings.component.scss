@@ -7,4 +7,44 @@
   object-fit: cover;
 }
 
+.username-container {
+  margin-bottom: 20px;
+}
 
+.username-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  .edit-button {
+    color: #1381FF!important;  
+    font-size: 14px;
+    text-transform: none;
+    min-width: auto;
+    padding: 0 8px;
+  }
+}
+
+.username-edit {
+  mat-form-field {
+    width: 100%;
+  }
+  
+  .edit-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 16px;
+
+    button[mat-stroked-button] {
+      color: #1381FF;  // Standard Textfarbe
+      border-color: currentColor;   // Verwendet die gleiche Farbe wie der Text
+    }
+
+    button[mat-flat-button] {
+      background-color: #1381FF;  // Material Design Primary Blue
+      color: white;
+    }
+  }
+}

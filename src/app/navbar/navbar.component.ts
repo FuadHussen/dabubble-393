@@ -1,4 +1,4 @@
-import { Component} from '@angular/core';
+import { Component, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatInputModule } from '@angular/material/input';
@@ -63,6 +63,8 @@ interface Message {
 })
 
 export class NavbarComponent {
+  @ViewChild('searchContainer') searchContainer!: ElementRef;
+  
   searchControl = new FormControl('');
   searchResults: any[] = [];
   showResults: boolean = false;
@@ -103,6 +105,13 @@ export class NavbarComponent {
         } else {
           console.log('No user document found for uid:', user.uid);
         }
+      }
+    });
+
+    // Neue Subscription für Username-Änderungen
+    this.userService.username$.subscribe(username => {
+      if (username) {
+        this.userName = username;
       }
     });
 
@@ -200,13 +209,13 @@ export class NavbarComponent {
         username: 'Sofia Weber',
         email: 'sofia@example.com',
         avatar: 'sofia-mueller-avatar.png',
-        id: 'a4QeEY8CNEd6CZ2KwQZVCBhlJ2z1'  // Exakte ID aus dem Login Component
+        uid: 'a4QeEY8CNEd6CZ2KwQZVCBhlJ2z0'  // Korrekte UID aus Firebase
       },
       {
         username: 'Sascha Lenz',
         email: 'sascha@example.com',
         avatar: 'frederik-beck-avatar.png',
-        id: 'NbMgkSxq3fULESFz01t7Sk7jDxw2'  // Exakte ID aus dem Login Component
+        uid: 'NbMgkSxq3fULESFz01t7Sk7jDxw2'  // Korrekte UID aus Firebase
       },
       {
         username: 'Gäste Login',
@@ -223,7 +232,7 @@ export class NavbarComponent {
           title: user.username,
           subtitle: user.email,
           avatar: user.avatar,
-          id: user.id
+          id: user.uid  // Hier die korrekte UID verwenden
         });
       }
     });
@@ -312,28 +321,59 @@ export class NavbarComponent {
   }
 
   async selectResult(result: SearchResult) {
+    console.log('Selecting result:', result);
+
     switch (result.type) {
       case 'channel':
         this.chatService.selectChannel(result.title);
         break;
       case 'user':
-        this.chatService.selectUser(result.title);
+        const userQuery = query(
+          collection(this.firestore, 'users'),
+          where('username', '==', result.title)
+        );
+        const userSnapshot = await getDocs(userQuery);
+        
+        if (!userSnapshot.empty) {
+          const userData = userSnapshot.docs[0].data();
+          console.log('Found user data:', userData);
+          this.chatService.selectUser(userData['uid']);
+        } else {
+          console.error('User not found:', result.title);
+        }
         break;
       case 'message':
         if (result.channelId) {
-          await this.chatService.selectChannel(result.channelId);
+          // Für Nachrichten in Channels
+          this.chatService.selectChannel(result.channelId);
         } else {
-          await this.chatService.selectUser(result.title);
+          // Für Direktnachrichten
+          const userQuery = query(
+            collection(this.firestore, 'users'),
+            where('username', '==', result.title)
+          );
+          const userSnapshot = await getDocs(userQuery);
+          if (!userSnapshot.empty) {
+            const userData = userSnapshot.docs[0].data();
+            this.chatService.selectUser(userData['uid']);
+          }
         }
         break;
     }
     this.closeSearch();
   }
 
-  // Methode zum Schließen der Suche
+  @HostListener('document:click', ['$event'])
+  handleClickOutside(event: MouseEvent) {
+    // Prüfen ob der Klick außerhalb des Such-Containers war
+    if (this.searchContainer && !this.searchContainer.nativeElement.contains(event.target)) {
+      this.closeSearch();
+    }
+  }
+
   closeSearch() {
+    this.searchControl.setValue('');
+    this.searchResults = [];
     this.showResults = false;
-    this.searchControl.setValue('');  // Input leeren
-    this.searchResults = [];  // Ergebnisse zurücksetzen
   }
 }
