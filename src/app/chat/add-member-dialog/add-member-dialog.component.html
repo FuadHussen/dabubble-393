@@ -11,30 +11,35 @@
         <p class="channel-name"># {{ channelName }}</p>
         
         <div class="search-container">
-          <div class="selected-user" *ngIf="selectedUser">
-            <img [src]="'assets/img/avatars/' + selectedUser.avatar" [alt]="selectedUser.username" class="user-avatar">
-            <span class="username">{{ selectedUser.username }}</span>
-            <button class="remove-user" (click)="removeSelectedUser($event)">
-              <mat-icon>close</mat-icon>
-            </button>
+          <div class="selected-users-container">
+            <div class="selected-user-tag" *ngFor="let user of selectedUsers">
+              <img [src]="'assets/img/avatars/' + user.avatar" [alt]="user.username" class="user-avatar">
+              <span class="username">{{ user.username }}</span>
+              <button class="remove-user" (click)="removeSelectedUser(user, $event)">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
           </div>
-          <input 
-            type="text" 
-            class="search-input"
-            [class.has-selected]="selectedUser"
-            placeholder="Nach Personen suchen"
-            [(ngModel)]="searchText"
-            (input)="onSearch()"
-            [disabled]="selectedUser">
-          <mat-icon class="search-icon">search</mat-icon>
+
+          <div class="search-input-container">
+            <input 
+              type="text" 
+              class="search-input"
+              placeholder="Nach Personen suchen"
+              [(ngModel)]="searchText"
+              (input)="onSearch()">
+            <mat-icon class="search-icon">search</mat-icon>
+          </div>
         </div>
 
-        <div class="search-results" *ngIf="searchResults.length > 0 && !selectedUser">
+        <div class="search-results" *ngIf="searchResults.length > 0">
           <div class="user-item" 
-               *ngFor="let user of searchResults" 
-               (click)="selectUser(user)">
+               *ngFor="let user of searchResults"
+               (click)="selectUser(user)"
+               [class.selected]="isUserSelected(user)">
             <img [src]="'assets/img/avatars/' + user.avatar" [alt]="user.username + ' avatar'" class="user-avatar">
             <span class="username">{{ user.username }}</span>
+            <mat-icon class="check-icon" *ngIf="isUserSelected(user)">check</mat-icon>
           </div>
         </div>
       </mat-card-content>
@@ -42,9 +47,9 @@
       <mat-card-actions>
         <button mat-flat-button 
                 color="primary" 
-                [disabled]="!selectedUser"
+                [disabled]="selectedUsers.length === 0"
                 (click)="addMember()">
-          Hinzufügen
+          {{ selectedUsers.length }} Personen hinzufügen
         </button>
       </mat-card-actions>
     </mat-card>

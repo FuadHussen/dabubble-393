@@ -66,18 +66,18 @@ export class ChatService {
   }
 
   selectChannel(channelName: string) {
-    console.log('Selecting channel:', channelName);
     this.selectedChannelSubject.next(channelName);
     this.selectedUserSubject.next('');
     this.isDirectMessageSubject.next(false);
   }
 
+
   selectUser(userId: string) {
-    console.log('Selecting user:', userId);
     this.selectedUserSubject.next(userId);
     this.selectedChannelSubject.next('');
     this.isDirectMessageSubject.next(true);
   }
+
 
   selectNextAvailableChannel() {
     const channelsRef = collection(this.firestore, 'channels');
@@ -113,15 +113,9 @@ export class ChatService {
 
   async getUserByDisplayName(displayName: string) {
     try {
-      console.log('Searching for user with displayName:', displayName);
       const usersRef = collection(this.firestore, 'users');
       const q = query(usersRef, where('displayName', '==', displayName));
       const querySnapshot = await getDocs(q);
-      
-      console.log('Query results:', querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        data: doc.data()
-      })));
       
       if (!querySnapshot.empty) {
         return querySnapshot.docs[0];
@@ -144,9 +138,8 @@ export class ChatService {
   }
 
   createChatId(uid1: string, uid2: string): string {
-    console.log('Creating chat ID for users:', uid1, uid2);
     const chatId = [uid1, uid2].sort().join('_');
-    console.log('Generated chat ID:', chatId);
     return chatId;
   }
+
 } 

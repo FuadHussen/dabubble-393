@@ -90,18 +90,9 @@ export class NavbarComponent {
         
         if (!querySnapshot.empty) {
           const userData = querySnapshot.docs[0].data();
-          console.log('Loaded user data from Firebase:', userData);
-          
           this.userName = userData['username'] || 'Unbekannt';
           this.userEmail = userData['email'] || '';
           this.userAvatar = userData['avatar'] || 'default-avatar.png';
-          
-          console.log('Set user data:', {
-            name: this.userName,
-            email: this.userEmail,
-            avatar: this.userAvatar,
-            uid: user.uid
-          });
         } else {
           console.log('No user document found for uid:', user.uid);
         }
@@ -321,7 +312,6 @@ export class NavbarComponent {
   }
 
   async selectResult(result: SearchResult) {
-    console.log('Selecting result:', result);
 
     switch (result.type) {
       case 'channel':
@@ -336,11 +326,11 @@ export class NavbarComponent {
         
         if (!userSnapshot.empty) {
           const userData = userSnapshot.docs[0].data();
-          console.log('Found user data:', userData);
           this.chatService.selectUser(userData['uid']);
         } else {
           console.error('User not found:', result.title);
         }
+
         break;
       case 'message':
         if (result.channelId) {

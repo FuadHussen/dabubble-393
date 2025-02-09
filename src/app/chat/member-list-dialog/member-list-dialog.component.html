@@ -1,0 +1,38 @@
+<div class="dialog-overlay" *ngIf="isOpen" (click)="close()">
+    <mat-card class="dialog-card" (click)="$event.stopPropagation()">
+      <mat-card-header>
+        <mat-card-title>Mitglieder</mat-card-title>
+        <button mat-icon-button class="close-button" (click)="close()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <div class="members-list">
+          <div class="member-item" 
+               *ngFor="let member of members"
+               (click)="showProfile(member)">
+            <img [src]="'assets/img/avatars/' + member.avatar" 
+                 [alt]="member.username + ' avatar'"
+                 class="member-avatar">
+            <span class="member-name">{{ member.username }}</span>
+            <span class="creator-badge" *ngIf="member.isCreator">Ersteller</span>
+          </div>
+        </div>
+        
+        <button mat-button class="add-member-button" (click)="addMember()">
+          <mat-icon>person_add</mat-icon>
+          Mitglieder hinzufügen
+        </button>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <app-profile-info
+    [isOpen]="selectedMember !== null"
+    [username]="selectedMember?.username || ''"
+    [email]="selectedMember?.email || ''"
+    [avatar]="selectedMember?.avatar || ''"
+    [isOnline]="selectedMember?.isOnline || false"
+    (closeInfo)="closeProfile()">
+  </app-profile-info>

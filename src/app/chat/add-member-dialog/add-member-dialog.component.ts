@@ -8,6 +8,13 @@ import { FormsModule } from '@angular/forms';
 import { UserService } from '../../services/user.service';
 import { Firestore, collection, addDoc } from '@angular/fire/firestore';
 
+interface UserData {
+  uid: string;
+  username: string;
+  email: string;
+  avatar?: string;
+  isOnline?: boolean;
+}
 @Component({
   selector: 'app-add-member-dialog',
   standalone: true,
@@ -31,8 +38,8 @@ export class AddMemberDialogComponent {
   @Output() memberAdded = new EventEmitter<void>();
   
   searchText = '';
-  selectedUser: any = null;
-  searchResults: any[] = [];
+  selectedUsers: UserData[] = [];
+  searchResults: UserData[] = [];
 
   constructor(
     private userService: UserService,
@@ -41,52 +48,62 @@ export class AddMemberDialogComponent {
 
   close() {
     this.searchText = '';
-    this.selectedUser = null;
+    this.selectedUsers = [];
     this.searchResults = [];
     this.closeDialog.emit();
   }
 
   async onSearch() {
-    if (this.searchText.trim().length > 0) {
-      // Suche nach Usern, die noch nicht Mitglied sind
-      this.searchResults = await this.userService.searchUsers(
-        this.searchText, 
-        this.currentMembers
-      );
-    } else {
+    try {
+      if (this.searchText.trim().length > 0) {
+        const users = await this.userService.searchUsers(
+          this.searchText.trim(),
+          this.currentMembers
+        );
+        this.searchResults = users;
+      } else {
+        this.searchResults = [];
+      }
+    } catch (error) {
+      console.error('Error in onSearch:', error);
       this.searchResults = [];
     }
   }
 
-  removeSelectedUser(event: Event) {
-    event.stopPropagation();
-    this.selectedUser = null;
-    this.searchText = '';
-    // Aktiviere das Suchfeld wieder
+  selectUser(user: UserData) {
+    if (!this.selectedUsers.find(u => u.uid === user.uid)) {
+      this.selectedUsers.push(user);
+    }
   }
 
-  selectUser(user: any) {
-    this.selectedUser = user;
-    this.searchText = user.username;
-    this.searchResults = [];
+  removeSelectedUser(user: UserData, event: Event) {
+    event.stopPropagation();
+    this.selectedUsers = this.selectedUsers.filter(u => u.uid !== user.uid);
   }
 
   async addMember() {
-    if (this.selectedUser && this.channelId) {
+    if (this.selectedUsers.length > 0 && this.channelId) {
       try {
         const channelMembersRef = collection(this.firestore, 'channelMembers');
-        await addDoc(channelMembersRef, {
-          channelId: this.channelId,
-          userId: this.selectedUser.uid,
-          joinedAt: new Date()
-        });
         
-        console.log('Member added successfully:', this.selectedUser.username);
-        this.memberAdded.emit(); // Benachrichtigt den Parent Component
+        // Füge alle ausgewählten User hinzu
+        for (const user of this.selectedUsers) {
+          await addDoc(channelMembersRef, {
+            channelId: this.channelId,
+            userId: user.uid,
+            joinedAt: new Date()
+          });
+        }
+        
+        this.memberAdded.emit();
         this.close();
       } catch (error) {
-        console.error('Error adding member:', error);
+        console.error('Error adding members:', error);
       }
     }
+  }
+
+  isUserSelected(user: UserData): boolean {
+    return this.selectedUsers.some(u => u.uid === user.uid);
   }
 }

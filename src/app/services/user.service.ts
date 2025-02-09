@@ -14,6 +14,14 @@ import { User as FirebaseUser } from 'firebase/auth';
 import { Router } from '@angular/router';
 import { User as UserModel } from '../models/user.model';  // Importiere das Interface
 
+interface UserData {
+  uid: string;
+  username: string;
+  email: string;
+  avatar?: string;
+  isOnline?: boolean;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -51,9 +59,7 @@ export class UserService {
       const userDoc = await getDoc(userRef);
       if (userDoc.exists()) {
         const userData = userDoc.data();
-      } else {
-        console.log('Benutzer existiert nicht in Firestore');
-      }
+      } 
     } catch (error) {
       console.error('Fehler beim Laden der Benutzerdaten:', error);
     }
@@ -90,7 +96,6 @@ export class UserService {
         },
         { merge: true }
       );
-      console.log('Avatar erfolgreich gespeichert!');
     }
   }
 
@@ -111,9 +116,8 @@ export class UserService {
 
   async getUserById(userId: string): Promise<any> {
     try {
-      console.log('Getting user by ID:', userId);
       const userDoc = await getDoc(doc(this.firestore, 'users', userId));
-      
+
       if (userDoc.exists()) {
         const userData = userDoc.data();
         return {
@@ -139,7 +143,7 @@ export class UserService {
   async createUserIfNotExists(userId: string, userData: any): Promise<void> {
     try {
       const userDoc = await getDoc(doc(this.firestore, 'users', userId));
-      
+
       if (!userDoc.exists()) {
         console.log('Creating new user:', userId);
         await setDoc(doc(this.firestore, 'users', userId), {
@@ -155,26 +159,33 @@ export class UserService {
     }
   }
 
-  async searchUsers(searchText: string, excludeUserIds: string[] = []): Promise<any[]> {
+  async searchUsers(searchTerm: string, excludeUserIds: string[] = []): Promise<UserData[]> {
     try {
-      const usersRef = collection(this.firestore, 'users');
-      const q = query(
-        usersRef,
-        where('username', '>=', searchText),
-        where('username', '<=', searchText + '\uf8ff')
-      );
+      console.log('Searching for:', searchTerm);
+      console.log('Excluding users:', excludeUserIds);
       
-      const querySnapshot = await getDocs(q);
-      const users = querySnapshot.docs
+      const usersRef = collection(this.firestore, 'users');
+      const querySnapshot = await getDocs(usersRef);
+      
+      const results = querySnapshot.docs
         .map(doc => ({
           uid: doc.id,
           ...doc.data()
-        }))
-        // Filtere User aus, die bereits Mitglied sind
-        .filter(user => !excludeUserIds.includes(user.uid));
-      
-      console.log('Search results:', users);
-      return users;
+        } as UserData))  // Type assertion hinzugefügt
+        .filter(user => {
+          const usernameMatches = user.username?.toLowerCase().includes(searchTerm.toLowerCase());
+          const isNotExcluded = !excludeUserIds.includes(user.uid);
+          
+          console.log('Checking user:', user.username, {
+            usernameMatches,
+            isNotExcluded
+          });
+          
+          return usernameMatches && isNotExcluded;
+        });
+
+      console.log('Search results:', results);
+      return results;
     } catch (error) {
       console.error('Error searching users:', error);
       return [];
@@ -187,10 +198,10 @@ export class UserService {
       if (userString) {
         const user = JSON.parse(userString);
         const uid = user.uid || null;
-        console.log('getCurrentUserId returning:', uid); // Debug log
         return uid;
       }
       return null;
+
     } catch (error) {
       console.error('Error getting current user ID:', error);
       return null;

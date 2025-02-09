@@ -42,7 +42,7 @@ export class MessagesComponent implements OnInit {
   private messagesSubscription: (() => void) | undefined;
   users: User[] = [];
   messageText: string = '';
-  
+
   constructor(
     private firestore: Firestore,
     private chatService: ChatService,
@@ -55,8 +55,8 @@ export class MessagesComponent implements OnInit {
         ...user,
         avatar: user['avatar'] || null
       })) as User[];
-      console.log('Loaded users:', this.users);
     });
+
 
     // Subscribe to channel changes
     this.chatService.selectedChannel$.subscribe(channel => {
@@ -87,8 +87,6 @@ export class MessagesComponent implements OnInit {
   async loadMessages() {
     try {
       this.currentUser = await this.chatService.getCurrentUser();
-      console.log('Loading messages for:', this.isDirectMessage ? 'DM' : 'Channel', 
-                 this.isDirectMessage ? this.chatService.selectedUser : this.selectedChannel);
 
       if (this.isDirectMessage) {
         const selectedUserId = this.chatService.selectedUser;
@@ -110,7 +108,7 @@ export class MessagesComponent implements OnInit {
             querySnapshot.docs.forEach(doc => {
               const messageData = doc.data();
               const user = this.users.find(u => u.uid === messageData['userId']);
-              
+
               messages.push({
                 id: doc.id,
                 ...messageData,
@@ -119,10 +117,10 @@ export class MessagesComponent implements OnInit {
               } as Message);
             });
 
-            console.log('Loaded DM messages:', messages);
             this.messages = messages;
             this.groupMessagesByDate();
             this.chatService.setHasMessages(this.messages.length > 0);
+
           });
         }
       } else {
@@ -143,7 +141,7 @@ export class MessagesComponent implements OnInit {
             querySnapshot.docs.forEach(doc => {
               const messageData = doc.data();
               const user = this.users.find(u => u.uid === messageData['userId']);
-              
+
               messages.push({
                 id: doc.id,
                 ...messageData,
@@ -151,10 +149,10 @@ export class MessagesComponent implements OnInit {
               } as Message);
             });
 
-            console.log('Loaded channel messages:', messages);
             this.messages = messages;
             this.groupMessagesByDate();
             this.chatService.setHasMessages(this.messages.length > 0);
+
           });
         }
       }
@@ -171,10 +169,10 @@ export class MessagesComponent implements OnInit {
 
   groupMessagesByDate() {
     const groups = new Map<string, Message[]>();
-    
+
     this.messages.forEach(message => {
       let date: Date;
-      
+
       if (message.timestamp instanceof Timestamp) {
         date = message.timestamp.toDate();
       } else if (message.timestamp?.toDate) {
@@ -184,7 +182,7 @@ export class MessagesComponent implements OnInit {
       }
 
       const dateStr = this.formatDate(date);
-      
+
       if (!groups.has(dateStr)) {
         groups.set(dateStr, []);
       }
@@ -221,8 +219,8 @@ export class MessagesComponent implements OnInit {
 
   private isSameDay(date1: Date, date2: Date): boolean {
     return date1.getDate() === date2.getDate() &&
-           date1.getMonth() === date2.getMonth() &&
-           date1.getFullYear() === date2.getFullYear();
+      date1.getMonth() === date2.getMonth() &&
+      date1.getFullYear() === date2.getFullYear();
   }
 
   isCurrentUser(userId: string): boolean {
@@ -243,7 +241,7 @@ export class MessagesComponent implements OnInit {
 
     try {
       const messagesRef = collection(this.firestore, 'messages');
-      
+
       const messageData = {
         text: this.messageText.trim(),
         timestamp: new Date(),

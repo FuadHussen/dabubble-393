@@ -81,10 +81,9 @@ export class SidenavComponent implements OnInit {
         ...user,
         avatar: user['avatar'] || null
       })) as User[];
-      
-      console.log('Loaded users with mapping:', this.users); // Debug log
     });
     
+
     // Neue Users Collection laden
     const usersCollectionNew = collection(this.firestore, 'users');
     this.users$ = collectionData(usersCollectionNew) as Observable<User[]>;
@@ -136,14 +135,13 @@ export class SidenavComponent implements OnInit {
 
     // Direkt die Auth UID verwenden
     this.currentUserId = this.auth.currentUser?.uid || null;
-    console.log('Current User ID from Auth:', this.currentUserId);
 
     // Falls die ID sich ändert
     this.auth.onAuthStateChanged((user) => {
       this.currentUserId = user?.uid || null;
-      console.log('Updated Current User ID:', this.currentUserId);
     });
   }
+
 
   loadChannels() {
     const channelsCollection = collection(this.firestore, 'channels');
@@ -163,13 +161,10 @@ export class SidenavComponent implements OnInit {
           displayName: user['displayName'],
           avatar: user['avatar'] || 'default-avatar.png'
         };
-        console.log('Mapped User:', mappedUser); // Debug log für jeden User
         return mappedUser;
       }) as User[];
-      
-      console.log('All Users:', this.users);
-      console.log('Comparing with currentUserId:', this.currentUserId);
     });
+
   }
 
   selectChannel(channelName: string) {

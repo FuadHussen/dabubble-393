@@ -331,3 +331,9 @@ mat-nav-list {
   border-radius: 50%;
   object-fit: cover;
 }
+
+.channel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

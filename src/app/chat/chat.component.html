@@ -24,7 +24,7 @@
 
       <!-- Channel Members (nur für Channels) nach rechts verschieben -->
       <div class="channel-members-container" *ngIf="!isDirectMessage">
-        <div class="member-avatars">
+        <div class="member-avatars" (click)="openMemberList()">
           <div class="avatar-stack">
             <img *ngFor="let member of channelMembers.slice(0, 3)" 
                  [src]="'assets/img/avatars/' + member.avatar" 
@@ -126,3 +126,10 @@
   (closeDialog)="closeAddMemberDialog()"
   (memberAdded)="onMemberAdded()">
 </app-add-member-dialog>
+
+<app-member-list-dialog
+  [isOpen]="isMemberListOpen"
+  [members]="channelMembers"
+  (closeDialog)="closeMemberList()"
+  (openAddMember)="openAddMemberDialog()">
+</app-member-list-dialog>
