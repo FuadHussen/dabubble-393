@@ -176,6 +176,8 @@ export class LoginComponent {
   private async initializeGuestChat() {
     try {
       const messagesRef = collection(this.firestore, 'messages');
+      const channelsRef = collection(this.firestore, 'channels');
+      const channelMembersRef = collection(this.firestore, 'channelMembers');
       const currentTime = new Date();
 
       // Hole zuerst die aktuelle User-ID des Gäste-Logins
@@ -201,6 +203,27 @@ export class LoginComponent {
         return;
       }
 
+      // Erstelle zuerst den Channel
+      const channelDoc = await addDoc(channelsRef, {
+        name: 'Front-End-Team',
+        description: 'Channel für Frontend-Entwicklung',
+        createdBy: 'a4QeEY8CNEd6CZ2KwQZVCBhlJ2z1', // Sofia ist die Erstellerin
+        createdAt: new Date(currentTime.getTime() - 35 * 60000)
+      });
+
+      // Füge Channel-Mitglieder hinzu
+      await addDoc(channelMembersRef, {
+        channelId: channelDoc.id,
+        userId: 'a4QeEY8CNEd6CZ2KwQZVCBhlJ2z1', // Sofia
+        joinedAt: new Date(currentTime.getTime() - 35 * 60000)
+      });
+
+      await addDoc(channelMembersRef, {
+        channelId: channelDoc.id,
+        userId: guestUserId, // Gast
+        joinedAt: new Date(currentTime.getTime() - 25 * 60000)
+      });
+
       // Channel-Nachrichten für "Front-End-Team"
       const channelMessages = [
         {
@@ -208,16 +231,16 @@ export class LoginComponent {
           userId: 'a4QeEY8CNEd6CZ2KwQZVCBhlJ2z1',
           username: 'Sofia Weber',
           timestamp: new Date(currentTime.getTime() - 30 * 60000),
-          channelId: 'Front-End-Team',
-          recipientId: null,
+          channelId: channelDoc.id,
+          recipientId: null
         },
         {
           text: 'Danke für die Einladung! Ich freue mich darauf, mehr über das Projekt zu erfahren.',
           userId: guestUserId,
           username: 'Gäste Login',
           timestamp: new Date(currentTime.getTime() - 25 * 60000),
-          channelId: 'Front-End-Team',
-          recipientId: null,
+          channelId: channelDoc.id,
+          recipientId: null
         },
       ];
 
@@ -229,7 +252,7 @@ export class LoginComponent {
           username: 'Sascha Lenz',
           timestamp: new Date(currentTime.getTime() - 20 * 60000),
           channelId: null,
-          recipientId: guestUserId,
+          recipientId: guestUserId
         },
         {
           text: 'Ja, die sehen super aus! Besonders die neue Navigation gefällt mir sehr gut.',
@@ -237,7 +260,7 @@ export class LoginComponent {
           username: 'Gäste Login',
           timestamp: new Date(currentTime.getTime() - 15 * 60000),
           channelId: null,
-          recipientId: 'NbMgkSxq3fULESFz01t7Sk7jDxw2',
+          recipientId: 'NbMgkSxq3fULESFz01t7Sk7jDxw2'
         },
       ];
 

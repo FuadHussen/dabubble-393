@@ -3,8 +3,12 @@
     <mat-card-header class="chat-header">
       <div class="channel-info">
         <mat-card-title class="channel-title-container">
-          <!-- Channel/DM Icon und Name -->
-          <div class="channel-name" (click)="openSettings()">
+          <!-- Neue Nachricht Header -->
+          <div class="new-message-container" *ngIf="isNewChat">
+            <div class="channel-name">Neue Nachricht</div>
+          </div>
+          <!-- Normaler Channel/DM Header -->
+          <div class="channel-name" (click)="openSettings()" *ngIf="!isNewChat">
             <mat-icon class="material-symbols-outlined" *ngIf="!isDirectMessage">tag</mat-icon>
             <div class="avatar-container" *ngIf="isDirectMessage">
               <img *ngIf="selectedUserAvatar" 
@@ -21,9 +25,8 @@
           </div>
         </mat-card-title>
       </div>
-
-      <!-- Channel Members (nur für Channels) nach rechts verschieben -->
-      <div class="channel-members-container" *ngIf="!isDirectMessage">
+      <!-- Channel Members nur anzeigen wenn kein neuer Chat und kein DM -->
+      <div class="channel-members-container" *ngIf="!isNewChat && !isDirectMessage">
         <div class="member-avatars" (click)="openMemberList()">
           <div class="avatar-stack">
             <img *ngFor="let member of channelMembers.slice(0, 3)" 
@@ -42,12 +45,52 @@
       </div>
     </mat-card-header>
     <mat-card-content class="chat-content" #chatContent>
-      <!-- Welcome message nur anzeigen, wenn keine Nachrichten vorhanden sind -->
-      <ng-container *ngIf="!hasMessages">
+      <!-- Neue Nachricht Input -->
+      <div *ngIf="isNewChat" class="new-chat-input">
+        <mat-form-field appearance="outline" class="recipient-input">
+          <input matInput
+                 placeholder="An: #channel, oder @jemand oder E-Mail Adresse"
+                 [(ngModel)]="recipientInput"
+                 (input)="onRecipientInput()">
+        </mat-form-field>
+        
+        <!-- Suchergebnisse -->
+        <div class="recipient-input-container">
+          <!-- Suchergebnisse -->
+          <div class="search-results" *ngIf="showResults && filteredResults.length > 0">
+            <div class="result-item" 
+                 *ngFor="let result of filteredResults" 
+                 (click)="selectResult(result)">
+              
+              <!-- User Avatar -->
+              <div class="avatar-container" *ngIf="result.type === 'user'">
+                <img [src]="'assets/img/avatars/' + result.avatar" 
+                     [alt]="result.name + ' avatar'"
+                     class="user-avatar">
+              </div>
+
+              <div class="result-info">
+                <span class="result-name">
+                  {{ result.type === 'channel' ? '#' : '' }}{{ result.name }}
+                </span>
+                <span class="result-email" *ngIf="result.email">
+                  {{ result.email }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Welcome message nur anzeigen, wenn keine Nachrichten und kein neuer Chat -->
+      <ng-container *ngIf="!hasMessages && !isNewChat">
         <!-- Channel Message -->
         <div class="welcome-message" *ngIf="selectedChannel && !isDirectMessage">
           <h2 class="channel-title"># {{ selectedChannel }}</h2>
-          <p class="channel-description">Du hast diesen Channel heute erstellt. Das ist der Anfang des Channels <span># {{ selectedChannel }}</span></p>
+          <p class="channel-description">
+            Du hast diesen Channel {{ getFormattedCreationDate() }} erstellt. 
+            Das ist der Anfang des Channels <span># {{ selectedChannel }}</span>
+          </p>
         </div>
 
         <!-- Direct Message -->
@@ -67,8 +110,8 @@
         </div>
       </ng-container>
 
-      <!-- Messages Component -->
-      <app-messages></app-messages>
+      <!-- Messages Component nur anzeigen wenn kein neuer Chat -->
+      <app-messages *ngIf="!isNewChat"></app-messages>
       
     </mat-card-content>
 
@@ -130,6 +173,7 @@
 <app-member-list-dialog
   [isOpen]="isMemberListOpen"
   [members]="channelMembers"
+  [channelId]="currentChannelId"
   (closeDialog)="closeMemberList()"
   (openAddMember)="openAddMemberDialog()">
 </app-member-list-dialog>

@@ -16,6 +16,7 @@ import { MessagesComponent } from './messages/messages.component';
 import { UserService } from '../services/user.service';
 import { AddMemberDialogComponent } from './add-member-dialog/add-member-dialog.component';
 import { MemberListDialogComponent } from './member-list-dialog/member-list-dialog.component';
+import { ActivatedRoute } from '@angular/router';
 
 
 @Component({
@@ -64,11 +65,18 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   currentUser: any;
   isCurrentUser = false;
   isMemberListOpen = false;
+  channelCreatedAt: Date | null = null;  // Neue Property
+  isNewChat: boolean = false;
+  recipientInput: string = '';
+  showWelcomeMessage = true;
+  filteredResults: any[] = [];
+  showResults: boolean = false;
 
   constructor(
     private firestore: Firestore,
     public chatService: ChatService,
-    private userService: UserService
+    private userService: UserService,
+    private route: ActivatedRoute
   ) {
     // Aktuellen User ID speichern
     this.userService.currentUser$.subscribe(user => {
@@ -90,7 +98,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
         const usersRef = collection(this.firestore, 'users');
         const q = query(usersRef, where('uid', '==', userId));
         const querySnapshot = await getDocs(q);
-        
+
         if (!querySnapshot.empty) {
           const userData = querySnapshot.docs[0].data();
           this.selectedUserDisplayName = userData['username'] || 'Unbekannt';
@@ -116,19 +124,20 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     try {
       const channelsRef = collection(this.firestore, 'channels');
       const q = query(channelsRef, where('name', '==', channelName));
-      
+
       const querySnapshot = await getDocs(q);
       if (!querySnapshot.empty) {
         const channelDoc = querySnapshot.docs[0];
         const channelData = channelDoc.data();
-        
+
         this.currentChannelId = channelDoc.id;
         this.channelName = channelData['name'];
         this.channelDescription = channelData['description'] || '';
-        
+        this.channelCreatedAt = channelData['createdAt']?.toDate() || null;  // Datum laden
+
         // Lade Channel-Mitglieder
-        await this.loadChannelMembers(channelDoc.id);
-        
+        await this.loadChannelMembers();
+
         if (channelData['createdByUserId']) {
           const userId = channelData['createdByUserId'];
           const user = await this.userService.getUserById(userId);
@@ -140,72 +149,65 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     }
   }
 
-  async loadChannelMembers(channelId: string) {
-    try {
-      // Zuerst den Channel-Ersteller laden
-      const channelsRef = collection(this.firestore, 'channels');
-      const channelDoc = await getDoc(doc(channelsRef, channelId));
-      const channelData = channelDoc.data();
-      const creatorId = channelData?.['createdByUserId'];
+  async loadChannelMembers() {
+    if (this.currentChannelId) {
+      try {
+        console.log('Loading members for channel:', this.currentChannelId);
 
-      // Alle Mitglieder laden
-      const membersRef = collection(this.firestore, 'channelMembers');
-      const q = query(membersRef, where('channelId', '==', channelId));
-      let memberSnapshot = await getDocs(q);  // 'let' statt 'const'
-      
-      // Prüfen ob der Ersteller bereits Mitglied ist
-      const isCreatorMember = memberSnapshot.docs.some(doc => 
-        doc.data()['userId'] === creatorId
-      );
+        const channelRef = doc(this.firestore, 'channels', this.currentChannelId);
+        const channelSnap = await getDoc(channelRef);
 
-      // Ersteller nur hinzufügen, wenn er noch nicht Mitglied ist
-      if (creatorId && !isCreatorMember) {
-        await addDoc(membersRef, {
-          channelId: channelId,
-          userId: creatorId,
-          joinedAt: new Date()
-        });
-        
-        // Aktualisierte Mitgliederliste abrufen
-        const updatedQuery = query(membersRef, where('channelId', '==', channelId));
-        memberSnapshot = await getDocs(updatedQuery);  // Neuer Snapshot
-      }
-      
-      const memberPromises = memberSnapshot.docs.map(async (doc) => {
-        const memberData = doc.data();
-        const userId = memberData['userId'];
-        const user = await this.userService.getUserById(userId);
-        
-        if (user) {
-          return {
-            uid: userId,
-            username: user.username,
-            avatar: user.avatar,
-            email: user.email,
-            isOnline: user.isOnline || false,
-            isCreator: userId === creatorId
-          };
+        if (!channelSnap.exists()) {
+          console.error('Channel document does not exist');
+          return;
         }
-        return null;
-      });
 
-      const members = await Promise.all(memberPromises);
-      // Sortiere den Ersteller an den Anfang und entferne Duplikate
-      this.channelMembers = members
-        .filter(member => member !== null)
-        .filter((member, index, self) => 
-          index === self.findIndex(m => m.uid === member.uid)
-        )
-        .sort((a, b) => (a.isCreator ? -1 : b.isCreator ? 1 : 0));
-        
-      // Aktualisiere die Member IDs
-      this.channelMemberIds = this.channelMembers.map(member => member.uid);
-    } catch (error) {
-      console.error('Error loading channel members:', error);
+        const channelData = channelSnap.data();
+        // Prüfe beide möglichen Felder
+        const creatorId = channelData['createdByUserId'] || channelData['createdBy'];
+        console.log('Channel data:', channelData);
+        console.log('Creator ID:', creatorId);
+
+        const membersRef = collection(this.firestore, 'channelMembers');
+        const q = query(membersRef, where('channelId', '==', this.currentChannelId));
+        const querySnapshot = await getDocs(q);
+
+        const memberPromises = querySnapshot.docs.map(async (memberDoc) => {
+          const memberData = memberDoc.data();
+          const userDoc = await getDoc(doc(this.firestore, 'users', memberData['userId']));
+          const userData = userDoc.data();
+
+          const isCreator = memberData['userId'] === creatorId;
+          console.log(`Checking if member ${memberData['userId']} is creator:`, isCreator);
+
+          const member = {
+            uid: memberData['userId'],
+            username: userData?.['username'] || 'Unbekannter Benutzer',
+            email: userData?.['email'],
+            avatar: userData?.['avatar'] || 'default-avatar.png',
+            isCreator: isCreator,
+            isOnline: userData?.['isOnline'] || false
+          };
+          console.log('Loaded member:', member);
+          return member;
+        });
+
+        this.channelMembers = await Promise.all(memberPromises);
+        console.log('All channel members loaded:', this.channelMembers);
+      } catch (error) {
+        console.error('Error loading channel members:', error);
+      }
     }
   }
 
   async ngOnInit() {
+    this.route.queryParams.subscribe(params => {
+      this.isNewChat = params['mode'] === 'new';
+      if (this.isNewChat) {
+        this.showWelcomeMessage = false;
+      }
+    });
+
     this.chatService.selectedChannel$.subscribe(channel => {
       this.selectedChannel = channel;
     });
@@ -223,9 +225,19 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       }
     });
 
+    this.chatService.isNewChatMode$.subscribe(isNewChat => {
+      this.isNewChat = isNewChat;
+      if (isNewChat) {
+        this.showWelcomeMessage = false;
+        this.selectedChannel = '';
+        this.selectedUserDisplayName = '';
+      }
+    });
+
     this.chatService.hasMessages$.subscribe(
       hasMessages => this.hasMessages = hasMessages
     );
+
 
     // Füge existierende Nachrichtenautoren als Mitglieder hinzu
     await this.addExistingMessageAuthorsAsMembers();
@@ -238,31 +250,40 @@ export class ChatComponent implements OnInit, AfterViewChecked {
         await this.addExistingMessageAuthorsAsMembers();
         // Lade die Channel-Mitglieder nach dem Hinzufügen
         if (this.currentChannelId) {
-          await this.loadChannelMembers(this.currentChannelId);
+          await this.loadChannelMembers();
         }
+      }
+    });
+
+    this.chatService.isNewChatMode$.subscribe(isNewChat => {
+      this.isNewChat = isNewChat;
+      if (isNewChat) {
+        this.showWelcomeMessage = false;
+        this.selectedChannel = '';
+        this.selectedUserDisplayName = '';
       }
     });
   }
 
   getPlaceholderText(): string {
     if (this.isDirectMessage) {
-      return this.selectedUserDisplayName ? 
-        `Nachricht an @${this.selectedUserDisplayName}` : 
+      return this.selectedUserDisplayName ?
+        `Nachricht an @${this.selectedUserDisplayName}` :
         'Nachricht schreiben...';
     }
-    return this.selectedChannel ? 
-      `Nachricht an #${this.selectedChannel}` : 
+    return this.selectedChannel ?
+      `Nachricht an #${this.selectedChannel}` :
       'Nachricht schreiben...';
   }
 
   getWelcomeText(): string {
     if (this.isDirectMessage) {
-      return this.selectedUserDisplayName ? 
-        `Dies ist der Beginn deiner Direktnachricht mit @${this.selectedUserDisplayName}` : 
+      return this.selectedUserDisplayName ?
+        `Dies ist der Beginn deiner Direktnachricht mit @${this.selectedUserDisplayName}` :
         'Wähle einen Benutzer aus, um eine Direktnachricht zu beginnen';
     }
-    return this.selectedChannel ? 
-      `Willkommen im Channel #${this.selectedChannel}` : 
+    return this.selectedChannel ?
+      `Willkommen im Channel #${this.selectedChannel}` :
       'Wähle einen Channel aus, um die Unterhaltung zu beginnen';
   }
 
@@ -272,7 +293,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       if (selectedUserId) {
         const usersRef = collection(this.firestore, 'users');
         const q = query(usersRef, where('uid', '==', selectedUserId));
-        
+
         try {
           const querySnapshot = await getDocs(q);
           if (!querySnapshot.empty) {
@@ -298,7 +319,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     this.isSettingsOpen = false;
   }
 
-  saveSettings(settings: {name: string, description: string}) {
+  saveSettings(settings: { name: string, description: string }) {
     this.isSettingsOpen = false;
   }
 
@@ -322,7 +343,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     try {
       const messagesRef = collection(this.firestore, 'messages');
       const currentUser = await this.chatService.getCurrentUser();
-      
+
 
       // Hole zusätzliche User-Informationen aus der Datenbank
       const userDoc = await this.userService.getUserById(currentUser.uid);
@@ -330,23 +351,23 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       // Prüfe und füge User als Channel-Mitglied hinzu, falls noch nicht vorhanden
       if (!this.isDirectMessage && this.currentChannelId) {
         const channelMembersRef = collection(this.firestore, 'channelMembers');
-        
-        const q = query(channelMembersRef, 
+
+        const q = query(channelMembersRef,
           where('channelId', '==', this.currentChannelId),
           where('userId', '==', currentUser.uid)
         );
-        
+
         const memberSnapshot = await getDocs(q);
-        
+
         if (memberSnapshot.empty) {
           await addDoc(channelMembersRef, {
             channelId: this.currentChannelId,
             userId: currentUser.uid,
             joinedAt: new Date()
           });
-          
+
           // Aktualisiere die Mitgliederliste
-          await this.loadChannelMembers(this.currentChannelId);
+          await this.loadChannelMembers();
         }
       }
 
@@ -399,19 +420,19 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       const messageSnapshot = await getDocs(q);
 
       const channelMembersRef = collection(this.firestore, 'channelMembers');
-      
+
       for (const messageDoc of messageSnapshot.docs) {
         const messageData = messageDoc.data();
         const userId = messageData['userId'];
-        
+
         if (userId) {
           // Prüfe ob User bereits Mitglied ist
-          const memberQuery = query(channelMembersRef, 
+          const memberQuery = query(channelMembersRef,
             where('channelId', '==', this.currentChannelId),
             where('userId', '==', userId)
           );
           const memberSnapshot = await getDocs(memberQuery);
-          
+
           if (memberSnapshot.empty) {
             await addDoc(channelMembersRef, {
               channelId: this.currentChannelId,
@@ -421,15 +442,15 @@ export class ChatComponent implements OnInit, AfterViewChecked {
           }
         }
       }
-      
+
       // Aktualisiere die Mitgliederliste
-      await this.loadChannelMembers(this.currentChannelId);
+      await this.loadChannelMembers();
     } catch (error) {
     }
   }
 
   async onMemberAdded() {
-    await this.loadChannelMembers(this.currentChannelId);
+    await this.loadChannelMembers();
   }
 
   async loadDirectMessageUser(userId: string) {
@@ -451,5 +472,131 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   closeMemberList() {
     this.isMemberListOpen = false;
   }
-}
 
+  getFormattedCreationDate(): string {
+    if (!this.channelCreatedAt) return '';
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const creationDate = new Date(this.channelCreatedAt);
+    const creationDay = new Date(
+      creationDate.getFullYear(),
+      creationDate.getMonth(),
+      creationDate.getDate()
+    );
+
+    if (creationDay.getTime() === today.getTime()) {
+      return 'heute';
+    } else if (creationDay.getTime() === yesterday.getTime()) {
+      return 'gestern';
+    } else {
+      // Formatierung auf dd.mm.yyyy ändern
+      const day = creationDate.getDate().toString().padStart(2, '0');
+      const month = (creationDate.getMonth() + 1).toString().padStart(2, '0');
+      const year = creationDate.getFullYear().toString();
+      return `${day}.${month}.${year}`;
+    }
+  }
+
+  async onRecipientInput() {
+    const input = this.recipientInput.trim();
+    this.showResults = input.length > 0;
+
+    if (!input || input.length < 2) {
+      this.filteredResults = [];
+      return;
+    }
+
+    try {
+      if (input.startsWith('#')) {
+        // Suche nach Channels
+        const channelsRef = collection(this.firestore, 'channels');
+        const q = query(
+          channelsRef,
+          where('name', '>=', input.substring(1)),
+          where('name', '<=', input.substring(1) + '\uf8ff')
+        );
+        const querySnapshot = await getDocs(q);
+        this.filteredResults = querySnapshot.docs.map(doc => ({
+          type: 'channel',
+          id: doc.id,
+          name: doc.data()['name'],
+          icon: 'tag'
+        }));
+
+      } else if (input.startsWith('@')) {
+        // Suche nach Benutzern
+        const usersRef = collection(this.firestore, 'users');
+        const q = query(
+          usersRef,
+          where('username', '>=', input.substring(1)),
+          where('username', '<=', input.substring(1) + '\uf8ff')
+        );
+        const querySnapshot = await getDocs(q);
+        this.filteredResults = querySnapshot.docs
+          .map(doc => ({
+            type: 'user',
+            id: doc.id,
+            name: doc.data()['username'],
+            email: doc.data()['email'],
+            avatar: doc.data()['avatar'],
+            icon: 'person'
+          }))
+          .filter(user => user.id !== this.currentUserId);
+
+      } else {
+        // Suche nach E-Mail (mit oder ohne @)
+        const usersRef = collection(this.firestore, 'users');
+        const q = query(
+          usersRef,
+          where('email', '>=', input),
+          where('email', '<=', input + '\uf8ff')
+        );
+        const querySnapshot = await getDocs(q);
+        this.filteredResults = querySnapshot.docs
+          .map(doc => ({
+            type: 'user',
+            id: doc.id,
+            name: doc.data()['username'],
+            email: doc.data()['email'],
+            avatar: doc.data()['avatar'],
+            icon: 'mail'
+          }))
+          .filter(user => user.id !== this.currentUserId);
+      }
+    } catch (error) {
+      console.error('Error searching for recipients:', error);
+      this.filteredResults = [];
+    }
+  }
+
+  selectResult(result: any) {
+    if (result.type === 'channel') {
+      this.chatService.selectChannel(result.name);
+    } else if (result.type === 'user') {
+      this.chatService.selectUser(result.id);
+    }
+    
+    // Reset aller relevanten Zustände
+    this.recipientInput = '';
+    this.showResults = false;
+    this.filteredResults = [];
+    this.isNewChat = false;
+    this.chatService.setNewChatMode(false);
+  }
+
+  // Diese Methode aufrufen, wenn ein Channel ausgewählt wird
+  selectChannel(channel: string) {
+    this.chatService.setNewChatMode(false); // Zurücksetzen des NewChat-Modus
+    // ... restlicher existierender Code für Channel-Auswahl
+  }
+
+  // Diese Methode aufrufen, wenn eine Direct Message ausgewählt wird
+  selectDirectMessage(user: any) {
+    this.chatService.setNewChatMode(false); // Zurücksetzen des NewChat-Modus
+    // ... restlicher existierender Code für DM-Auswahl
+  }
+}

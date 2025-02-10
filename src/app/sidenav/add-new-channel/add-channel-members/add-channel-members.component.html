@@ -1,0 +1,70 @@
+<div class="dialog-container">
+  <div class="dialog-header">
+    <h2>Leute hinzufügen</h2>
+    <button mat-icon-button (click)="onClose()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-radio-group [(ngModel)]="selectedOption" class="radio-group">
+    <!-- Channel Options -->
+    <div *ngFor="let channel of existingChannels">
+      <mat-radio-button [value]="'channel_' + channel.id" class="radio-button">
+        <div class="option-content">
+          <h3>Alle Mitglieder von {{ channel.name }} hinzufügen</h3>
+          <p>{{ channel.memberCount }} Mitglieder</p>
+        </div>
+      </mat-radio-button>
+    </div>
+
+    <!-- Select Individual Users Option -->
+    <mat-radio-button value="select" class="radio-button">
+      <div class="option-content">
+        <h3>Bestimmte Leute hinzufügen</h3>
+        <p>Wähle einzelne Personen aus, die du hinzufügen möchtest</p>
+      </div>
+    </mat-radio-button>
+  </mat-radio-group>
+
+  <!-- User Search and List -->
+  <div *ngIf="selectedOption === 'select'" class="user-search-section">
+    <div class="search-input-container">
+      <input 
+        type="text" 
+        class="search-input"
+        placeholder="Nach Namen oder E-Mail-Adresse suchen"
+        [(ngModel)]="searchText"
+        (ngModelChange)="onSearchChange()">
+      <mat-icon class="search-icon">search</mat-icon>
+    </div>
+
+    <!-- Nur anzeigen wenn gesucht wird und Ergebnisse vorhanden sind -->
+    <div class="user-list" *ngIf="showUserList && filteredUsers.length > 0">
+      <div *ngFor="let user of filteredUsers" 
+           class="user-item" 
+           [class.selected]="user.selected"
+           (click)="toggleUserSelection(user)">
+        <div class="user-info">
+          <img [src]="'assets/img/avatars/' + user.avatar" 
+               [alt]="user.displayName + ' avatar'"
+               class="user-avatar">
+          <div class="user-details">
+            <span class="user-name">{{ user.displayName }}</span>
+            <span class="user-email">{{ user.email }}</span>
+          </div>
+        </div>
+        <mat-icon class="check-icon" *ngIf="user.selected">check</mat-icon>
+      </div>
+    </div>
+  </div>
+
+  <div class="dialog-actions">
+    <button mat-button (click)="onClose()">Abbrechen</button>
+    <button mat-flat-button 
+            color="primary" 
+            [disabled]="!selectedOption || (selectedOption === 'select' && selectedUsers.size === 0)"
+            (click)="onConfirm()">
+      Weiter
+    </button>
+  </div>
+</div>

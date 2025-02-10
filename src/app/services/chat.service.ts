@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { switchMap, map, take } from 'rxjs/operators';
-import { collection, query, where, collectionData, getDocs } from '@angular/fire/firestore';
+import { collection, query, where, collectionData, getDocs, addDoc } from '@angular/fire/firestore';
 import { Firestore } from '@angular/fire/firestore';
 import { Auth, getAuth } from '@angular/fire/auth';
 import { User } from '../models/user.model';
@@ -15,12 +15,14 @@ export class ChatService {
   private selectedUserSubject = new BehaviorSubject<string>('');
   private selectedChannelSubject = new BehaviorSubject<string>('');
   private hasMessagesSubject = new BehaviorSubject<boolean>(false);
+  private isNewChatMode = new BehaviorSubject<boolean>(false);
 
   currentChannelId$ = this.currentChannelIdSubject.asObservable();
   isDirectMessage$ = this.isDirectMessageSubject.asObservable();
   selectedUser$ = this.selectedUserSubject.asObservable();
   selectedChannel$ = this.selectedChannelSubject.asObservable();
   hasMessages$ = this.hasMessagesSubject.asObservable();
+  isNewChatMode$ = this.isNewChatMode.asObservable();
 
   constructor(
     private firestore: Firestore,
@@ -140,6 +142,23 @@ export class ChatService {
   createChatId(uid1: string, uid2: string): string {
     const chatId = [uid1, uid2].sort().join('_');
     return chatId;
+  }
+
+  async createChannel(channelData: any) {
+    try {
+      const channelsRef = collection(this.firestore, 'channels');
+      await addDoc(channelsRef, {
+        ...channelData,
+        createdAt: new Date(),  // Erstellungsdatum hinzufügen
+      });
+    } catch (error) {
+      console.error('Error creating channel:', error);
+      throw error;
+    }
+  }
+
+  setNewChatMode(value: boolean) {
+    this.isNewChatMode.next(value);
   }
 
 } 

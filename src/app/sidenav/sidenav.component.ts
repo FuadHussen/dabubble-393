@@ -172,6 +172,7 @@ export class SidenavComponent implements OnInit {
     this.selectedUser = '';
     this.isDirectMessage = false;
     this.chatService.selectChannel(channelName);
+    this.chatService.setNewChatMode(false);
   }
 
   selectUser(user: User) {
@@ -180,6 +181,7 @@ export class SidenavComponent implements OnInit {
     this.selectedChannel = '';
     this.isDirectMessage = true;
     this.chatService.selectUser(user.uid || '');
+    this.chatService.setNewChatMode(false);
   }
 
   async openAddChannelDialog() {
@@ -224,5 +226,9 @@ export class SidenavComponent implements OnInit {
   isUserActive(user: User): boolean {
     const userIdentifier = user.displayName || user.username || '';
     return this.selectedUser === userIdentifier && this.isDirectMessage;
+  }
+
+  startNewChat() {
+    this.chatService.setNewChatMode(true);
   }
 }

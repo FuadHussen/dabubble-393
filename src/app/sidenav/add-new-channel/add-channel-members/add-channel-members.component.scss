@@ -1,0 +1,168 @@
+.dialog-container {
+    max-width: 100%;
+    padding: 40px;
+
+    .dialog-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+
+        h2 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+        }
+    }
+
+    .radio-group {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .radio-button {
+        .option-content {
+            padding: 8px;
+
+            h3 {
+                margin: 0 0 4px 0;
+                font-size: 18px;
+                font-weight: 400;
+            }
+
+            p {
+                margin: 0;
+                color: #686868;
+                font-size: 14px;
+            }
+        }
+    }
+
+    .user-search-section {
+        margin-top: 8px;
+
+        .search-input-container {
+            position: relative;
+
+            .search-input {
+                width: 100%;
+                padding: 12px 16px;
+                padding-right: 40px;
+                border: 1px solid rgba(0, 0, 0, 0.12);
+                border-radius: 30px;
+                font-size: 14px;
+                outline: none;
+                box-sizing: border-box;
+
+                &:focus {
+                    border-color: #444DF2;
+                }
+            }
+
+            .search-icon {
+                position: absolute;
+                right: 12px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: #686868;
+            }
+        }
+
+        .user-list {
+            max-height: 100px;
+            overflow-y: auto;
+
+            .user-item {
+                display: flex;
+                align-items: center;
+                padding: 8px 16px;
+                gap: 12px;
+                cursor: pointer;
+                border-radius: 30px !important;
+                margin: 4px 0;
+                position: relative;
+                
+
+                .user-info {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    flex: 1;
+
+                    img {
+                        width: 24px;
+                        height: 24px;
+                        border-radius: 50%;
+                        border: 2px solid #444DF2;
+                    }
+
+                    .user-details {
+                        display: flex;
+                        flex-direction: column;
+
+                        .user-name {
+                            font-size: 14px;
+                            font-weight: 500;
+                        }
+
+                        .user-email {
+                            font-size: 12px;
+                            color: #686868;
+                        }
+                    }
+                }
+
+                &:hover {
+                    background-color: #eceefe;
+                }
+
+                &.selected {
+                    background-color: #eceefe;
+                }
+
+                .check-icon {
+                    position: absolute;
+                    right: 16px;
+                    color: #444DF2;
+                }
+            }
+        }
+    }
+
+    .dialog-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 16px;
+        margin-top: 24px;
+
+        button {
+            border-radius: 30px;
+            padding: 0 24px;
+        }
+    }
+}
+
+::ng-deep {
+    .mat-mdc-dialog-container {
+        border-radius: 30px !important;
+    }
+
+    .mat-radio-button.mat-accent {
+        .mat-radio-inner-circle {
+            background-color: #444DF2 !important;
+        }
+
+        &.mat-radio-checked .mat-radio-outer-circle {
+            border-color: #444DF2 !important;
+        }
+    }
+}
+
+.channel-name {
+    color: #444DF2;
+}
+
+::ng-deep .mdc-radio {
+    align-self: start;
+}

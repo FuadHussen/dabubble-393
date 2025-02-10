@@ -22,6 +22,14 @@ interface UserData {
   isOnline?: boolean;
 }
 
+interface FirestoreUser {
+  uid: string;
+  displayName?: string;
+  email?: string;
+  avatar?: string;
+  username?: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -205,6 +213,21 @@ export class UserService {
     } catch (error) {
       console.error('Error getting current user ID:', error);
       return null;
+    }
+  }
+
+  async getAllUsers(): Promise<FirestoreUser[]> {
+    try {
+      const usersRef = collection(this.firestore, 'users');
+      const querySnapshot = await getDocs(usersRef);
+      
+      return querySnapshot.docs.map(doc => ({
+        uid: doc.id,
+        ...doc.data()
+      })) as FirestoreUser[];
+    } catch (error) {
+      console.error('Error getting users:', error);
+      return [];
     }
   }
 }
