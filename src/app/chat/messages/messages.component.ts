@@ -1,9 +1,22 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Firestore, collection, query, where, orderBy, onSnapshot, collectionData, Timestamp, serverTimestamp, addDoc } from '@angular/fire/firestore';
+import { Firestore, collection, query, where, orderBy, onSnapshot, collectionData, Timestamp, serverTimestamp, addDoc, doc, updateDoc } from '@angular/fire/firestore';
 import { ChatService } from '../../services/chat.service';
 import { UserService } from '../../services/user.service';
 import { FormsModule } from '@angular/forms';
+import { MatIconModule } from '@angular/material/icon';
+
+interface Reaction {
+  userId: string;
+  emoji: string;
+  timestamp: Date;
+}
+
+interface GroupedReaction {
+  emoji: string;
+  count: number;
+  users: string[];
+}
 
 interface Message {
   id: string;
@@ -14,6 +27,9 @@ interface Message {
   avatar?: string;
   channelId?: string;
   recipientId?: string;
+  showReactions?: boolean;
+  showEmojiPicker?: boolean;
+  reactions?: Reaction[];
 }
 
 interface User {
@@ -27,7 +43,7 @@ interface User {
 @Component({
   selector: 'app-messages',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatIconModule],
   templateUrl: './messages.component.html',
   styleUrl: './messages.component.scss'
 })
@@ -42,6 +58,13 @@ export class MessagesComponent implements OnInit {
   private messagesSubscription: (() => void) | undefined;
   users: User[] = [];
   messageText: string = '';
+  emojis: string[] = [
+    '😀', '😂', '😊', '😍', '🥰', '😎', '😴', '🤔', 
+    '😅', '😭', '😤', '😡', '🥺', '😳', '🤯', '🤮', 
+    '🥳', '😇', '🤪', '🤓', '👍', '👎', '👋', '🙌', 
+    '👏', '🤝', '🙏', '💪', '🫶', '❤️', '🔥', '💯', 
+    '✨', '🎉', '👻', '🤖', '💩', '🦄'
+  ];
 
   constructor(
     private firestore: Firestore,
@@ -258,7 +281,94 @@ export class MessagesComponent implements OnInit {
     }
   }
 
-  scrollToBottom() {
-    // Implement the logic to scroll to the bottom of the message container
+  showReactionOptions(event: MouseEvent, message: any) {
+    message.showReactions = true;
+  }
+
+  hideReactionOptions(event: MouseEvent, message: any) {
+    const target = event.currentTarget as HTMLElement;
+    if (!target.querySelector('.message-emoji-picker:hover')) {
+      message.showReactions = false;
+      message.showEmojiPicker = false;
+    }
+  }
+
+  showEmojiPickerForMessage(event: Event, message: any) {
+    event.stopPropagation();
+    message.showEmojiPicker = !message.showEmojiPicker;
+  }
+
+  groupReactions(reactions: Reaction[]): GroupedReaction[] {
+    if (!reactions) return [];
+    
+    const grouped = reactions.reduce((acc: { [key: string]: GroupedReaction }, reaction: Reaction) => {
+      if (!acc[reaction.emoji]) {
+        acc[reaction.emoji] = {
+          emoji: reaction.emoji,
+          count: 0,
+          users: []
+        };
+      }
+      acc[reaction.emoji].count++;
+      acc[reaction.emoji].users.push(reaction.userId);
+      return acc;
+    }, {});
+
+    return Object.values(grouped);
+  }
+
+  hasUserReacted(message: any, emoji: string) {
+    return message.reactions?.some((r: any) => 
+      r.userId === this.currentUser.uid && r.emoji === emoji
+    );
+  }
+
+  async addReaction(message: any, emoji: string) {
+    try {
+      const messageRef = doc(this.firestore, 'messages', message.id);
+      const reactions = message.reactions || [];
+      
+      const existingReaction = reactions.find(
+        (r: any) => r.userId === this.currentUser.uid && r.emoji === emoji
+      );
+
+      if (existingReaction) {
+        await updateDoc(messageRef, {
+          reactions: reactions.filter((r: any) => 
+            !(r.userId === this.currentUser.uid && r.emoji === emoji)
+          )
+        });
+      } else {
+        await updateDoc(messageRef, {
+          reactions: [...reactions, {
+            userId: this.currentUser.uid,
+            emoji: emoji,
+            timestamp: new Date()
+          }]
+        });
+      }
+
+      message.showEmojiPicker = false;
+    } catch (error) {
+      console.error('Error updating reaction:', error);
+    }
+  }
+
+  async toggleReaction(message: Message, reaction: GroupedReaction) {
+    try {
+      const messageRef = doc(this.firestore, 'messages', message.id);
+      const reactions = message.reactions || [];
+      
+      if (this.hasUserReacted(message, reaction.emoji)) {
+        // Reaktion entfernen
+        await updateDoc(messageRef, {
+          reactions: reactions.filter((r: Reaction) => 
+            !(r.userId === this.currentUser.uid && r.emoji === reaction.emoji)
+          )
+        });
+      }
+    } catch (error) {
+      console.error('Error toggling reaction:', error);
+    }
   }
 }

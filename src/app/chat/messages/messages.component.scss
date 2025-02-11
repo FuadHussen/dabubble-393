@@ -35,9 +35,79 @@
   display: flex;
   align-items: flex-start;
   gap: 12px;
+  padding: 16px;
+  border-radius: 8px;
+
+  &:not(.guest):hover {
+    background-color: #ECEEFE;
+
+    .message-content {
+      .message-text {
+        background-color: #fff;
+      }
+    }
+  }
+
+  &.guest:hover {
+    background-color: #ECEEFE;
+  }
 
   &.guest {
     flex-direction: row-reverse;
+
+    .message-content {
+      .message-header {
+        flex-direction: row-reverse;
+      }
+
+      .message-text {
+        background-color: #797EF3;
+        color: white;
+        border-radius: 30px 0 30px 30px;
+      }
+    }
+
+    .reaction-options {
+      right: auto;
+      left: -80px;
+
+      .quick-reactions {
+        .reaction-emoji {
+          &.picker-trigger {
+            mat-icon {
+              color: #000;
+            }
+          }
+        }
+      }
+    }
+
+    .message-emoji-picker {
+      right: auto;
+      left: -100px;
+    }
+  }
+
+  &.direct-message {
+    &.guest {
+      .message-content .message-text {
+        background-color: #797EF3;
+      }
+    }
+
+    &:not(.guest) {
+      .message-content .message-text {
+        background-color: #ECEEFE;
+      }
+    }
+  }
+
+  &.highlighted {
+    background-color: rgba(255, 223, 0, 0.3);
+  }
+
+  &.highlight-animation {
+    animation: highlight 2s ease-out;
   }
 
   .avatar-container {
@@ -83,46 +153,93 @@
       background-color: #ECEEFE;
       color: #000;
       border-radius: 0 30px 30px 30px;
+      transition: background-color 0.2s ease;
     }
   }
 
-  &.guest {
-    flex-direction: row-reverse;
+  .reaction-options {
+    position: absolute;
+    right: -80px;
+    top: 8px;
+    transform: translateY(-50%);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    background-color: white;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 4px;
+    z-index: 1;
 
-    .message-content {
-      .message-header {
-        flex-direction: row-reverse;
-      }
+    &.show {
+      opacity: 1;
+      visibility: visible;
+    }
 
-      .message-text {
-        background-color: #797EF3;
-        color: white;
-        border-radius: 30px 0 30px 30px;
+    .quick-reactions {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+
+      .reaction-emoji {
+        padding: 4px 8px;
+        border-radius: 16px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        
+        &:hover {
+          background-color: #ECEEFE;
+        }
+
+        &.picker-trigger {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          
+          mat-icon {
+            font-size: 20px;
+            width: 20px;
+            height: 20px;
+          }
+        }
       }
     }
   }
 
-  &.direct-message {
-    &.guest {
-      .message-content .message-text {
-        background-color: #797EF3;
+  .message-emoji-picker {
+    position: absolute;
+    right: -100px;
+    top: 0;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 8px;
+    z-index: 2;
+    
+    .emoji-container {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 4px;
+      max-height: 200px;
+      overflow-y: auto;
+      
+      .emoji {
+        font-size: 20px;
+        padding: 4px;
+        cursor: pointer;
+        text-align: center;
+        border-radius: 4px;
+        
+        &:hover {
+          background-color: #ECEEFE;
+        }
       }
     }
-
-    &:not(.guest) {
-      .message-content .message-text {
-        background-color: #ECEEFE;
-      }
-    }
   }
+}
 
-  &.highlighted {
-    background-color: rgba(255, 223, 0, 0.3);
-  }
-
-  &.highlight-animation {
-    animation: highlight 2s ease-out;
-  }
+.message-content {
+  position: relative;
 }
 
 @keyframes highlight {
@@ -133,5 +250,47 @@
   100% {
     background-color: transparent;
     transform: scale(1);
+  }
+}
+
+.message-reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.reaction-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 10px;
+  border: 1px solid #ADB0D9;
+  border-radius: 20px;
+  background-color: #fff!important;
+  cursor: pointer;
+  z-index: 1000;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: #ECEEFE;
+  }
+
+  &.user-reacted {
+    background-color: #ECEEFE;
+  }
+
+  .reaction-emoji {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .reaction-count {
+    font-size: 14px;
+    color: #686868;
   }
 }

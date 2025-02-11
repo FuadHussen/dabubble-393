@@ -117,24 +117,47 @@
 
     <mat-card-actions class="chat-input-actions">
       <mat-form-field class="chat-input-field" appearance="outline">
-        <button mat-icon-button matPrefix>
+        <button mat-icon-button matPrefix (click)="toggleEmojiPicker($event)">
           <mat-icon>sentiment_satisfied_alt</mat-icon>
         </button>
-        <button mat-icon-button matPrefix>
+        <button mat-icon-button matPrefix (click)="onAtButtonClick()">
           <mat-icon>alternate_email</mat-icon>
         </button>
         <textarea 
+          #messageTextarea
           matInput 
           cdkTextareaAutosize 
           cdkAutosizeMinRows="5" 
           cdkAutosizeMaxRows="5" 
           [placeholder]="getPlaceholderText()"
           [(ngModel)]="messageText"
-          (keyup.enter)="sendMessage()"
-        ></textarea>
+          (input)="onMessageInput($event)"
+          [attr.data-has-mentions]="messageText.includes('@')">
+        </textarea>
         <button class="send-button" mat-icon-button matSuffix (click)="sendMessage()">
           <mat-icon>send</mat-icon>
         </button>
+
+        <!-- Emoji Picker innerhalb des mat-form-field -->
+        <div class="emoji-picker" *ngIf="showEmojiPicker">
+          <div class="emoji-container">
+            <div class="emoji" *ngFor="let emoji of emojis" (click)="addEmoji(emoji)">
+              {{ emoji }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Benutzervorschläge -->
+        <div class="mention-suggestions" *ngIf="showUserMentions && mentionResults.length > 0">
+          <div class="mention-item" 
+               *ngFor="let user of mentionResults" 
+               (click)="insertMention(user)">
+            <img [src]="'assets/img/avatars/' + user.avatar" 
+                 [alt]="user.username" 
+                 class="mention-avatar">
+            <span class="mention-username">{{ user.username }}</span>
+          </div>
+        </div>
       </mat-form-field>
     </mat-card-actions>
   </mat-card>

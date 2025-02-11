@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked, AfterViewInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
@@ -41,7 +41,7 @@ import { ActivatedRoute } from '@angular/router';
   styleUrls: ['./chat.component.scss']
 })
 
-export class ChatComponent implements OnInit, AfterViewChecked {
+export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
   @ViewChild('chatContent') private chatContent!: ElementRef;
   private shouldScroll = false;
   isSettingsOpen = false;
@@ -71,6 +71,20 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   showWelcomeMessage = true;
   filteredResults: any[] = [];
   showResults: boolean = false;
+  showUserMentions: boolean = false;
+  mentionResults: any[] = [];
+  cursorPosition: number = 0;
+  selectedMentions: string[] = [];
+  showEmojiPicker = false;
+
+  // Emoji-Array als Property definieren
+  emojis: string[] = [
+    '😀', '😂', '😊', '😍', '🥰', '😎', '😴', '🤔', 
+    '😅', '😭', '😤', '😡', '🥺', '😳', '🤯', '🤮', 
+    '🥳', '😇', '🤪', '🤓', '👍', '👎', '👋', '🙌', 
+    '👏', '🤝', '🙏', '💪', '🫶', '❤️', '🔥', '💯', 
+    '✨', '🎉', '👻', '🤖', '💩', '🦄'
+  ];
 
   constructor(
     private firestore: Firestore,
@@ -377,11 +391,14 @@ export class ChatComponent implements OnInit, AfterViewChecked {
         userId: currentUser.uid,
         username: userDoc?.username || 'Unbekannt',
         channelId: this.isDirectMessage ? null : this.selectedChannel,
-        recipientId: this.isDirectMessage ? this.chatService.selectedUser : null
+        recipientId: this.isDirectMessage ? this.chatService.selectedUser : null,
+        mentions: this.selectedMentions
       };
 
       await addDoc(messagesRef, messageData);
       this.messageText = '';
+      this.selectedMentions = [];
+      this.mentionResults = [];
       this.shouldScroll = true;
     } catch (error) {
       console.error('Error in sendMessage:', error);
@@ -598,5 +615,145 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   selectDirectMessage(user: any) {
     this.chatService.setNewChatMode(false); // Zurücksetzen des NewChat-Modus
     // ... restlicher existierender Code für DM-Auswahl
+  }
+
+  async onAtButtonClick() {
+    // Füge @ am aktuellen Cursor ein
+    const cursorPos = (document.querySelector('textarea') as HTMLTextAreaElement).selectionStart;
+    const textBefore = this.messageText.substring(0, cursorPos);
+    const textAfter = this.messageText.substring(cursorPos);
+    this.messageText = textBefore + '@' + textAfter;
+    
+    // Zeige Benutzervorschläge
+    await this.searchUsers('');
+    this.showUserMentions = true;
+  }
+
+  async searchUsers(searchTerm: string) {
+    try {
+      const usersRef = collection(this.firestore, 'users');
+      let q;
+      
+      if (searchTerm) {
+        q = query(
+          usersRef,
+          where('username', '>=', searchTerm),
+          where('username', '<=', searchTerm + '\uf8ff')
+        );
+      } else {
+        q = query(usersRef);
+      }
+
+      const querySnapshot = await getDocs(q);
+      
+      // Extrahiere alle bereits erwähnten Benutzer aus dem aktuellen Text
+      const currentMentions = this.messageText.match(/@(\w+\s\w+)/g) || [];
+      const mentionedUsernames = currentMentions.map(mention => 
+        mention.substring(1).trim() // Entferne das @-Symbol und Leerzeichen
+      );
+
+      console.log('Already mentioned users:', mentionedUsernames);
+
+      // Filtere die Ergebnisse
+      this.mentionResults = querySnapshot.docs
+        .map(doc => ({
+          id: doc.id,
+          username: doc.data()['username'],
+          avatar: doc.data()['avatar']
+        }))
+        .filter(user => {
+          const isCurrentUser = user.id === this.currentUserId;
+          const isAlreadyMentioned = mentionedUsernames.some(mention => 
+            mention === user.username // Exakter Vergleich des Benutzernamens
+          );
+          
+          console.log(`User ${user.username}: current=${isCurrentUser}, mentioned=${isAlreadyMentioned}`);
+          
+          return !isCurrentUser && !isAlreadyMentioned;
+        });
+
+      console.log('Available users after filtering:', this.mentionResults);
+    } catch (error) {
+      console.error('Error searching users:', error);
+      this.mentionResults = [];
+    }
+  }
+
+  insertMention(user: any) {
+    const textarea = document.querySelector('textarea') as HTMLTextAreaElement;
+    const cursorPos = textarea.selectionStart;
+    const textBeforeAt = this.messageText.substring(0, this.messageText.lastIndexOf('@', cursorPos));
+    const textAfter = this.messageText.substring(cursorPos);
+    
+    const mention = `@${user.username} `;
+    this.messageText = textBeforeAt + mention + textAfter;
+    
+    const newCursorPos = textBeforeAt.length + mention.length;
+    
+    requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+      this.searchUsers(''); // Aktualisiere die Liste
+    });
+    
+    this.showUserMentions = false;
+  }
+
+  onMessageInput(event: any) {
+    const textarea = event.target as HTMLTextAreaElement;
+    const cursorPos = textarea.selectionStart;
+    const textUpToCursor = this.messageText.substring(0, cursorPos);
+    const lastAtSymbol = textUpToCursor.lastIndexOf('@');
+    
+    if (lastAtSymbol !== -1) {
+      const searchTerm = textUpToCursor.substring(lastAtSymbol + 1);
+      if (searchTerm !== '') {
+        this.searchUsers(searchTerm);
+        this.showUserMentions = true;
+      }
+    } else {
+      this.showUserMentions = false;
+    }
+  }
+
+  ngAfterViewInit() {
+  }
+
+  toggleEmojiPicker(event: Event) {
+    event.stopPropagation(); // Verhindert Bubbling
+    this.showEmojiPicker = !this.showEmojiPicker;
+  }
+
+  addEmoji(emoji: string) {
+    const textarea = document.querySelector('textarea') as HTMLTextAreaElement;
+    const cursorPos = textarea.selectionStart || 0;
+    const textBefore = this.messageText.substring(0, cursorPos);
+    const textAfter = this.messageText.substring(cursorPos);
+    
+    this.messageText = textBefore + emoji + textAfter;
+    
+    // Setze Cursor nach dem Emoji
+    const newCursorPos = cursorPos + emoji.length;
+    requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    });
+    
+    this.showEmojiPicker = false;
+  }
+
+  // Schließe Emoji-Picker wenn außerhalb geklickt wird
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const emojiPicker = document.querySelector('.emoji-picker');
+    const emojiButton = document.querySelector('button[matPrefix]');
+    
+    if (emojiPicker && emojiButton) {
+      const clickedInside = emojiPicker.contains(event.target as Node) || 
+                          emojiButton.contains(event.target as Node);
+      if (!clickedInside) {
+        this.showEmojiPicker = false;
+      }
+    }
   }
 }
