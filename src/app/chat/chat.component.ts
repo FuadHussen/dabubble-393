@@ -166,7 +166,6 @@ export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
   async loadChannelMembers() {
     if (this.currentChannelId) {
       try {
-        console.log('Loading members for channel:', this.currentChannelId);
 
         const channelRef = doc(this.firestore, 'channels', this.currentChannelId);
         const channelSnap = await getDoc(channelRef);
@@ -179,8 +178,6 @@ export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
         const channelData = channelSnap.data();
         // Prüfe beide möglichen Felder
         const creatorId = channelData['createdByUserId'] || channelData['createdBy'];
-        console.log('Channel data:', channelData);
-        console.log('Creator ID:', creatorId);
 
         const membersRef = collection(this.firestore, 'channelMembers');
         const q = query(membersRef, where('channelId', '==', this.currentChannelId));
@@ -192,7 +189,6 @@ export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
           const userData = userDoc.data();
 
           const isCreator = memberData['userId'] === creatorId;
-          console.log(`Checking if member ${memberData['userId']} is creator:`, isCreator);
 
           const member = {
             uid: memberData['userId'],
@@ -202,12 +198,10 @@ export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
             isCreator: isCreator,
             isOnline: userData?.['isOnline'] || false
           };
-          console.log('Loaded member:', member);
           return member;
         });
 
         this.channelMembers = await Promise.all(memberPromises);
-        console.log('All channel members loaded:', this.channelMembers);
       } catch (error) {
         console.error('Error loading channel members:', error);
       }
@@ -652,7 +646,6 @@ export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
         mention.substring(1).trim() // Entferne das @-Symbol und Leerzeichen
       );
 
-      console.log('Already mentioned users:', mentionedUsernames);
 
       // Filtere die Ergebnisse
       this.mentionResults = querySnapshot.docs
@@ -667,12 +660,10 @@ export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
             mention === user.username // Exakter Vergleich des Benutzernamens
           );
           
-          console.log(`User ${user.username}: current=${isCurrentUser}, mentioned=${isAlreadyMentioned}`);
           
           return !isCurrentUser && !isAlreadyMentioned;
         });
 
-      console.log('Available users after filtering:', this.mentionResults);
     } catch (error) {
       console.error('Error searching users:', error);
       this.mentionResults = [];

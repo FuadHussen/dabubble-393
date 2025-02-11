@@ -149,7 +149,7 @@
     .message-text {
       line-height: 1.4;
       font-size: 18px;
-      padding: 15px;
+      padding: 8px;
       background-color: #ECEEFE;
       color: #000;
       border-radius: 0 30px 30px 30px;
@@ -182,7 +182,7 @@
       align-items: center;
 
       .reaction-emoji {
-        padding: 4px 8px;
+        padding: 4px;
         border-radius: 16px;
         cursor: pointer;
         transition: background-color 0.2s ease;
@@ -256,41 +256,170 @@
 .message-reactions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 8px;
+  gap: 8px;
+  margin-top: 4px;
+  position: relative;
 }
 
 .reaction-badge {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 5px 10px;
-  border: 1px solid #ADB0D9;
-  border-radius: 20px;
-  background-color: #fff!important;
   cursor: pointer;
-  z-index: 1000;
-  transition: background-color 0.2s ease;
-
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 20px;
+  background: white;
+  border: 1px solid #ADB0D9;
+  
   &:hover {
-    background-color: #ECEEFE;
-  }
-
-  &.user-reacted {
-    background-color: #ECEEFE;
+    background-color: rgba(68, 77, 242, 0.1);
   }
 
   .reaction-emoji {
-    font-size: 24px;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    font-size: 16px;
   }
 
   .reaction-count {
     font-size: 14px;
     color: #686868;
+  }
+}
+
+.reaction-tooltip {
+  position: absolute;
+  bottom: 32px;
+  left: 32px;
+  margin-bottom: 10px;
+  z-index: 99999;
+  background: #444DF2;
+  border-radius: 30px 30px 30px 0;
+  padding: 15px 10px;
+  width: 167px;
+  max-height: 112px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  color: white;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: none;
+  will-change: transform;
+  text-align: center;
+
+  .tooltip-content {
+    .emoji-preview {
+      font-size: 24px;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .users-list {
+      .user-item {
+        margin-bottom: 5px;
+        
+        .username {
+          font-size: 18px;
+          font-weight: 500;
+          display: block;
+        }
+        
+        .reaction-text {
+          font-size: 16px;
+          opacity: 0.8;
+        }
+      }
+    }
+  }
+}
+
+.edit-menu {
+  position: absolute;
+  background: white;
+  border-radius: 0 30px 30px 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  padding: 10px 20px;
+  z-index: 1000;
+  min-width: 200px;
+  top: 8px;
+  left: 80px;
+
+
+  .edit-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    padding: 10px 20px;
+    border-radius: 30px;
+
+
+    &:hover {
+      background-color: #ECEEFE;
+      color: #444DF2;
+    }
+
+    mat-icon {
+      font-size: 20px;
+      color: #444DF2;
+    }
+
+    span {
+      font-size: 14px;
+    }
+  }
+}
+
+.message-edit-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  .message-edit-input {
+    max-width: 100%;
+    padding: 10px;
+    border-radius: 30px;
+    border: 1px solid #ADB0D9;
+    font-size: 18px;
+    background: white;
+    color: #000;
+    outline: none;
+
+    &:focus {
+      border-color: #444DF2;
+    }
+  }
+
+  .edit-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+
+    .edit-button {
+      padding: 8px 20px;
+      border-radius: 20px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s ease;
+
+      &.cancel {
+        background: #ECEEFE;
+        color: #444DF2;
+
+        &:hover {
+          background: #dfe1fd;
+        }
+      }
+
+      &.save {
+        background: #444DF2;
+        color: white;
+
+        &:hover {
+          background: #3238c4;
+        }
+      }
+    }
   }
 }

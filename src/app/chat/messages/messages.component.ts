@@ -5,6 +5,9 @@ import { ChatService } from '../../services/chat.service';
 import { UserService } from '../../services/user.service';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { trigger, state, style, animate, transition } from '@angular/animations';
+import { HostListener } from '@angular/core';
 
 interface Reaction {
   userId: string;
@@ -30,6 +33,9 @@ interface Message {
   showReactions?: boolean;
   showEmojiPicker?: boolean;
   reactions?: Reaction[];
+  showEditMenu?: boolean;
+  isEditing?: boolean;
+  editText?: string;
 }
 
 interface User {
@@ -43,10 +49,16 @@ interface User {
 @Component({
   selector: 'app-messages',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatIconModule,
+    MatButtonModule
+  ],
   templateUrl: './messages.component.html',
-  styleUrl: './messages.component.scss'
+  styleUrl: './messages.component.scss',
 })
+
 export class MessagesComponent implements OnInit {
   currentUser: any;
   messages: Message[] = [];
@@ -65,7 +77,19 @@ export class MessagesComponent implements OnInit {
     '👏', '🤝', '🙏', '💪', '🫶', '❤️', '🔥', '💯', 
     '✨', '🎉', '👻', '🤖', '💩', '🦄'
   ];
+  console = console;
+  activeTooltipId: string | null = null;
+  hoveredReactionId: string | null = null;
+  emojiTooltipVisible = false;
+  emojiTooltipData: { emoji: string, users: string[] } | null = null;
+  emojiTooltipStyle: any = {};
+  oneIsHovering = false;
 
+  hoveredReaction: GroupedReaction | null = null;
+  tooltipX: number = 0;
+  tooltipY: number = 0;
+
+  
   constructor(
     private firestore: Firestore,
     private chatService: ChatService,
@@ -105,6 +129,14 @@ export class MessagesComponent implements OnInit {
 
   ngOnInit() {
     this.loadMessages();
+  }
+
+  showTooltip(event: MouseEvent, reaction: GroupedReaction) {
+    console.log('showTooltip called', reaction);
+    const rect = (event.target as HTMLElement).getBoundingClientRect();
+    this.tooltipX = rect.left;
+    this.tooltipY = rect.top - 120;
+    this.hoveredReaction = reaction;
   }
 
   async loadMessages() {
@@ -298,7 +330,13 @@ export class MessagesComponent implements OnInit {
     message.showEmojiPicker = !message.showEmojiPicker;
   }
 
+  getUserName(userId: string): string {
+    const user = this.users.find(u => u.uid === userId);
+    return user?.username || 'Unbekannter Nutzer';
+  }
+
   groupReactions(reactions: Reaction[]): GroupedReaction[] {
+    
     if (!reactions) return [];
     
     const grouped = reactions.reduce((acc: { [key: string]: GroupedReaction }, reaction: Reaction) => {
@@ -314,7 +352,8 @@ export class MessagesComponent implements OnInit {
       return acc;
     }, {});
 
-    return Object.values(grouped);
+    const result = Object.values(grouped);
+    return result;
   }
 
   hasUserReacted(message: any, emoji: string) {
@@ -370,5 +409,171 @@ export class MessagesComponent implements OnInit {
     } catch (error) {
       console.error('Error toggling reaction:', error);
     }
+  }
+
+  @HostListener('document:mouseover', ['$event'])
+  onDocumentMouseOver(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    const reactionBadge = target.closest('.reaction-badge');
+    
+    // Wenn wir nicht über einem Badge oder dem Tooltip sind, alles ausblenden
+    if (!reactionBadge) {
+      this.hideTooltip();
+      return;
+    }
+
+    const emojiElement = reactionBadge.querySelector('.reaction-emoji');
+    if (!emojiElement) return;
+
+    const emoji = emojiElement.textContent?.trim();
+    if (!emoji) return;
+
+    // Position berechnen und Tooltip anzeigen...
+    const rect = reactionBadge.getBoundingClientRect();
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+
+    console.log('Tooltip position:', {
+      rect,
+      scrollTop,
+      scrollLeft,
+      style: this.emojiTooltipStyle
+    });
+
+    const message = this.findMessageByEmoji(emoji);
+    if (message && message.reactions) {
+      const reaction = this.groupReactions(message.reactions)
+        .find(r => r.emoji === emoji);
+
+      if (reaction) {
+        this.emojiTooltipData = {
+          emoji: reaction.emoji,
+          users: reaction.users
+        };
+        this.emojiTooltipVisible = true;
+      }
+    }
+  }
+
+  @HostListener('document:mousemove', ['$event'])
+  onDocumentMouseMove(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    const reactionBadge = target.closest('.reaction-badge');
+    const tooltipElement = target.closest('.reaction-tooltip');
+
+    // Wenn wir weder über einem Badge noch über dem Tooltip sind
+    if (!reactionBadge && !tooltipElement) {
+      this.hideTooltip();
+    }
+  }
+
+  private hideTooltip() {
+    if (this.emojiTooltipVisible) {
+      console.log('Hiding tooltip');
+      this.emojiTooltipVisible = false;
+      this.emojiTooltipData = null;
+    }
+  }
+
+  // Optional: Tooltip auch ausblenden wenn geklickt wird
+  @HostListener('document:click')
+  onDocumentClick() {
+    this.hideTooltip();
+    this.messages.forEach(message => {
+      message.showEditMenu = false;
+    });
+  }
+
+  // Optional: Tooltip ausblenden wenn gescrollt wird
+  @HostListener('window:scroll')
+  onWindowScroll() {
+    this.hideTooltip();
+  }
+
+  private findMessageByEmoji(emoji: string) {
+    return this.messages.find(message => 
+      message.reactions?.some(reaction => reaction.emoji === emoji)
+    );
+  }
+
+  handleReactionHover(event: MouseEvent, message: Message, reaction: GroupedReaction) {
+    event.stopPropagation();
+    
+    // Finde die aktuelle Message
+    const messageElement = (event.target as HTMLElement).closest('.message');
+    if (!messageElement) return;
+
+    const rect = (event.target as HTMLElement).getBoundingClientRect();
+    
+    this.emojiTooltipData = {
+      emoji: reaction.emoji,
+      users: reaction.users
+    };
+    
+    this.emojiTooltipVisible = true;
+  }
+
+  handleReactionLeave(event: MouseEvent) {
+    event.stopPropagation();
+    this.emojiTooltipVisible = false;
+    this.emojiTooltipData = null;
+  }
+
+  toggleEditMenu(event: MouseEvent, message: any) {
+    event.stopPropagation();
+    // Schließe alle anderen offenen Menüs
+    this.messages.forEach(m => {
+      if (m !== message) m.showEditMenu = false;
+    });
+    message.showEditMenu = !message.showEditMenu;
+  }
+
+  startEditingMessage(message: Message) {
+    // Schließe das Edit-Menü
+    message.showEditMenu = false;
+    
+    // Aktiviere Edit-Modus und speichere original Text
+    message.isEditing = true;
+    message.editText = message.text;
+  }
+
+  async saveEditedMessage(message: Message) {
+    try {
+      if (!message.editText?.trim()) {
+        return;
+      }
+
+      // Update in Firebase
+      const messageRef = doc(this.firestore, 'messages', message.id);
+      await updateDoc(messageRef, {
+        text: message.editText,
+        edited: true,
+        editedAt: serverTimestamp()
+      });
+
+      // Update lokale Message
+      message.text = message.editText;
+      message.isEditing = false;
+      message.editText = '';
+
+      console.log('Message updated successfully');
+    } catch (error) {
+      console.error('Error updating message:', error);
+    }
+  }
+
+  cancelEdit(message: Message) {
+    message.isEditing = false;
+    message.editText = '';
+  }
+
+  // Optional: ESC Taste zum Abbrechen
+  @HostListener('document:keydown.escape')
+  onEscapePress() {
+    this.messages.forEach(message => {
+      if (message.isEditing) {
+        this.cancelEdit(message);
+      }
+    });
   }
 }

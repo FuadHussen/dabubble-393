@@ -17,7 +17,29 @@
           <span class="timestamp">{{ message.timestamp | date:'HH:mm' }} Uhr</span>
         </div>
         <div class="message-text">
-          {{ message.text }}
+          <!-- Normaler Text oder Edit-Modus -->
+          <div *ngIf="!message.isEditing" class="message-text">
+            {{ message.text }}
+          </div>
+          
+          <!-- Edit-Modus -->
+          <div *ngIf="message.isEditing" class="message-edit-container">
+            <input 
+              type="text" 
+              [(ngModel)]="message.editText" 
+              class="message-edit-input"
+              (keyup.enter)="saveEditedMessage(message)"
+              (keyup.escape)="cancelEdit(message)">
+            
+            <div class="edit-actions">
+              <button class="edit-button cancel" (click)="cancelEdit(message)">
+                Abbrechen
+              </button>
+              <button class="edit-button save" (click)="saveEditedMessage(message)">
+                Speichern
+              </button>
+            </div>
+          </div>
 
           <!-- Reaktions-Optionen -->
           <div class="reaction-options" [class.show]="message.showReactions">
@@ -27,6 +49,12 @@
               <div class="reaction-emoji" (click)="addReaction(message, '😂')">😂</div>
               <div class="reaction-emoji picker-trigger" (click)="showEmojiPickerForMessage($event, message)">
                 <mat-icon>add_reaction</mat-icon>
+              </div>
+              <div class="reaction-emoji picker-trigger" *ngIf="isCurrentUser(message.userId)" (click)="toggleEditMenu($event, message)">
+                <mat-icon>more_vert</mat-icon>
+              </div>
+              <div class="reaction-emoji picker-trigger" *ngIf="!isCurrentUser(message.userId) && !isDirectMessage">
+                <mat-icon>comment</mat-icon>
               </div>
             </div>
           </div>
@@ -44,12 +72,31 @@
 
         <!-- Angezeigte Reaktionen unter der Nachricht -->
         <div class="message-reactions" *ngIf="message.reactions && message.reactions.length > 0">
-          <div class="reaction-badge" 
-               *ngFor="let reaction of groupReactions(message.reactions)"
-               (click)="$event.stopPropagation(); toggleReaction(message, reaction)"
-               [class.user-reacted]="hasUserReacted(message, reaction.emoji)">
-            <span class="reaction-emoji">{{ reaction.emoji }}</span>
-            <span class="reaction-count">{{ reaction.count }}</span>
+          <div class="reaction-wrapper" *ngFor="let reaction of groupReactions(message.reactions)">
+            <div *ngIf="emojiTooltipVisible && emojiTooltipData" class="reaction-tooltip" [ngStyle]="emojiTooltipStyle">
+              <div class="tooltip-content">
+                <div class="emoji-preview">{{ emojiTooltipData.emoji }}</div>
+                <div class="users-list">
+                  <div class="user-item" *ngFor="let userId of emojiTooltipData.users">
+                    <span class="username">{{ getUserName(userId) }}</span>
+                    <span class="reaction-text">hat reagiert</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="reaction-badge" [class.user-reacted]="hasUserReacted(message, reaction.emoji)"
+              [attr.data-emoji]="reaction.emoji">
+              <span class="reaction-emoji">{{ reaction.emoji }}</span>
+              <span class="reaction-count">{{ reaction.count }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Edit Menu - Jetzt innerhalb der message-Schleife -->
+        <div class="edit-menu" *ngIf="message.showEditMenu">
+          <div class="edit-option" (click)="startEditingMessage(message)">
+            <mat-icon>edit</mat-icon>
+            <span>Nachricht bearbeiten</span>
           </div>
         </div>
       </div>
