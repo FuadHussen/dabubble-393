@@ -32,7 +32,7 @@
           <a [href]="'mailto:' + email" class="email-link">{{ email }}</a>
         </div>
 
-        <button mat-button class="message-button" (click)="sendMessage()">
+        <button mat-button class="message-button" (click)="startDirectMessage($event)">
           <mat-icon>chat_bubble_outline</mat-icon>
           Nachricht
         </button>

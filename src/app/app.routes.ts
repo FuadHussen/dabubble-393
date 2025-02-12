@@ -18,6 +18,6 @@ export const routes: Routes = [
     { path: 'workspace', component: WorkspaceComponent },
     { path: 'imprint', component: ImprintComponent },
     { path: 'privacy-policy', component: PrivacyPolicyComponent },
-    { path: 'channel/:channelId', component: WorkspaceComponent },
+    { path: 'channel/:channelName/:id', component: WorkspaceComponent },
     { path: 'dm/:userId', component: WorkspaceComponent },
 ];

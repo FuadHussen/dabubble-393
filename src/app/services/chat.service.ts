@@ -68,14 +68,12 @@ export class ChatService {
   }
 
   async selectUser(userId: string) {
-    console.log('ChatService - Selecting user:', userId);
     this.selectedUserSubject.next(userId);
     
     if (userId) {
       // Lade die User-Daten sofort
       const userDoc = await this.getUserData(userId);
       if (userDoc) {
-        console.log('ChatService - Loaded user data:', userDoc);
         this.selectedUserDataSubject.next(userDoc);
       }
     }
@@ -180,12 +178,10 @@ export class ChatService {
   }
 
   async selectChannel(channelName: string) {
-    console.log('ChatService - Selecting channel:', channelName);
     this.selectedChannelSubject.next(channelName);
   }
 
   async setIsDirectMessage(isDM: boolean) {
-    console.log('ChatService - Setting isDM:', isDM);
     this.isDirectMessageSubject.next(isDM);
     if (!isDM) {
       // Reset user data when switching to channel
@@ -207,6 +203,17 @@ export class ChatService {
       return true;
     } catch (error) {
       console.error('Error sending message:', error);
+      return false;
+    }
+  }
+
+  async startDirectMessage(userId: string) {
+    try {
+      await this.setIsDirectMessage(true);
+      await this.selectUser(userId);
+      return true;
+    } catch (error) {
+      console.error('Error starting DM:', error);
       return false;
     }
   }

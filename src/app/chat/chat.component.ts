@@ -99,7 +99,6 @@ export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
   ) {
     // Aktuellen User ID speichern
     this.userService.currentUser$.subscribe(user => {
-      console.log('Current user updated:', user);
       if (user) {
         this.currentUserId = user.uid;
       }
@@ -107,7 +106,6 @@ export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
 
     // Channel Subscription
     this.chatService.selectedChannel$.subscribe(channelName => {
-      console.log('Selected channel changed to:', channelName);
       if (channelName) {
         this.loadChannelDetails(channelName);
       }
@@ -115,7 +113,6 @@ export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
 
     // Direct Message Subscription
     this.chatService.selectedUser$.subscribe(async (userId) => {
-      console.log('Selected user changed to:', userId);
       if (userId) {
         const usersRef = collection(this.firestore, 'users');
         const q = query(usersRef, where('uid', '==', userId));
@@ -127,12 +124,6 @@ export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
           this.selectedUserEmail = userData['email'] || '';
           this.selectedUserAvatar = userData['avatar'];
           this.isCurrentUser = userId === this.currentUserId;
-          console.log('Loaded user data:', {
-            displayName: this.selectedUserDisplayName,
-            email: this.selectedUserEmail,
-            avatar: this.selectedUserAvatar,
-            isCurrentUser: this.isCurrentUser
-          });
         }
       }
     });
@@ -150,15 +141,11 @@ export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
     // Single route subscription
     this.subscriptions.push(
       this.route.params.subscribe(async params => {
-        console.log('Route params changed:', params);
         if (params['userId']) {
-          console.log('Setting up DM mode for user:', params['userId']);
           await this.chatService.setIsDirectMessage(true);
           await this.chatService.selectUser(params['userId']);
           this.selectedChannel = null;
-          console.log('After DM setup - selectedChannel:', this.selectedChannel);
         } else if (params['channelId']) {
-          console.log('Setting up channel mode for:', params['channelId']);
           await this.chatService.setIsDirectMessage(false);
           await this.chatService.selectChannel(params['channelId']);
         }

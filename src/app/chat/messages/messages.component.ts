@@ -135,7 +135,6 @@ export class MessagesComponent implements OnInit {
 
     // Subscribe to user data changes
     this.chatService.selectedUserData$.subscribe(userData => {
-      console.log('Messages - User data updated:', userData);
       this.selectedUserData = userData;
       if (userData) {
         // Trigger change detection

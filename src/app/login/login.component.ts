@@ -199,7 +199,6 @@ export class LoginComponent {
 
       // Wenn bereits Nachrichten existieren, nicht neu erstellen
       if (!existingMessages.empty) {
-        console.log('Chat already initialized for guest user');
         return;
       }
 
@@ -271,7 +270,6 @@ export class LoginComponent {
         await addDoc(messagesRef, message);
       }
 
-      console.log('Chat initialized for guest user');
     } catch (error) {
       console.error('Error initializing guest chat:', error);
     }

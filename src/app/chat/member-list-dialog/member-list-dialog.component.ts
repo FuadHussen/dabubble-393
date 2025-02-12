@@ -5,6 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { ProfileInfoComponent } from '../profile-info/profile-info.component';
 import { Firestore, doc, getDoc } from '@angular/fire/firestore';
+import { Router } from '@angular/router';
 
 interface Member {
   uid: string;
@@ -31,7 +32,10 @@ export class MemberListDialogComponent implements OnInit, OnChanges {
 
   selectedMember: Member | null = null;
 
-  constructor(private firestore: Firestore) {}
+  constructor(
+    private firestore: Firestore,
+    private router: Router
+  ) {}
 
   async ngOnInit() {
     if (this.channelId) {

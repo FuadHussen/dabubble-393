@@ -10,7 +10,7 @@ import { NavbarComponent } from '../../navbar/navbar.component';
 import { MatDialog } from '@angular/material/dialog';
 import { AddNewChannelComponent } from './add-new-channel/add-new-channel.component';
 import { MatExpansionPanel } from '@angular/material/expansion';
-import { Firestore, collection, addDoc, collectionData } from '@angular/fire/firestore';
+import { Firestore, collection, addDoc, collectionData, query, where, getDocs } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { ChatService } from '../../services/chat.service';
@@ -188,8 +188,28 @@ export class SidenavComponent implements OnInit {
 
   async selectChannel(channelName: string) {
     try {
-      // Only handle navigation, guard will setup the state
-      await this.router.navigate(['/channel', channelName]);
+      // Suche die Channel ID aus der channels Collection
+      const channelsCollection = collection(this.firestore, 'channels');
+      const q = query(
+        channelsCollection, 
+        where('name', '==', channelName)
+      );
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        const channelDoc = querySnapshot.docs[0];
+        const channelData = channelDoc.data();
+        const channelId = channelDoc.id;
+
+        // Setze die Channel-Informationen im ChatService
+        this.chatService.setCurrentChannelId(channelId);
+        await this.chatService.selectChannel(channelName);
+        
+        // Navigate mit channelName und ID
+        await this.router.navigate(['/channel', channelName, channelId]);
+      } else {
+        console.error('Channel nicht gefunden:', channelName);
+      }
     } catch (error) {
       console.error('Error selecting channel:', error);
     }
