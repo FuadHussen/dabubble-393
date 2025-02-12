@@ -119,7 +119,6 @@ export class ChannelSettingsComponent {
         return;
       }
       
-      console.log('Versuche Channel zu löschen mit ID:', this.channelId);
       
       // Referenz zum Channel-Dokument erstellen
       const channelRef = doc(this.firestore, 'channels', this.channelId);

@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { switchMap, map, take } from 'rxjs/operators';
-import { collection, query, where, collectionData, getDocs, addDoc } from '@angular/fire/firestore';
+import { collection, query, where, collectionData, getDocs, addDoc, doc, getDoc } from '@angular/fire/firestore';
 import { Firestore } from '@angular/fire/firestore';
-import { Auth, getAuth } from '@angular/fire/auth';
+import { Auth } from '@angular/fire/auth';
 import { User } from '../models/user.model';
+import { AudioService } from './audio.service';
 
 @Injectable({
   providedIn: 'root'
@@ -16,6 +17,7 @@ export class ChatService {
   private selectedChannelSubject = new BehaviorSubject<string>('');
   private hasMessagesSubject = new BehaviorSubject<boolean>(false);
   private isNewChatMode = new BehaviorSubject<boolean>(false);
+  private selectedUserDataSubject = new BehaviorSubject<any>(null);
 
   currentChannelId$ = this.currentChannelIdSubject.asObservable();
   isDirectMessage$ = this.isDirectMessageSubject.asObservable();
@@ -23,10 +25,12 @@ export class ChatService {
   selectedChannel$ = this.selectedChannelSubject.asObservable();
   hasMessages$ = this.hasMessagesSubject.asObservable();
   isNewChatMode$ = this.isNewChatMode.asObservable();
+  selectedUserData$ = this.selectedUserDataSubject.asObservable();
 
   constructor(
     private firestore: Firestore,
-    private auth: Auth
+    private auth: Auth,
+    private audioService: AudioService
   ) {}
 
   async getCurrentUser(): Promise<User> {
@@ -59,27 +63,41 @@ export class ChatService {
     this.currentChannelIdSubject.next(channelId);
   }
 
-  setIsDirectMessage(isDM: boolean) {
-    this.isDirectMessageSubject.next(isDM);
-  }
-
   setSelectedUser(user: string) {
     this.selectedUserSubject.next(user);
   }
 
-  selectChannel(channelName: string) {
-    this.selectedChannelSubject.next(channelName);
-    this.selectedUserSubject.next('');
-    this.isDirectMessageSubject.next(false);
-  }
-
-
-  selectUser(userId: string) {
+  async selectUser(userId: string) {
+    console.log('ChatService - Selecting user:', userId);
     this.selectedUserSubject.next(userId);
-    this.selectedChannelSubject.next('');
-    this.isDirectMessageSubject.next(true);
+    
+    if (userId) {
+      // Lade die User-Daten sofort
+      const userDoc = await this.getUserData(userId);
+      if (userDoc) {
+        console.log('ChatService - Loaded user data:', userDoc);
+        this.selectedUserDataSubject.next(userDoc);
+      }
+    }
   }
 
+  private async getUserData(userId: string) {
+    try {
+      const userRef = doc(this.firestore, 'users', userId);
+      const userSnap = await getDoc(userRef);
+      
+      if (userSnap.exists()) {
+        return {
+          id: userSnap.id,
+          ...userSnap.data()
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      return null;
+    }
+  }
 
   selectNextAvailableChannel() {
     const channelsRef = collection(this.firestore, 'channels');
@@ -161,4 +179,35 @@ export class ChatService {
     this.isNewChatMode.next(value);
   }
 
+  async selectChannel(channelName: string) {
+    console.log('ChatService - Selecting channel:', channelName);
+    this.selectedChannelSubject.next(channelName);
+  }
+
+  async setIsDirectMessage(isDM: boolean) {
+    console.log('ChatService - Setting isDM:', isDM);
+    this.isDirectMessageSubject.next(isDM);
+    if (!isDM) {
+      // Reset user data when switching to channel
+      this.selectedUserDataSubject.next(null);
+    }
+  }
+
+  async sendMessage(messageData: any) {
+    try {
+      const messagesRef = collection(this.firestore, 'messages');
+      await addDoc(messagesRef, {
+        ...messageData,
+        timestamp: new Date()
+      });
+      
+      // Sound abspielen nach erfolgreichem Senden
+      this.audioService.playMessageSound();
+      
+      return true;
+    } catch (error) {
+      console.error('Error sending message:', error);
+      return false;
+    }
+  }
 } 

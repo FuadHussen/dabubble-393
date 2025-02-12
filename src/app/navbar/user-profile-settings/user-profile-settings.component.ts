@@ -101,7 +101,6 @@ export class UserProfileSettingsComponent implements OnInit {
           
           this.username = this.newUsername;
           this.userService.updateUsername(this.newUsername);
-          console.log('Username updated successfully');
         }
       } catch (error) {
         console.error('Error updating username:', error);

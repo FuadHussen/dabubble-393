@@ -49,9 +49,4 @@ export class ProfileInfoComponent {
     event.stopPropagation();
     this.closeInfo.emit();
   }
-
-  sendMessage() {
-    // Implementierung für Nachricht senden
-    console.log('Nachricht senden an:', this.username);
-  }
 }

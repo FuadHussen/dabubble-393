@@ -73,19 +73,25 @@
         <!-- Angezeigte Reaktionen unter der Nachricht -->
         <div class="message-reactions" *ngIf="message.reactions && message.reactions.length > 0">
           <div class="reaction-wrapper" *ngFor="let reaction of groupReactions(message.reactions)">
-            <div *ngIf="emojiTooltipVisible && emojiTooltipData" class="reaction-tooltip" [ngStyle]="emojiTooltipStyle">
+            <!-- Tooltip für jede einzelne Reaktion -->
+            <div *ngIf="tooltipVisibility[message.id + '-' + reaction.emoji]" 
+                 class="reaction-tooltip">
               <div class="tooltip-content">
-                <div class="emoji-preview">{{ emojiTooltipData.emoji }}</div>
+                <div class="emoji-preview">{{ reaction.emoji }}</div>
                 <div class="users-list">
-                  <div class="user-item" *ngFor="let userId of emojiTooltipData.users">
+                  <div class="user-item" *ngFor="let userId of reaction.users">
                     <span class="username">{{ getUserName(userId) }}</span>
                     <span class="reaction-text">hat reagiert</span>
                   </div>
                 </div>
               </div>
             </div>
-            <div class="reaction-badge" [class.user-reacted]="hasUserReacted(message, reaction.emoji)"
-              [attr.data-emoji]="reaction.emoji">
+            
+            <div class="reaction-badge" 
+                 [class.user-reacted]="hasUserReacted(message, reaction.emoji)"
+                 [attr.data-emoji]="reaction.emoji"
+                 (mouseover)="handleReactionHover($event, message, reaction)"
+                 (mouseleave)="handleReactionLeave($event, message, reaction)">
               <span class="reaction-emoji">{{ reaction.emoji }}</span>
               <span class="reaction-count">{{ reaction.count }}</span>
             </div>

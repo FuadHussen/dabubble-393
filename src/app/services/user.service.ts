@@ -83,7 +83,6 @@ export class UserService {
     try {
       // Sendet eine E-Mail zur Passwortzurücksetzung
       await sendPasswordResetEmail(auth, email);
-      console.log(`Passwort-Zurücksetzungs-E-Mail wurde an ${email} gesendet.`);
     } catch (error) {
       // Fehlerbehandlung
       console.error('Fehler beim Senden der Passwort-Zurücksetzung:', error);
@@ -153,14 +152,12 @@ export class UserService {
       const userDoc = await getDoc(doc(this.firestore, 'users', userId));
 
       if (!userDoc.exists()) {
-        console.log('Creating new user:', userId);
         await setDoc(doc(this.firestore, 'users', userId), {
           uid: userId,
           username: 'Sofia Weber',  // oder userData.username
           email: 'sofia.weber@example.com',  // oder userData.email
           avatar: 'sofia-weber-avatar.png',  // oder ein Default-Avatar
         });
-        console.log('User created successfully');
       }
     } catch (error) {
       console.error('Error creating user:', error);
@@ -169,9 +166,7 @@ export class UserService {
 
   async searchUsers(searchTerm: string, excludeUserIds: string[] = []): Promise<UserData[]> {
     try {
-      console.log('Searching for:', searchTerm);
-      console.log('Excluding users:', excludeUserIds);
-      
+
       const usersRef = collection(this.firestore, 'users');
       const querySnapshot = await getDocs(usersRef);
       
@@ -184,15 +179,9 @@ export class UserService {
           const usernameMatches = user.username?.toLowerCase().includes(searchTerm.toLowerCase());
           const isNotExcluded = !excludeUserIds.includes(user.uid);
           
-          console.log('Checking user:', user.username, {
-            usernameMatches,
-            isNotExcluded
-          });
-          
           return usernameMatches && isNotExcluded;
         });
 
-      console.log('Search results:', results);
       return results;
     } catch (error) {
       console.error('Error searching users:', error);

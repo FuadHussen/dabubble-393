@@ -38,9 +38,12 @@ interface User {
 }
 
 interface Message {
+  id: string;
   text: string;
+  timestamp: any;
+  userId: string;
   username: string;
-  channelId?: string;
+  channelId: string | null;
   recipientId?: string;
 }
 
@@ -93,8 +96,6 @@ export class NavbarComponent {
           this.userName = userData['username'] || 'Unbekannt';
           this.userEmail = userData['email'] || '';
           this.userAvatar = userData['avatar'] || 'default-avatar.png';
-        } else {
-          console.log('No user document found for uid:', user.uid);
         }
       }
     });

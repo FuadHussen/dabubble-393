@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Firestore, collection, query, where, orderBy, onSnapshot, collectionData, Timestamp, serverTimestamp, addDoc, doc, updateDoc } from '@angular/fire/firestore';
+import { Firestore, collection, query, where, orderBy, onSnapshot, collectionData, Timestamp, serverTimestamp, addDoc, doc, updateDoc, getDoc } from '@angular/fire/firestore';
 import { ChatService } from '../../services/chat.service';
 import { UserService } from '../../services/user.service';
 import { FormsModule } from '@angular/forms';
@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { trigger, state, style, animate, transition } from '@angular/animations';
 import { HostListener } from '@angular/core';
+import { AudioService } from '../../services/audio.service';
 
 interface Reaction {
   userId: string;
@@ -89,11 +90,17 @@ export class MessagesComponent implements OnInit {
   tooltipX: number = 0;
   tooltipY: number = 0;
 
-  
+  tooltipVisibility: { [key: string]: boolean } = {};
+  tooltipData: { [key: string]: { emoji: string, users: string[] } } = {};
+  selectedUserData: any;
+
   constructor(
     private firestore: Firestore,
     private chatService: ChatService,
-    private userService: UserService
+    private userService: UserService,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone,
+    private audioService: AudioService
   ) {
     // Users aus Firestore laden mit ID
     const usersCollection = collection(this.firestore, 'users');
@@ -125,6 +132,16 @@ export class MessagesComponent implements OnInit {
     this.chatService.isDirectMessage$.subscribe(isDM => {
       this.isDirectMessage = isDM;
     });
+
+    // Subscribe to user data changes
+    this.chatService.selectedUserData$.subscribe(userData => {
+      console.log('Messages - User data updated:', userData);
+      this.selectedUserData = userData;
+      if (userData) {
+        // Trigger change detection
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   ngOnInit() {
@@ -132,7 +149,6 @@ export class MessagesComponent implements OnInit {
   }
 
   showTooltip(event: MouseEvent, reaction: GroupedReaction) {
-    console.log('showTooltip called', reaction);
     const rect = (event.target as HTMLElement).getBoundingClientRect();
     this.tooltipX = rect.left;
     this.tooltipY = rect.top - 120;
@@ -158,24 +174,26 @@ export class MessagesComponent implements OnInit {
             this.messagesSubscription();
           }
 
-          this.messagesSubscription = onSnapshot(q, (querySnapshot) => {
+          this.messagesSubscription = onSnapshot(q, async (querySnapshot) => {
             const messages: Message[] = [];
-            querySnapshot.docs.forEach(doc => {
-              const messageData = doc.data();
-              const user = this.users.find(u => u.uid === messageData['userId']);
+            for (const docSnapshot of querySnapshot.docs) {
+              const messageData = docSnapshot.data();
+              // Korrigierte Syntax für getDoc
+              const userRef = doc(this.firestore, 'users', messageData['userId']);
+              const userDoc = await getDoc(userRef);
+              const userData = userDoc.exists() ? userDoc.data() : null;
 
               messages.push({
-                id: doc.id,
+                id: docSnapshot.id,
                 ...messageData,
-                avatar: user?.avatar || 'sofia-mueller-avatar.png'
-
+                avatar: userData?.['avatar']
               } as Message);
-            });
+            }
 
             this.messages = messages;
             this.groupMessagesByDate();
             this.chatService.setHasMessages(this.messages.length > 0);
-
+            this.cdr.detectChanges();
           });
         }
       } else {
@@ -191,23 +209,26 @@ export class MessagesComponent implements OnInit {
             this.messagesSubscription();
           }
 
-          this.messagesSubscription = onSnapshot(q, (querySnapshot) => {
+          this.messagesSubscription = onSnapshot(q, async (querySnapshot) => {
             const messages: Message[] = [];
-            querySnapshot.docs.forEach(doc => {
-              const messageData = doc.data();
-              const user = this.users.find(u => u.uid === messageData['userId']);
+            for (const docSnapshot of querySnapshot.docs) {
+              const messageData = docSnapshot.data();
+              // Korrigierte Syntax für getDoc
+              const userRef = doc(this.firestore, 'users', messageData['userId']);
+              const userDoc = await getDoc(userRef);
+              const userData = userDoc.exists() ? userDoc.data() : null;
 
               messages.push({
-                id: doc.id,
+                id: docSnapshot.id,
                 ...messageData,
-                avatar: user?.avatar || 'sofia-mueller-avatar.png'
+                avatar: userData?.['avatar']
               } as Message);
-            });
+            }
 
             this.messages = messages;
             this.groupMessagesByDate();
             this.chatService.setHasMessages(this.messages.length > 0);
-
+            this.cdr.detectChanges();
           });
         }
       }
@@ -295,19 +316,21 @@ export class MessagesComponent implements OnInit {
     if (!this.messageText.trim() || !this.currentUser) return;
 
     try {
-      const messagesRef = collection(this.firestore, 'messages');
-
       const messageData = {
         text: this.messageText.trim(),
-        timestamp: new Date(),
         userId: this.currentUser.uid,
         username: this.currentUser.username || 'Unbekannt',
         channelId: this.isDirectMessage ? null : this.selectedChannel,
         recipientId: this.isDirectMessage ? this.chatService.selectedUser : null
       };
 
-      await addDoc(messagesRef, messageData);
-      this.messageText = '';
+      // Nachricht über den ChatService senden
+      const success = await this.chatService.sendMessage(messageData);
+      
+      if (success) {
+        this.messageText = '';
+      }
+      
     } catch (error) {
       console.error('Error sending message:', error);
     }
@@ -415,108 +438,56 @@ export class MessagesComponent implements OnInit {
   onDocumentMouseOver(event: MouseEvent) {
     const target = event.target as HTMLElement;
     const reactionBadge = target.closest('.reaction-badge');
-    
-    // Wenn wir nicht über einem Badge oder dem Tooltip sind, alles ausblenden
-    if (!reactionBadge) {
-      this.hideTooltip();
-      return;
-    }
-
-    const emojiElement = reactionBadge.querySelector('.reaction-emoji');
-    if (!emojiElement) return;
-
-    const emoji = emojiElement.textContent?.trim();
-    if (!emoji) return;
-
-    // Position berechnen und Tooltip anzeigen...
-    const rect = reactionBadge.getBoundingClientRect();
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-
-    console.log('Tooltip position:', {
-      rect,
-      scrollTop,
-      scrollLeft,
-      style: this.emojiTooltipStyle
-    });
-
-    const message = this.findMessageByEmoji(emoji);
-    if (message && message.reactions) {
-      const reaction = this.groupReactions(message.reactions)
-        .find(r => r.emoji === emoji);
-
-      if (reaction) {
-        this.emojiTooltipData = {
-          emoji: reaction.emoji,
-          users: reaction.users
-        };
-        this.emojiTooltipVisible = true;
-      }
-    }
-  }
-
-  @HostListener('document:mousemove', ['$event'])
-  onDocumentMouseMove(event: MouseEvent) {
-    const target = event.target as HTMLElement;
-    const reactionBadge = target.closest('.reaction-badge');
     const tooltipElement = target.closest('.reaction-tooltip');
-
+    
     // Wenn wir weder über einem Badge noch über dem Tooltip sind
     if (!reactionBadge && !tooltipElement) {
-      this.hideTooltip();
+      // Alle Tooltips ausblenden
+      this.hideAllTooltips();
     }
   }
 
-  private hideTooltip() {
-    if (this.emojiTooltipVisible) {
-      console.log('Hiding tooltip');
-      this.emojiTooltipVisible = false;
-      this.emojiTooltipData = null;
-    }
+  private hideAllTooltips() {
+    // Alle Tooltip-Flags zurücksetzen
+    this.tooltipVisibility = {};
+    this.tooltipData = {};
   }
 
-  // Optional: Tooltip auch ausblenden wenn geklickt wird
-  @HostListener('document:click')
-  onDocumentClick() {
-    this.hideTooltip();
-    this.messages.forEach(message => {
-      message.showEditMenu = false;
-    });
+  handleReactionHover(event: MouseEvent, message: Message, reaction: GroupedReaction) {
+    event.stopPropagation();
+    
+    // Erst alle anderen Tooltips ausblenden
+    this.hideAllTooltips();
+    
+    // Dann den aktuellen Tooltip anzeigen
+    const reactionKey = `${message.id}-${reaction.emoji}`;
+    this.tooltipVisibility[reactionKey] = true;
+    this.tooltipData[reactionKey] = {
+      emoji: reaction.emoji,
+      users: reaction.users
+    };
   }
 
-  // Optional: Tooltip ausblenden wenn gescrollt wird
-  @HostListener('window:scroll')
-  onWindowScroll() {
-    this.hideTooltip();
+  handleReactionLeave(event: MouseEvent, message: Message, reaction: GroupedReaction) {
+    event.stopPropagation();
+    const reactionKey = `${message.id}-${reaction.emoji}`;
+    
+    // Kurze Verzögerung beim Ausblenden
+    setTimeout(() => {
+      const target = event.relatedTarget as HTMLElement;
+      const isOverTooltip = target?.closest('.reaction-tooltip');
+      
+      if (!isOverTooltip) {
+        this.tooltipVisibility[reactionKey] = false;
+        delete this.tooltipData[reactionKey];
+      }
+    }, 100);
   }
 
   private findMessageByEmoji(emoji: string) {
     return this.messages.find(message => 
       message.reactions?.some(reaction => reaction.emoji === emoji)
     );
-  }
-
-  handleReactionHover(event: MouseEvent, message: Message, reaction: GroupedReaction) {
-    event.stopPropagation();
-    
-    // Finde die aktuelle Message
-    const messageElement = (event.target as HTMLElement).closest('.message');
-    if (!messageElement) return;
-
-    const rect = (event.target as HTMLElement).getBoundingClientRect();
-    
-    this.emojiTooltipData = {
-      emoji: reaction.emoji,
-      users: reaction.users
-    };
-    
-    this.emojiTooltipVisible = true;
-  }
-
-  handleReactionLeave(event: MouseEvent) {
-    event.stopPropagation();
-    this.emojiTooltipVisible = false;
-    this.emojiTooltipData = null;
   }
 
   toggleEditMenu(event: MouseEvent, message: any) {
@@ -556,7 +527,6 @@ export class MessagesComponent implements OnInit {
       message.isEditing = false;
       message.editText = '';
 
-      console.log('Message updated successfully');
     } catch (error) {
       console.error('Error updating message:', error);
     }

@@ -5,18 +5,18 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { MatListModule } from '@angular/material/list';
-import { ChatComponent } from '../chat/chat.component';
-import { NavbarComponent } from '../navbar/navbar.component';
+import { ChatComponent } from '../../chat/chat.component';
+import { NavbarComponent } from '../../navbar/navbar.component';
 import { MatDialog } from '@angular/material/dialog';
 import { AddNewChannelComponent } from './add-new-channel/add-new-channel.component';
 import { MatExpansionPanel } from '@angular/material/expansion';
 import { Firestore, collection, addDoc, collectionData } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 import { take } from 'rxjs/operators';
-import { ChatService } from '../services/chat.service';
+import { ChatService } from '../../services/chat.service';
 import { getAuth } from '@angular/fire/auth';
 import { Auth } from '@angular/fire/auth';
-import { UserService } from '../services/user.service';
+import { UserService } from '../../services/user.service';
 import { Router } from '@angular/router';
 
 interface Channel {
@@ -107,6 +107,16 @@ export class SidenavComponent implements OnInit {
     this.chatService.selectedUser$.subscribe(user => {
       this.selectedUser = user || '';
     });
+
+    // Subscribe to channel changes
+    this.chatService.selectedChannel$.subscribe(channel => {
+      this.selectedChannel = channel;
+    });
+
+    // Subscribe to user changes
+    this.chatService.selectedUser$.subscribe(userId => {
+      this.selectedUser = userId;
+    });
   }
 
   async ngOnInit() {
@@ -167,21 +177,22 @@ export class SidenavComponent implements OnInit {
 
   }
 
-  selectChannel(channelName: string) {
-    this.selectedChannel = channelName;
-    this.selectedUser = '';
-    this.isDirectMessage = false;
-    this.chatService.selectChannel(channelName);
-    this.chatService.setNewChatMode(false);
+  async selectUser(user: any) {
+    try {
+      // Only handle navigation, guard will setup the state
+      await this.router.navigate(['/dm', user.uid]);
+    } catch (error) {
+      console.error('Error selecting user:', error);
+    }
   }
 
-  selectUser(user: User) {
-    const userIdentifier = user.displayName || user.username || '';
-    this.selectedUser = userIdentifier;
-    this.selectedChannel = '';
-    this.isDirectMessage = true;
-    this.chatService.selectUser(user.uid || '');
-    this.chatService.setNewChatMode(false);
+  async selectChannel(channelName: string) {
+    try {
+      // Only handle navigation, guard will setup the state
+      await this.router.navigate(['/channel', channelName]);
+    } catch (error) {
+      console.error('Error selecting channel:', error);
+    }
   }
 
   async openAddChannelDialog() {
@@ -193,7 +204,6 @@ export class SidenavComponent implements OnInit {
       if (result?.name) {
         try {
           const currentUser = this.auth.currentUser;
-          console.log('Current User:', currentUser); // Debug log
           
           if (!currentUser) {
             console.error('Kein User eingeloggt');
@@ -208,7 +218,6 @@ export class SidenavComponent implements OnInit {
             createdByUserId: currentUser.uid  // Speichere die User-ID
           };
           
-          console.log('Saving channel with data:', channelData); // Debug log
           
           await addDoc(channelsCollection, channelData);
           this.selectChannel(result.name);

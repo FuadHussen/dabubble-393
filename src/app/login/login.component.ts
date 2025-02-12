@@ -151,7 +151,7 @@ export class LoginComponent {
     this.userService
       .login(this.userEmail, this.userPassword)
       .then(() => {
-        this.router.navigate(['/sidenav']); // Erfolgreicher Login
+        this.router.navigate(['/workspace']); // Erfolgreicher Login
       })
       .catch((error) => {
         if (error.code) {
@@ -165,7 +165,7 @@ export class LoginComponent {
       .login('gäste@login.login', 'gästelogin')
       .then(async () => {
         await this.initializeGuestChat();
-        this.router.navigate(['/sidenav']);
+        this.router.navigate(['/workspace']);
       })
       .catch((error) => {
         console.error('Login fehlgeschlagen', error);

@@ -34,25 +34,19 @@ export class MemberListDialogComponent implements OnInit, OnChanges {
   constructor(private firestore: Firestore) {}
 
   async ngOnInit() {
-    console.log('MemberListDialog initialized with channelId:', this.channelId);
     if (this.channelId) {
       await this.updateCreatorStatus();
     }
   }
 
   async ngOnChanges(changes: SimpleChanges) {
-    console.log('Changes detected:', changes);
     if (changes['channelId'] && !changes['channelId'].firstChange) {
       await this.updateCreatorStatus();
-    }
-    if (changes['members']) {
-      console.log('New members:', this.members);
     }
   }
 
   async updateCreatorStatus() {
     try {
-      console.log('Updating creator status for channelId:', this.channelId);
       const channelRef = doc(this.firestore, 'channels', this.channelId);
       const channelSnap = await getDoc(channelRef);
       
@@ -64,18 +58,14 @@ export class MemberListDialogComponent implements OnInit, OnChanges {
       const channelData = channelSnap.data();
       // Prüfe beide möglichen Felder
       const creatorId = channelData['createdByUserId'] || channelData['createdBy'];
-      console.log('Channel data:', channelData);
-      console.log('Creator ID:', creatorId);
 
       this.members = this.members.map(member => {
         const isCreator = member.uid === creatorId;
-        console.log(`Checking if member ${member.username} (${member.uid}) is creator:`, isCreator);
         return {
           ...member,
           isCreator: isCreator
         };
       });
-      console.log('Updated members:', this.members);
     } catch (error) {
       console.error('Error updating creator status:', error);
     }

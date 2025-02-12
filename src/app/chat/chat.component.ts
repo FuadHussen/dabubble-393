@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked, AfterViewInit, HostListener } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked, AfterViewInit, HostListener, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
@@ -16,8 +16,9 @@ import { MessagesComponent } from './messages/messages.component';
 import { UserService } from '../services/user.service';
 import { AddMemberDialogComponent } from './add-member-dialog/add-member-dialog.component';
 import { MemberListDialogComponent } from './member-list-dialog/member-list-dialog.component';
-import { ActivatedRoute } from '@angular/router';
-
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { AudioService } from '../services/audio.service';
 
 @Component({
   selector: 'app-chat',
@@ -43,7 +44,7 @@ import { ActivatedRoute } from '@angular/router';
 
 export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
   @ViewChild('chatContent') private chatContent!: ElementRef;
-  private shouldScroll = false;
+  private shouldScroll = true;
   isSettingsOpen = false;
   currentChannelId = '';
   channelName = '';
@@ -76,6 +77,7 @@ export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
   cursorPosition: number = 0;
   selectedMentions: string[] = [];
   showEmojiPicker = false;
+  private subscriptions: Subscription[] = [];
 
   // Emoji-Array als Property definieren
   emojis: string[] = [
@@ -90,10 +92,14 @@ export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
     private firestore: Firestore,
     public chatService: ChatService,
     private userService: UserService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private router: Router,
+    private audioService: AudioService,
+    private cdr: ChangeDetectorRef
   ) {
     // Aktuellen User ID speichern
     this.userService.currentUser$.subscribe(user => {
+      console.log('Current user updated:', user);
       if (user) {
         this.currentUserId = user.uid;
       }
@@ -101,6 +107,7 @@ export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
 
     // Channel Subscription
     this.chatService.selectedChannel$.subscribe(channelName => {
+      console.log('Selected channel changed to:', channelName);
       if (channelName) {
         this.loadChannelDetails(channelName);
       }
@@ -108,6 +115,7 @@ export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
 
     // Direct Message Subscription
     this.chatService.selectedUser$.subscribe(async (userId) => {
+      console.log('Selected user changed to:', userId);
       if (userId) {
         const usersRef = collection(this.firestore, 'users');
         const q = query(usersRef, where('uid', '==', userId));
@@ -119,6 +127,12 @@ export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
           this.selectedUserEmail = userData['email'] || '';
           this.selectedUserAvatar = userData['avatar'];
           this.isCurrentUser = userId === this.currentUserId;
+          console.log('Loaded user data:', {
+            displayName: this.selectedUserDisplayName,
+            email: this.selectedUserEmail,
+            avatar: this.selectedUserAvatar,
+            isCurrentUser: this.isCurrentUser
+          });
         }
       }
     });
@@ -131,6 +145,29 @@ export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
     // Direct Message Status Subscription
     this.chatService.isDirectMessage$.subscribe(isDM => {
       this.isDirectMessage = isDM;
+    });
+
+    // Single route subscription
+    this.subscriptions.push(
+      this.route.params.subscribe(async params => {
+        console.log('Route params changed:', params);
+        if (params['userId']) {
+          console.log('Setting up DM mode for user:', params['userId']);
+          await this.chatService.setIsDirectMessage(true);
+          await this.chatService.selectUser(params['userId']);
+          this.selectedChannel = null;
+          console.log('After DM setup - selectedChannel:', this.selectedChannel);
+        } else if (params['channelId']) {
+          console.log('Setting up channel mode for:', params['channelId']);
+          await this.chatService.setIsDirectMessage(false);
+          await this.chatService.selectChannel(params['channelId']);
+        }
+      })
+    );
+
+    // Füge Subscription für neue Nachrichten hinzu
+    this.chatService.hasMessages$.subscribe(() => {
+      this.shouldScroll = this.isUserNearBottom();
     });
   }
 
@@ -246,6 +283,14 @@ export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
       hasMessages => this.hasMessages = hasMessages
     );
 
+    // Listen to route params
+    this.route.params.subscribe(params => {
+      if (params['channelId']) {
+        this.chatService.selectChannel(params['channelId']);
+      } else if (params['userId']) {
+        this.chatService.selectUser(params['userId']);
+      }
+    });
 
     // Füge existierende Nachrichtenautoren als Mitglieder hinzu
     await this.addExistingMessageAuthorsAsMembers();
@@ -349,39 +394,11 @@ export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
     if (!this.messageText.trim()) return;
 
     try {
-      const messagesRef = collection(this.firestore, 'messages');
       const currentUser = await this.chatService.getCurrentUser();
-
-
-      // Hole zusätzliche User-Informationen aus der Datenbank
       const userDoc = await this.userService.getUserById(currentUser.uid);
-
-      // Prüfe und füge User als Channel-Mitglied hinzu, falls noch nicht vorhanden
-      if (!this.isDirectMessage && this.currentChannelId) {
-        const channelMembersRef = collection(this.firestore, 'channelMembers');
-
-        const q = query(channelMembersRef,
-          where('channelId', '==', this.currentChannelId),
-          where('userId', '==', currentUser.uid)
-        );
-
-        const memberSnapshot = await getDocs(q);
-
-        if (memberSnapshot.empty) {
-          await addDoc(channelMembersRef, {
-            channelId: this.currentChannelId,
-            userId: currentUser.uid,
-            joinedAt: new Date()
-          });
-
-          // Aktualisiere die Mitgliederliste
-          await this.loadChannelMembers();
-        }
-      }
 
       const messageData = {
         text: this.messageText.trim(),
-        timestamp: new Date(),
         userId: currentUser.uid,
         username: userDoc?.username || 'Unbekannt',
         channelId: this.isDirectMessage ? null : this.selectedChannel,
@@ -389,11 +406,15 @@ export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
         mentions: this.selectedMentions
       };
 
-      await addDoc(messagesRef, messageData);
-      this.messageText = '';
-      this.selectedMentions = [];
-      this.mentionResults = [];
-      this.shouldScroll = true;
+      const success = await this.chatService.sendMessage(messageData);
+      
+      if (success) {
+        this.messageText = '';
+        this.selectedMentions = [];
+        this.mentionResults = [];
+        this.shouldScroll = true;  // Setze Flag für Scroll nach dem Senden
+        this.scrollToBottom();     // Scrolle sofort nach dem Senden
+      }
     } catch (error) {
       console.error('Error in sendMessage:', error);
     }
@@ -420,6 +441,22 @@ export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
     } catch (err) {
       console.error('Fehler beim Scrollen:', err);
     }
+  }
+
+  // Methode zum Prüfen, ob der User am Ende des Chats ist
+  private isUserNearBottom(): boolean {
+    try {
+      const element = this.chatContent.nativeElement;
+      const threshold = 150; // Pixel vom unteren Rand
+      return element.scrollHeight - element.scrollTop - element.clientHeight < threshold;
+    } catch (err) {
+      return true;
+    }
+  }
+
+  // Scroll-Event-Handler
+  onScroll(): void {
+    this.shouldScroll = this.isUserNearBottom();
   }
 
   async addExistingMessageAuthorsAsMembers() {
@@ -746,5 +783,10 @@ export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
         this.showEmojiPicker = false;
       }
     }
+  }
+
+  ngOnDestroy() {
+    // Clean up subscriptions
+    this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 }

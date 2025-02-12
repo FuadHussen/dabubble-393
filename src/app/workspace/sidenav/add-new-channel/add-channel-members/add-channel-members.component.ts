@@ -9,7 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
 import { Firestore, collection, getDocs, query, where, collectionGroup, addDoc } from '@angular/fire/firestore';
-import { UserService } from '../../../services/user.service';
+import { UserService } from '../../../../services/user.service';
 import { Auth } from '@angular/fire/auth';
 
 interface Channel {
