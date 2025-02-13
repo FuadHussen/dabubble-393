@@ -22,6 +22,7 @@ import {
 
 @Component({
   selector: 'app-login',
+  standalone: true,
   imports: [FooterComponent, NgClass, FormsModule, CommonModule],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',

@@ -3,9 +3,10 @@ import { SidenavComponent } from './sidenav/sidenav.component';
 
 @Component({
   selector: 'app-workspace',
+  standalone: true,
   imports: [SidenavComponent],
   templateUrl: './workspace.component.html',
-  styleUrl: './workspace.component.scss'
+  styleUrls: ['./workspace.component.scss']
 })
 
 export class WorkspaceComponent {

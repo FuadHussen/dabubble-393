@@ -6,6 +6,7 @@ import { Auth } from '@angular/fire/auth';
 import { confirmPasswordReset } from 'firebase/auth';
 @Component({
   selector: 'app-new-password',
+  standalone: true,
   imports: [FooterComponent, NgClass,NgIf, CommonModule],
   templateUrl: './new-password.component.html',
   styleUrl: './new-password.component.scss',

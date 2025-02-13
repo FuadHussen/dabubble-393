@@ -6,9 +6,10 @@ import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-reset-password',
+  standalone: true,
   imports: [FooterComponent, NgClass],
   templateUrl: './reset-password.component.html',
-  styleUrl: './reset-password.component.scss',
+  styleUrls: ['./reset-password.component.scss']
 })
 export class ResetPasswordComponent {
   constructor(private router: Router, private userService: UserService) {}
@@ -67,7 +68,7 @@ export class ResetPasswordComponent {
     await this.userService.sendPasswordResetEmail(this.userEmail);
     alert('Passwort-Reset-Link wurde an die E-Mail gesendet.');
   }
-  }
+}
 
 
 

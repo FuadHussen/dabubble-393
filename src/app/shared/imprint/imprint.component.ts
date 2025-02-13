@@ -4,9 +4,10 @@ import { FooterComponent } from '../footer/footer.component';
 
 @Component({
   selector: 'app-imprint',
+  standalone: true,
   imports: [FooterComponent],
   templateUrl: './imprint.component.html',
-  styleUrl: './imprint.component.scss'
+  styleUrls: ['./imprint.component.scss']
 })
 export class ImprintComponent {
   constructor(private router: Router) {}

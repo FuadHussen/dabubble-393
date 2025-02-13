@@ -16,9 +16,10 @@ import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-signup',
+  standalone: true,
   imports: [FooterComponent, NgClass, CommonModule],
   templateUrl: './signup.component.html',
-  styleUrl: './signup.component.scss',
+  styleUrls: ['./signup.component.scss']
 })
 export class SignupComponent {
   private auth: Auth = inject(Auth);

@@ -45,6 +45,7 @@
 
   p {
     font-weight: 300;
+    margin: 0;
   }
 }
 
@@ -74,10 +75,13 @@
   background-color: #fff;
   color: #000;
   width: 366px;
-  border-radius: 30px;
-  margin: 24px auto;
+  border-radius: 30px !important;
+  margin: 24px;
   z-index: auto!important;
   
+  ::ng-deep .mdc-drawer {
+    border-radius: 30px !important;
+  }
 
   ::ng-deep {
     .mat-drawer-inner-container {
@@ -241,6 +245,7 @@ mat-nav-list {
 }
 
 .hover-btn {
+  border-radius: 30px!important;
 
   &:hover  {
     background-color: #ECEEFE;
@@ -250,15 +255,26 @@ mat-nav-list {
 
     p {
       color: #535AF1;
+      margin: 0;
     }
   }
 
   &.active {
     background-color: #eceefe;
 
+    p {
+      margin: 0;
+    }
+
      p, mat-icon {
       color: #535af1;
       font-weight: 500;
+    }
+  }
+
+  &:not(.active) {
+    p {
+      margin: 0;
     }
   }
 }
@@ -272,7 +288,7 @@ mat-nav-list {
 .user-info {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 32px;
 }
 
 .title-hover {
@@ -336,4 +352,41 @@ mat-nav-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+// Wichtige MDC Overrides für Angular Material 17
+::ng-deep {
+  .mat-drawer-container {
+    background-color: #ECEEFE !important;
+  }
+
+  .mat-drawer {
+    border-radius: 30px !important;
+  }
+
+  .mdc-drawer {
+    border-radius: 30px !important;
+    
+    &__content {
+      border-radius: 30px !important;
+    }
+  }
+
+  .mat-drawer-inner-container {
+    border-radius: 30px !important;
+  }
+
+  .mat-drawer-content {
+    border-radius: 30px !important;
+    margin-right: 24px !important;
+  }
+
+  .mdc-list {
+    padding: 8px 16px !important;
+  }
+
+  .mat-mdc-button {
+    padding: 8px 24px !important;
+    margin-left: 16px;
+  }
 }

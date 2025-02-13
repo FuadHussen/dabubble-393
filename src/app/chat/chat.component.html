@@ -132,7 +132,8 @@
           [placeholder]="getPlaceholderText()"
           [(ngModel)]="messageText"
           (input)="onMessageInput($event)"
-          [attr.data-has-mentions]="messageText.includes('@')">
+          [attr.data-has-mentions]="messageText.includes('@')"
+          style="border-radius: 30px;">
         </textarea>
         <button class="send-button" mat-icon-button matSuffix (click)="sendMessage()">
           <mat-icon>send</mat-icon>

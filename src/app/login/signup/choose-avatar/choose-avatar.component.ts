@@ -10,9 +10,10 @@ import { UserService } from '../../../services/user.service';
 
 @Component({
   selector: 'app-choose-avatar',
+  standalone: true,
   imports: [FooterComponent, NgFor, NgClass],
   templateUrl: './choose-avatar.component.html',
-  styleUrl: './choose-avatar.component.scss',
+  styleUrls: ['./choose-avatar.component.scss']
 })
 export class ChooseAvatarComponent {
   constructor(private router: Router, private userService: UserService) {}
