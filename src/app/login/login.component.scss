@@ -3,7 +3,7 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  overflow: hidden;
+  overflow: visible;
   background-color: #eceefe;
 }
 
@@ -21,7 +21,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  z-index: 20; // Über dem Hintergrund
+  z-index: 20;
+  white-space: nowrap;
 }
 
 .logo {
@@ -35,12 +36,21 @@
   font-size: 46px;
   font-weight: 700;
   z-index: 18;
- 
-    display: inline-block;
-    border-right: 2px solid white; /* Cursor-Effekt */
-    overflow: hidden;
-  }
+  color: #000;
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  border-right: 2px solid #000;
+  height: 70px;
+  line-height: 70px;
+  animation: typing 2s steps(8), blink .5s step-end infinite alternate;
+}
 
+@keyframes blink {
+  50% { 
+    border-color: transparent;
+  }
+}
 
 .signup-container {
   display: flex;
