@@ -188,27 +188,29 @@ export class SidenavComponent implements OnInit {
 
   async selectChannel(channelName: string) {
     try {
-      // Suche die Channel ID aus der channels Collection
+      // Reset user selection
+      this.selectedUser = '';
+      this.isDirectMessage = false;
+      
+      // Update chat service
+      await this.chatService.setIsDirectMessage(false);
+      await this.chatService.selectUser('');
+      
       const channelsCollection = collection(this.firestore, 'channels');
-      const q = query(
-        channelsCollection, 
-        where('name', '==', channelName)
-      );
+      const q = query(channelsCollection, where('name', '==', channelName));
       const querySnapshot = await getDocs(q);
       
       if (!querySnapshot.empty) {
         const channelDoc = querySnapshot.docs[0];
-        const channelData = channelDoc.data();
         const channelId = channelDoc.id;
 
-        // Setze die Channel-Informationen im ChatService
+        // Set channel selection
+        this.selectedChannel = channelName;
         this.chatService.setCurrentChannelId(channelId);
         await this.chatService.selectChannel(channelName);
         
-        // Navigate mit channelName und ID
+        // Navigate
         await this.router.navigate(['/channel', channelName, channelId]);
-      } else {
-        console.error('Channel nicht gefunden:', channelName);
       }
     } catch (error) {
       console.error('Error selecting channel:', error);

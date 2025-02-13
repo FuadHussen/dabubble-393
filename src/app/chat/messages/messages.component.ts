@@ -111,21 +111,31 @@ export class MessagesComponent implements OnInit {
       })) as User[];
     });
 
-
-    // Subscribe to channel changes
+    // Modifiziere die Subscriptions
     this.chatService.selectedChannel$.subscribe(channel => {
+      // Reset messages first
+      this.messages = [];
+      this.messageGroups = [];
       this.selectedChannel = channel;
       this.isDirectMessage = false;
+      
       if (channel) {
-        this.loadMessages();
+        setTimeout(() => {
+          this.loadMessages();
+        });
       }
     });
 
-    // Subscribe to direct message changes
     this.chatService.selectedUser$.subscribe(userId => {
+      // Reset messages first
+      this.messages = [];
+      this.messageGroups = [];
+      this.isDirectMessage = true;
+      
       if (userId) {
-        this.isDirectMessage = true;
-        this.loadMessages();
+        setTimeout(() => {
+          this.loadMessages();
+        });
       }
     });
 
@@ -136,15 +146,14 @@ export class MessagesComponent implements OnInit {
     // Subscribe to user data changes
     this.chatService.selectedUserData$.subscribe(userData => {
       this.selectedUserData = userData;
-      if (userData) {
-        // Trigger change detection
-        this.cdr.detectChanges();
-      }
     });
   }
 
   ngOnInit() {
-    this.loadMessages();
+    // Initial load only if we have a channel or user selected
+    if (this.selectedChannel || this.chatService.selectedUser) {
+      this.loadMessages();
+    }
   }
 
   showTooltip(event: MouseEvent, reaction: GroupedReaction) {
@@ -158,79 +167,57 @@ export class MessagesComponent implements OnInit {
     try {
       this.currentUser = await this.chatService.getCurrentUser();
 
+      if (this.messagesSubscription) {
+        this.messagesSubscription();
+      }
+
+      const messagesRef = collection(this.firestore, 'messages');
+      let q;
+
       if (this.isDirectMessage) {
         const selectedUserId = this.chatService.selectedUser;
-        if (selectedUserId && this.currentUser) {
-          const messagesRef = collection(this.firestore, 'messages');
-          const q = query(
-            messagesRef,
-            where('recipientId', 'in', [selectedUserId, this.currentUser.uid]),
-            where('userId', 'in', [selectedUserId, this.currentUser.uid]),
-            orderBy('timestamp', 'asc')
-          );
+        if (!selectedUserId || !this.currentUser) return;
 
-          if (this.messagesSubscription) {
-            this.messagesSubscription();
-          }
-
-          this.messagesSubscription = onSnapshot(q, async (querySnapshot) => {
-            const messages: Message[] = [];
-            for (const docSnapshot of querySnapshot.docs) {
-              const messageData = docSnapshot.data();
-              // Korrigierte Syntax für getDoc
-              const userRef = doc(this.firestore, 'users', messageData['userId']);
-              const userDoc = await getDoc(userRef);
-              const userData = userDoc.exists() ? userDoc.data() : null;
-
-              messages.push({
-                id: docSnapshot.id,
-                ...messageData,
-                avatar: userData?.['avatar']
-              } as Message);
-            }
-
-            this.messages = messages;
-            this.groupMessagesByDate();
-            this.chatService.setHasMessages(this.messages.length > 0);
-            this.cdr.detectChanges();
-          });
-        }
+        q = query(
+          messagesRef,
+          where('recipientId', 'in', [selectedUserId, this.currentUser.uid]),
+          where('userId', 'in', [selectedUserId, this.currentUser.uid]),
+          orderBy('timestamp', 'asc')
+        );
       } else {
-        if (this.selectedChannel) {
-          const messagesRef = collection(this.firestore, 'messages');
-          const q = query(
-            messagesRef,
-            where('channelId', '==', this.selectedChannel),
-            orderBy('timestamp', 'asc')
-          );
+        if (!this.selectedChannel) return;
 
-          if (this.messagesSubscription) {
-            this.messagesSubscription();
-          }
-
-          this.messagesSubscription = onSnapshot(q, async (querySnapshot) => {
-            const messages: Message[] = [];
-            for (const docSnapshot of querySnapshot.docs) {
-              const messageData = docSnapshot.data();
-              // Korrigierte Syntax für getDoc
-              const userRef = doc(this.firestore, 'users', messageData['userId']);
-              const userDoc = await getDoc(userRef);
-              const userData = userDoc.exists() ? userDoc.data() : null;
-
-              messages.push({
-                id: docSnapshot.id,
-                ...messageData,
-                avatar: userData?.['avatar']
-              } as Message);
-            }
-
-            this.messages = messages;
-            this.groupMessagesByDate();
-            this.chatService.setHasMessages(this.messages.length > 0);
-            this.cdr.detectChanges();
-          });
-        }
+        q = query(
+          messagesRef,
+          where('channelId', '==', this.selectedChannel),
+          orderBy('timestamp', 'asc')
+        );
       }
+
+      this.messagesSubscription = onSnapshot(q, async (querySnapshot) => {
+        const messages: Message[] = [];
+        
+        for (const docSnapshot of querySnapshot.docs) {
+          const messageData = docSnapshot.data();
+          const userRef = doc(this.firestore, 'users', messageData['userId']);
+          const userDoc = await getDoc(userRef);
+          const userData = userDoc.exists() ? userDoc.data() : null;
+
+          messages.push({
+            id: docSnapshot.id,
+            ...messageData,
+            avatar: userData?.['avatar']
+          } as Message);
+        }
+
+        // Update in NgZone
+        this.ngZone.run(() => {
+          this.messages = messages;
+          this.groupMessagesByDate();
+          this.chatService.setHasMessages(this.messages.length > 0);
+          this.cdr.detectChanges();
+        });
+      });
     } catch (error) {
       console.error('Error loading messages:', error);
     }
