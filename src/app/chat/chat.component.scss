@@ -124,7 +124,7 @@
   .mat-mdc-form-field {
     textarea {
       caret-color: #000000; // Cursor-Farbe
-      
+
       &::selection {
         background-color: rgba(83, 90, 241, 0.2);
       }
@@ -207,7 +207,6 @@
   .channel-title {
     font-weight: 700;
     font-size: 24px;
-    margin-bottom: 0;
 
     span {
       color: #000;
@@ -219,6 +218,11 @@
     font-size: 20px;
     font-weight: 400;
     margin-bottom: 0;
+
+    .current-user-message {
+      font-weight: 700;
+      color: #686868;
+    }
   }
 }
 
@@ -306,21 +310,21 @@
 
 
 
-      .result-info {
-        display: flex;
-        flex-direction: column;
+    .result-info {
+      display: flex;
+      flex-direction: column;
 
-        .result-name {
-          font-weight: 500;
-        }
+      .result-name {
+        font-weight: 500;
+      }
 
-        .result-email {
-          font-size: 0.8em;
-          color: var(--secondary-text-color, #666);
-        }
+      .result-email {
+        font-size: 0.8em;
+        color: var(--secondary-text-color, #666);
       }
     }
-  
+  }
+
   .results-section {
     padding: 8px 0;
 
@@ -395,7 +399,7 @@
 
     &:hover {
       background-color: #ECEEFE !important;
-        color: #444DF2 !important;
+      color: #444DF2 !important;
     }
 
     mat-icon {
@@ -444,7 +448,7 @@
   max-height: 200px;
   overflow-y: auto;
   z-index: 1000;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
   .mention-item {
     display: flex;
@@ -477,12 +481,12 @@
   background: white;
   border: 1px solid #ddd;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   z-index: 9999;
   padding: 8px;
   width: 100%;
   max-width: 100%;
-  
+
   .emoji-container {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
@@ -490,7 +494,7 @@
     max-height: 200px;
     overflow-y: auto;
     background-color: white;
-    
+
     .emoji {
       font-size: 24px;
       padding: 8px;
@@ -498,7 +502,7 @@
       text-align: center;
       border-radius: 4px;
       user-select: none;
-      
+
       &:hover {
         background-color: #ECEEFE;
       }

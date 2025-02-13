@@ -100,7 +100,7 @@
             <span *ngIf="isCurrentUser">(Du)</span>
           </h2>
           <p class="channel-description" *ngIf="isCurrentUser; else normalDM">
-            Dieser Raum ist nur für dich da. Mache dir Notizen, liste deine To-dos auf oder bewahre Links und Dateien griffbereit auf. Du kannst hier auch gerne Dinge mit dir selbst besprechen.
+            <span class="current-user-message">Dieser Raum ist nur für dich da.</span> Mache dir Notizen, liste deine To-dos auf oder bewahre Links und Dateien griffbereit auf. Du kannst hier auch gerne Dinge mit dir selbst besprechen.
           </p>
           <ng-template #normalDM>
             <p class="channel-description">

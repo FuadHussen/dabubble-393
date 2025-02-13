@@ -97,20 +97,59 @@ export class ChatService {
     }
   }
 
-  selectNextAvailableChannel() {
-    const channelsRef = collection(this.firestore, 'channels');
-    collectionData(channelsRef, { idField: 'id' }).pipe(
-      take(1)
-    ).subscribe(channels => {
-      if (channels.length > 0) {
-        // Wähle den ersten verfügbaren Channel
-        const nextChannel = channels[0] as any;  // Type assertion hinzufügen
-        this.currentChannelIdSubject.next(nextChannel['name']);  // Bracket notation verwenden
-      } else {
-        // Falls keine Channels mehr existieren
-        this.currentChannelIdSubject.next('');  // Leeren String statt null
+  async selectNextAvailableChannel() {
+    try {
+      const currentUser = await this.auth.currentUser;
+      if (!currentUser) return;
+
+      // Zuerst versuchen wir einen anderen Channel zu finden
+      const channelMembersRef = collection(this.firestore, 'channelMembers');
+      const memberQuery = query(
+        channelMembersRef,
+        where('userId', '==', currentUser.uid)
+      );
+      const memberSnapshot = await getDocs(memberQuery);
+      const channelIds = memberSnapshot.docs.map(doc => doc.data()['channelId']);
+
+      if (channelIds.length > 0) {
+        // Hole den ersten verfügbaren Channel
+        const channelsRef = collection(this.firestore, 'channels');
+        const channelQuery = query(channelsRef, where('__name__', 'in', channelIds));
+        const channelSnapshot = await getDocs(channelQuery);
+
+        if (!channelSnapshot.empty) {
+          const nextChannel = channelSnapshot.docs[0];
+          const channelData = nextChannel.data();
+          this.setCurrentChannelId(nextChannel.id);
+          this.selectedChannelSubject.next(channelData['name']);
+          this.setIsDirectMessage(false);
+          return `/channel/${channelData['name']}/${nextChannel.id}`;
+        }
       }
-    });
+
+      // Wenn keine Channels verfügbar sind, versuche DMs zu finden
+      const messagesRef = collection(this.firestore, 'messages');
+      const dmQuery = query(
+        messagesRef,
+        where('recipientId', '==', currentUser.uid)
+      );
+      const dmSnapshot = await getDocs(dmQuery);
+
+      if (!dmSnapshot.empty) {
+        const firstDM = dmSnapshot.docs[0].data();
+        const otherUserId = firstDM['userId'];
+        this.setIsDirectMessage(true);
+        this.selectUser(otherUserId);
+        return `/dm/${otherUserId}`;
+      }
+
+      // Wenn weder Channels noch DMs verfügbar sind
+      return '/workspace';
+
+    } catch (error) {
+      console.error('Error in selectNextAvailableChannel:', error);
+      return '/workspace';
+    }
   }
 
   getSelectedChannel() {

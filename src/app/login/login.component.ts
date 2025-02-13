@@ -176,103 +176,131 @@ export class LoginComponent {
 
   private async initializeGuestChat() {
     try {
+      console.log('Starting initializeGuestChat');
       const messagesRef = collection(this.firestore, 'messages');
       const channelsRef = collection(this.firestore, 'channels');
       const channelMembersRef = collection(this.firestore, 'channelMembers');
-      const currentTime = new Date();
 
-      // Hole zuerst die aktuelle User-ID des Gäste-Logins
       const currentUser = await this.userService.getCurrentUser();
       if (!currentUser) {
         console.error('No user found');
         return;
       }
+      console.log('Current user:', currentUser);
 
-      const guestUserId = currentUser.uid;
+      const guestUserId = 'a4QeEY8CNEd6CZ2KwQZVCBhlJ2z1';   // Gäste-Login ID
+      const sofiasId = 'a4QeEY8CNEd6CZ2KwQZVCBhlJ2z0';     // Sofia's ID
+      const saschasId = 'NbMgkSxq3fULESFz01t7Sk7jDxw2';    // Sascha's ID
 
-      // Prüfe ob bereits Nachrichten für den Gast existieren
-      const existingMessagesQuery = query(
-        messagesRef,
-        where('userId', '==', guestUserId)
-      );
+      // Prüfe ob der Front-End-Team Channel existiert
+      const channelQuery = query(channelsRef, where('name', '==', 'Front-End-Team'));
+      const existingChannels = await getDocs(channelQuery);
+      console.log('Existing channels:', existingChannels.empty ? 'No channels found' : 'Channel exists');
 
-      const existingMessages = await getDocs(existingMessagesQuery);
+      let channelId;
 
-      // Wenn bereits Nachrichten existieren, nicht neu erstellen
-      if (!existingMessages.empty) {
-        return;
+      if (existingChannels.empty) {
+        console.log('Creating new Front-End-Team channel');
+        // Erstelle den Channel neu
+        const newChannel = {
+          name: 'Front-End-Team',
+          description: 'Channel für Frontend-Entwicklung',
+          createdBy: sofiasId,
+          createdAt: new Date()
+        };
+        
+        try {
+          const channelDoc = await addDoc(channelsRef, newChannel);
+          channelId = channelDoc.id;
+          console.log('Channel created with ID:', channelId);
+
+          // Füge Sofia als Mitglied hinzu
+          const sofiaMembership = {
+            channelId: channelId,
+            userId: sofiasId,
+            joinedAt: new Date()
+          };
+          await addDoc(channelMembersRef, sofiaMembership);
+          console.log('Sofia added as member');
+
+          // Füge Sascha als Mitglied hinzu
+          const saschaMembership = {
+            channelId: channelId,
+            userId: saschasId,
+            joinedAt: new Date()
+          };
+          await addDoc(channelMembersRef, saschaMembership);
+          console.log('Sascha added as member');
+
+          // Füge die Willkommensnachricht von Sofia hinzu
+          const welcomeMessage = {
+            text: 'Willkommen im Front-End-Team! Hier besprechen wir alle Themen rund um die Benutzeroberfläche.',
+            userId: sofiasId,
+            username: 'Sofia Weber',
+            timestamp: new Date(),
+            channelId: channelId,
+            recipientId: null
+          };
+          await addDoc(messagesRef, welcomeMessage);
+          console.log('Welcome message added');
+
+          // Füge Saschas Begrüßung hinzu
+          const saschaMessage = {
+            text: 'Danke für die Einladung! Ich freue mich auf die Zusammenarbeit.',
+            userId: saschasId,
+            username: 'Sascha Lenz',
+            timestamp: new Date(),
+            channelId: channelId,
+            recipientId: null
+          };
+          await addDoc(messagesRef, saschaMessage);
+          console.log('Sascha message added');
+        } catch (error) {
+          console.error('Error during channel creation:', error);
+          throw error;
+        }
+      } else {
+        channelId = existingChannels.docs[0].id;
+        console.log('Using existing channel with ID:', channelId);
       }
 
-      // Erstelle zuerst den Channel
-      const channelDoc = await addDoc(channelsRef, {
-        name: 'Front-End-Team',
-        description: 'Channel für Frontend-Entwicklung',
-        createdBy: 'a4QeEY8CNEd6CZ2KwQZVCBhlJ2z1', // Sofia ist die Erstellerin
-        createdAt: new Date(currentTime.getTime() - 35 * 60000)
-      });
+      // Prüfe ob der Gäste-Login bereits Mitglied ist
+      const guestMemberQuery = query(
+        channelMembersRef,
+        where('channelId', '==', channelId),
+        where('userId', '==', guestUserId)
+      );
+      const guestMemberSnapshot = await getDocs(guestMemberQuery);
+      console.log('Guest is already member:', !guestMemberSnapshot.empty);
 
-      // Füge Channel-Mitglieder hinzu
-      await addDoc(channelMembersRef, {
-        channelId: channelDoc.id,
-        userId: 'a4QeEY8CNEd6CZ2KwQZVCBhlJ2z1', // Sofia
-        joinedAt: new Date(currentTime.getTime() - 35 * 60000)
-      });
+      if (guestMemberSnapshot.empty) {
+        console.log('Adding guest as member');
+        // Füge den Gäste-Login als Mitglied hinzu
+        const guestMembership = {
+          channelId: channelId,
+          userId: guestUserId,
+          joinedAt: new Date()
+        };
+        await addDoc(channelMembersRef, guestMembership);
 
-      await addDoc(channelMembersRef, {
-        channelId: channelDoc.id,
-        userId: guestUserId, // Gast
-        joinedAt: new Date(currentTime.getTime() - 25 * 60000)
-      });
-
-      // Channel-Nachrichten für "Front-End-Team"
-      const channelMessages = [
-        {
-          text: 'Willkommen im Front-End-Team! Hier besprechen wir alle Themen rund um die Benutzeroberfläche.',
-          userId: 'a4QeEY8CNEd6CZ2KwQZVCBhlJ2z1',
-          username: 'Sofia Weber',
-          timestamp: new Date(currentTime.getTime() - 30 * 60000),
-          channelId: channelDoc.id,
-          recipientId: null
-        },
-        {
+        // Füge die Begrüßungsnachricht des Gasts hinzu
+        const guestMessage = {
           text: 'Danke für die Einladung! Ich freue mich darauf, mehr über das Projekt zu erfahren.',
           userId: guestUserId,
           username: 'Gäste Login',
-          timestamp: new Date(currentTime.getTime() - 25 * 60000),
-          channelId: channelDoc.id,
+          timestamp: new Date(),
+          channelId: channelId,
           recipientId: null
-        },
-      ];
-
-      // Direct Messages mit Sascha Lenz
-      const dmMessagesSascha = [
-        {
-          text: 'Hi! Ich bin Sascha aus dem Design-Team. Hast du schon unsere neuen UI-Komponenten gesehen?',
-          userId: 'NbMgkSxq3fULESFz01t7Sk7jDxw2',
-          username: 'Sascha Lenz',
-          timestamp: new Date(currentTime.getTime() - 20 * 60000),
-          channelId: null,
-          recipientId: guestUserId
-        },
-        {
-          text: 'Ja, die sehen super aus! Besonders die neue Navigation gefällt mir sehr gut.',
-          userId: guestUserId,
-          username: 'Gäste Login',
-          timestamp: new Date(currentTime.getTime() - 15 * 60000),
-          channelId: null,
-          recipientId: 'NbMgkSxq3fULESFz01t7Sk7jDxw2'
-        },
-      ];
-
-      // Alle Nachrichten in Firestore speichern
-      const allMessages = [...channelMessages, ...dmMessagesSascha];
-
-      for (const message of allMessages) {
-        await addDoc(messagesRef, message);
+        };
+        await addDoc(messagesRef, guestMessage);
+        console.log('Guest message added');
       }
 
+      console.log('initializeGuestChat completed successfully');
     } catch (error) {
-      console.error('Error initializing guest chat:', error);
+      console.error('Error in initializeGuestChat:', error);
+      throw error;
     }
   }
 }
+

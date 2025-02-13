@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
@@ -6,10 +6,20 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { FormsModule } from '@angular/forms';
-import { Firestore, deleteDoc, doc, updateDoc } from '@angular/fire/firestore';
+import { Firestore, deleteDoc, doc, updateDoc, getDoc } from '@angular/fire/firestore';
 import { Router } from '@angular/router';
 import { ChatService } from '../../services/chat.service';
 import { trigger, state, style, animate, transition } from '@angular/animations';
+import { Auth } from '@angular/fire/auth';
+
+interface Member {
+  uid: string;
+  username: string;
+  avatar: string;
+  email?: string;
+  isCreator?: boolean;
+  isOnline?: boolean;
+}
 
 @Component({
   selector: 'app-channel-settings',
@@ -44,7 +54,7 @@ import { trigger, state, style, animate, transition } from '@angular/animations'
     ])
   ]
 })
-export class ChannelSettingsComponent {
+export class ChannelSettingsComponent implements OnInit, OnChanges {
   @Input() isOpen = false;
   @Input() channelName = '';
   @Input() channelDescription = '';
@@ -52,17 +62,80 @@ export class ChannelSettingsComponent {
   @Input() channelId = '';
   @Output() closeSettings = new EventEmitter<void>();
   
-  // Neue Properties für die Bearbeitung
   isEditingName = false;
   isEditingDescription = false;
   editedName = '';
   editedDescription = '';
+  members: Member[] = [];
 
   constructor(
     private firestore: Firestore,
     private router: Router,
-    private chatService: ChatService
+    private chatService: ChatService,
+    private auth: Auth
   ) {}
+
+  ngOnInit() {
+    if (this.channelId) {
+      this.loadCreatorInfo();
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['channelId'] && !changes['channelId'].firstChange) {
+      this.loadCreatorInfo();
+    }
+  }
+
+  async loadCreatorInfo() {
+    try {
+      console.log('Starting loadCreatorInfo with createdBy:', this.createdBy);
+      console.log('Channel ID:', this.channelId);
+      
+      // Hole zuerst den Channel um den Creator zu bekommen
+      const channelRef = doc(this.firestore, 'channels', this.channelId);
+      const channelSnap = await getDoc(channelRef);
+      
+      if (!channelSnap.exists()) {
+        console.error('Channel document does not exist');
+        return;
+      }
+
+      const channelData = channelSnap.data();
+      console.log('Channel data:', channelData);
+      
+      // Hole die createdBy ID aus dem Channel
+      const creatorId = channelData['createdBy'];
+      console.log('Creator ID from channel:', creatorId);
+
+      if (!creatorId) {
+        console.error('No creator ID found in channel');
+        return;
+      }
+
+      // Hole die User-Informationen des Creators
+      const userDoc = await getDoc(doc(this.firestore, 'users', creatorId));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        console.log('Creator user data:', userData);
+        
+        const member: Member = {
+          uid: creatorId,
+          username: userData['username'] || 'Unbekannter Benutzer',
+          avatar: userData['avatar'] || 'default-avatar.png',
+          email: userData['email'],
+          isCreator: true,
+          isOnline: userData['isOnline'] || false
+        };
+        this.members = [member];
+        console.log('Updated members array:', this.members);
+      } else {
+        console.error('Creator user document does not exist');
+      }
+    } catch (error) {
+      console.error('Error in loadCreatorInfo:', error);
+    }
+  }
 
   startEditingName() {
     this.editedName = this.channelName;

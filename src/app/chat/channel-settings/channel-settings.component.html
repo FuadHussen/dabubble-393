@@ -51,10 +51,20 @@
 
         <mat-divider></mat-divider>
 
-        <div class="card-header">
-          <h3>Erstellt von</h3>
+        <div class="creator-info">
+          <div class="card-header">
+            <h3>Erstellt von</h3>
+          <div class="members-list">
+            <div class="member-item" *ngFor="let member of members">
+              <img [src]="'assets/img/avatars/' + member.avatar" 
+                   [alt]="member.username + ' avatar'"
+                   class="member-avatar">
+              <span class="member-name">{{ member.username }}</span>
+            </div>
+          </div>
         </div>
-        <p class="created-by">{{ createdBy }}</p>
+      </div>
+
       </mat-card>
 
       <div class="form-field-container" *ngIf="isEditingDescription" [@fadeInOut]>
