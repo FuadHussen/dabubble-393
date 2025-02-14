@@ -18,6 +18,7 @@ import { getAuth } from '@angular/fire/auth';
 import { Auth } from '@angular/fire/auth';
 import { UserService } from '../../services/user.service';
 import { Router } from '@angular/router';
+import { ThreadComponent } from '../../chat/thread/thread.component';
 
 interface Channel {
   name: string;
@@ -44,12 +45,12 @@ interface User {
     MatListModule,
     ChatComponent,
     NavbarComponent,
-    MatExpansionPanel
+    MatExpansionPanel,
+    ThreadComponent
   ],
   templateUrl: './sidenav.component.html',
   styleUrl: './sidenav.component.scss'
 })
-
 export class SidenavComponent implements OnInit {
   isActive: boolean = false;
   readonly panelOpenState = signal(false);
@@ -61,6 +62,10 @@ export class SidenavComponent implements OnInit {
   users: User[] = [];
   users$: Observable<User[]>;
   currentUserId: string | null = null;
+  threadMessage$: Observable<any>;
+
+  // Immer true für die Entwicklung
+  showThread = true;
 
   constructor(
     private dialog: MatDialog,
@@ -70,9 +75,9 @@ export class SidenavComponent implements OnInit {
     private userService: UserService,
     private router: Router
   ) {
-    // Channels aus Firestore laden
-    const channelsCollection = collection(this.firestore, 'channels');
-    this.channels$ = collectionData(channelsCollection) as Observable<Channel[]>;
+    this.channels$ = collectionData(collection(this.firestore, 'channels')) as Observable<Channel[]>;
+    this.users$ = collectionData(collection(this.firestore, 'users')) as Observable<User[]>;
+    this.threadMessage$ = this.chatService.threadMessage$;
     
     // Users aus Firestore laden mit ID
     const usersCollection = collection(this.firestore, 'users');
@@ -82,17 +87,11 @@ export class SidenavComponent implements OnInit {
         avatar: user['avatar'] || null
       })) as User[];
     });
-    
 
-    // Neue Users Collection laden
-    const usersCollectionNew = collection(this.firestore, 'users');
-    this.users$ = collectionData(usersCollectionNew) as Observable<User[]>;
-    
     // Subscribe to channels
     this.channels$.subscribe(channels => {
       if (channels && channels.length > 0) {
         this.channels = channels;
-        // Wenn kein Channel ausgewählt ist, den ersten auswählen
         if (!this.selectedChannel) {
           this.selectChannel(channels[0].name);
         }
@@ -106,16 +105,6 @@ export class SidenavComponent implements OnInit {
     
     this.chatService.selectedUser$.subscribe(user => {
       this.selectedUser = user || '';
-    });
-
-    // Subscribe to channel changes
-    this.chatService.selectedChannel$.subscribe(channel => {
-      this.selectedChannel = channel;
-    });
-
-    // Subscribe to user changes
-    this.chatService.selectedUser$.subscribe(userId => {
-      this.selectedUser = userId;
     });
   }
 
@@ -169,7 +158,7 @@ export class SidenavComponent implements OnInit {
           uid: user['uid'], // Wichtig: Wir brauchen beide IDs
           username: user['displayName'] || user['username'] || 'Unnamed User',
           displayName: user['displayName'],
-          avatar: user['avatar'] || 'default-avatar.png'
+          avatar: user['avatar']
         };
         return mappedUser;
       }) as User[];
@@ -261,5 +250,9 @@ export class SidenavComponent implements OnInit {
 
   startNewChat() {
     this.chatService.setNewChatMode(true);
+  }
+
+  closeThread() {
+    this.chatService.setThreadMessage(null);
   }
 }

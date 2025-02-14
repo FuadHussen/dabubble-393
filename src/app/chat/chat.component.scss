@@ -137,12 +137,10 @@
 }
 
 .send-button {
-  color: #444DF2 !important;
-  transform: none;
+    color: #686868;
 
-  &:hover {
-    opacity: 0.8;
-    transition: all 0.125s;
+    &:hover {
+    color: #444DF2;
   }
 }
 

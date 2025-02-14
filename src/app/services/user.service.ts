@@ -1,18 +1,15 @@
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import {
   Auth,
   signInWithEmailAndPassword,
   getAuth,
   onAuthStateChanged,
   sendPasswordResetEmail,
-  fetchSignInMethodsForEmail,
-  User,
 } from '@angular/fire/auth';
-import { DocumentData, Firestore, doc, getDoc, setDoc, collection, query, where, getDocs, DocumentData as FirestoreDocumentData } from '@angular/fire/firestore';
+import {  Firestore, doc, getDoc, setDoc, collection, getDocs } from '@angular/fire/firestore';
 import { User as FirebaseUser } from 'firebase/auth';
 import { Router } from '@angular/router';
-import { User as UserModel } from '../models/user.model';  // Importiere das Interface
 
 interface UserData {
   uid: string;

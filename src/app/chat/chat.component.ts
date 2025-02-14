@@ -42,9 +42,7 @@ import { AudioService } from '../services/audio.service';
   styleUrls: ['./chat.component.scss']
 })
 
-export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
-  @ViewChild('chatContent') private chatContent!: ElementRef;
-  private shouldScroll = true;
+export class ChatComponent implements OnInit, AfterViewInit {
   isSettingsOpen = false;
   currentChannelId = '';
   channelName = '';
@@ -151,11 +149,6 @@ export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
         }
       })
     );
-
-    // Füge Subscription für neue Nachrichten hinzu
-    this.chatService.hasMessages$.subscribe(() => {
-      this.shouldScroll = this.isUserNearBottom();
-    });
   }
 
   async loadChannelDetails(channelName: string) {
@@ -399,8 +392,6 @@ export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
         this.messageText = '';
         this.selectedMentions = [];
         this.mentionResults = [];
-        this.shouldScroll = true;  // Setze Flag für Scroll nach dem Senden
-        this.scrollToBottom();     // Scrolle sofort nach dem Senden
       }
     } catch (error) {
       console.error('Error in sendMessage:', error);
@@ -412,38 +403,6 @@ export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
       return `${user.username} (Du)`;
     }
     return user.username;
-  }
-
-  ngAfterViewChecked() {
-    if (this.shouldScroll) {
-      this.scrollToBottom();
-      this.shouldScroll = false;
-    }
-  }
-
-  private scrollToBottom(): void {
-    try {
-      const element = this.chatContent.nativeElement;
-      element.scrollTop = element.scrollHeight;
-    } catch (err) {
-      console.error('Fehler beim Scrollen:', err);
-    }
-  }
-
-  // Methode zum Prüfen, ob der User am Ende des Chats ist
-  private isUserNearBottom(): boolean {
-    try {
-      const element = this.chatContent.nativeElement;
-      const threshold = 150; // Pixel vom unteren Rand
-      return element.scrollHeight - element.scrollTop - element.clientHeight < threshold;
-    } catch (err) {
-      return true;
-    }
-  }
-
-  // Scroll-Event-Handler
-  onScroll(): void {
-    this.shouldScroll = this.isUserNearBottom();
   }
 
   async addExistingMessageAuthorsAsMembers() {

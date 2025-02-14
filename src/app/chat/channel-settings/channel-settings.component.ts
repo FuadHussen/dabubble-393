@@ -89,9 +89,6 @@ export class ChannelSettingsComponent implements OnInit, OnChanges {
 
   async loadCreatorInfo() {
     try {
-      console.log('Starting loadCreatorInfo with createdBy:', this.createdBy);
-      console.log('Channel ID:', this.channelId);
-      
       // Hole zuerst den Channel um den Creator zu bekommen
       const channelRef = doc(this.firestore, 'channels', this.channelId);
       const channelSnap = await getDoc(channelRef);
@@ -102,11 +99,9 @@ export class ChannelSettingsComponent implements OnInit, OnChanges {
       }
 
       const channelData = channelSnap.data();
-      console.log('Channel data:', channelData);
       
       // Hole die createdBy ID aus dem Channel
       const creatorId = channelData['createdBy'];
-      console.log('Creator ID from channel:', creatorId);
 
       if (!creatorId) {
         console.error('No creator ID found in channel');
@@ -117,7 +112,6 @@ export class ChannelSettingsComponent implements OnInit, OnChanges {
       const userDoc = await getDoc(doc(this.firestore, 'users', creatorId));
       if (userDoc.exists()) {
         const userData = userDoc.data();
-        console.log('Creator user data:', userData);
         
         const member: Member = {
           uid: creatorId,
@@ -128,7 +122,6 @@ export class ChannelSettingsComponent implements OnInit, OnChanges {
           isOnline: userData['isOnline'] || false
         };
         this.members = [member];
-        console.log('Updated members array:', this.members);
       } else {
         console.error('Creator user document does not exist');
       }

@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { switchMap, map, take } from 'rxjs/operators';
-import { collection, query, where, collectionData, getDocs, addDoc, doc, getDoc } from '@angular/fire/firestore';
+import { collection, query, where, collectionData, getDocs, addDoc, doc, getDoc, orderBy, serverTimestamp } from '@angular/fire/firestore';
 import { Firestore } from '@angular/fire/firestore';
 import { Auth } from '@angular/fire/auth';
 import { User } from '../models/user.model';
 import { AudioService } from './audio.service';
+import { Message } from './../models/message.model';
 
 @Injectable({
   providedIn: 'root'
@@ -18,6 +19,7 @@ export class ChatService {
   private hasMessagesSubject = new BehaviorSubject<boolean>(false);
   private isNewChatMode = new BehaviorSubject<boolean>(false);
   private selectedUserDataSubject = new BehaviorSubject<any>(null);
+  private threadMessageSource = new BehaviorSubject<Message | null>(null);
 
   currentChannelId$ = this.currentChannelIdSubject.asObservable();
   isDirectMessage$ = this.isDirectMessageSubject.asObservable();
@@ -26,6 +28,7 @@ export class ChatService {
   hasMessages$ = this.hasMessagesSubject.asObservable();
   isNewChatMode$ = this.isNewChatMode.asObservable();
   selectedUserData$ = this.selectedUserDataSubject.asObservable();
+  threadMessage$ = this.threadMessageSource.asObservable();
 
   constructor(
     private firestore: Firestore,
@@ -254,6 +257,52 @@ export class ChatService {
     } catch (error) {
       console.error('Error starting DM:', error);
       return false;
+    }
+  }
+
+  setThreadMessage(message: Message | null) {
+    this.threadMessageSource.next(message);
+  }
+
+  async getThreadReplies(messageId: string): Promise<Message[]> {
+    try {
+      const messagesRef = collection(this.firestore, 'messages');
+      const q = query(messagesRef, where('parentId', '==', messageId), orderBy('timestamp', 'asc'));
+      const querySnapshot = await getDocs(q);
+      
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Message));
+    } catch (error) {
+      console.error('Error getting thread replies:', error);
+      return [];
+    }
+  }
+
+  async sendThreadReply(threadMessage: Message, replyText: string) {
+    try {
+      const messagesRef = collection(this.firestore, 'messages');
+      const currentUser = await this.getCurrentUser();
+      
+      if (!currentUser) throw new Error('No user logged in');
+
+      const replyData = {
+        text: replyText,
+        userId: currentUser.uid,
+        username: currentUser.username || currentUser.displayName || currentUser.email,
+        timestamp: serverTimestamp(),
+        parentId: threadMessage.id,
+        channelId: threadMessage.channelId,
+        avatar: currentUser.avatar || 'default-avatar.png',
+        isThread: true
+      };
+
+      await addDoc(messagesRef, replyData);
+      this.audioService.playMessageSound();
+    } catch (error) {
+      console.error('Error sending thread reply:', error);
+      throw error;
     }
   }
 } 

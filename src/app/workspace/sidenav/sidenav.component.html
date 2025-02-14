@@ -118,6 +118,12 @@
   </mat-drawer>
 
   <mat-drawer-content class="main-content">
-    <app-chat></app-chat>
+    <div class="content-container" [class.with-thread]="threadMessage$ | async">
+      <app-chat></app-chat>
+      <app-thread *ngIf="threadMessage$ | async" 
+                 [message]="threadMessage$ | async"
+                 (closeThread)="closeThread()">
+      </app-thread>
+    </div>
   </mat-drawer-content>
 </mat-drawer-container>

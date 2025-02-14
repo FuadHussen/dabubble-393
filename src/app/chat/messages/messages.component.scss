@@ -155,6 +155,39 @@
       border-radius: 0 30px 30px 30px;
       transition: background-color 0.2s ease;
     }
+
+    .thread-replies-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 20px;
+      background: #444DF2;
+      color: white;
+      cursor: pointer;
+      margin-top: 4px;
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background-color: #3238c4;
+      }
+
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+
+      .replies-count {
+        font-size: 14px;
+      }
+    }
+
+    .message.guest & {
+      .thread-replies-badge {
+        margin-right: auto;
+      }
+    }
   }
 
   .reaction-options {
@@ -186,7 +219,7 @@
         border-radius: 16px;
         cursor: pointer;
         transition: background-color 0.2s ease;
-        
+
         &:hover {
           background-color: #ECEEFE;
         }
@@ -195,7 +228,7 @@
           display: flex;
           align-items: center;
           justify-content: center;
-          
+
           mat-icon {
             font-size: 20px;
             width: 20px;
@@ -215,21 +248,21 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     padding: 8px;
     z-index: 2;
-    
+
     .emoji-container {
       display: grid;
       grid-template-columns: repeat(6, 1fr);
       gap: 4px;
       max-height: 200px;
       overflow-y: auto;
-      
+
       .emoji {
         font-size: 20px;
         padding: 4px;
         cursor: pointer;
         text-align: center;
         border-radius: 4px;
-        
+
         &:hover {
           background-color: #ECEEFE;
         }
@@ -247,6 +280,7 @@
     background-color: rgba(255, 223, 0, 0.5);
     transform: scale(1.02);
   }
+
   100% {
     background-color: transparent;
     transform: scale(1);
@@ -254,11 +288,12 @@
 }
 
 .message-reactions {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 4px;
-  position: relative;
+  align-items: center;
 }
 
 .reaction-badge {
@@ -272,7 +307,7 @@
   border-radius: 20px;
   background: white;
   border: 1px solid #ADB0D9;
-  
+
   &:hover {
     background-color: rgba(68, 77, 242, 0.1);
   }
@@ -290,7 +325,6 @@
 .reaction-tooltip {
   position: absolute;
   bottom: 32px;
-  left: 32px;
   margin-bottom: 10px;
   z-index: 99999;
   background: #444DF2;
@@ -305,6 +339,8 @@
   pointer-events: none;
   will-change: transform;
   text-align: center;
+  transition: left 0.2s ease;
+  transform: translateX(32px);
 
   .tooltip-content {
     .emoji-preview {
@@ -316,13 +352,13 @@
     .users-list {
       .user-item {
         margin-bottom: 5px;
-        
+
         .username {
           font-size: 18px;
           font-weight: 500;
           display: block;
         }
-        
+
         .reaction-text {
           font-size: 16px;
           opacity: 0.8;
@@ -422,4 +458,11 @@
       }
     }
   }
+}
+
+.badge-container {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  gap: 8px;
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, NgZone, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Firestore, collection, query, where, orderBy, onSnapshot, collectionData, Timestamp, serverTimestamp, addDoc, doc, updateDoc, getDoc } from '@angular/fire/firestore';
 import { ChatService } from '../../services/chat.service';
@@ -37,6 +37,7 @@ interface Message {
   showEditMenu?: boolean;
   isEditing?: boolean;
   editText?: string;
+  threadId?: string;
 }
 
 interface User {
@@ -45,6 +46,16 @@ interface User {
   displayName?: string;
   uid?: string;
   avatar?: string;
+}
+
+// Neues Interface für Tooltip-Daten
+interface TooltipData {
+  emoji: string;
+  users: string[];
+  position: {
+    left: string;
+    bottom: string;
+  };
 }
 
 @Component({
@@ -78,21 +89,28 @@ export class MessagesComponent implements OnInit {
     '👏', '🤝', '🙏', '💪', '🫶', '❤️', '🔥', '💯', 
     '✨', '🎉', '👻', '🤖', '💩', '🦄'
   ];
-  console = console;
   activeTooltipId: string | null = null;
   hoveredReactionId: string | null = null;
   emojiTooltipVisible = false;
   emojiTooltipData: { emoji: string, users: string[] } | null = null;
   emojiTooltipStyle: any = {};
   oneIsHovering = false;
+  threadReplies: Message[] = [];
 
   hoveredReaction: GroupedReaction | null = null;
   tooltipX: number = 0;
   tooltipY: number = 0;
 
   tooltipVisibility: { [key: string]: boolean } = {};
-  tooltipData: { [key: string]: { emoji: string, users: string[] } } = {};
+  tooltipData: { [key: string]: TooltipData } = {};
   selectedUserData: any;
+  selectedThread: Message | null = null;
+  private isUserScrolling = false;
+  private lastScrollTop = 0;
+  private shouldScrollToBottom = true;
+  private scrollTimeout: any;
+
+  @ViewChild('chatContent') private chatContent!: ElementRef;
 
   constructor(
     private firestore: Firestore,
@@ -194,8 +212,13 @@ export class MessagesComponent implements OnInit {
         );
       }
 
+      // Separate Arrays für Hauptnachrichten und Thread-Antworten
+      let mainMessages: Message[] = [];
+      let threadReplies: Message[] = [];
+
       this.messagesSubscription = onSnapshot(q, async (querySnapshot) => {
-        const messages: Message[] = [];
+        mainMessages = [];
+        threadReplies = [];
         
         for (const docSnapshot of querySnapshot.docs) {
           const messageData = docSnapshot.data();
@@ -203,18 +226,38 @@ export class MessagesComponent implements OnInit {
           const userDoc = await getDoc(userRef);
           const userData = userDoc.exists() ? userDoc.data() : null;
 
-          messages.push({
+          const message = {
             id: docSnapshot.id,
             ...messageData,
             avatar: userData?.['avatar']
-          } as Message);
+          } as Message;
+
+          // Sortiere die Nachrichten in die entsprechenden Arrays
+          if (messageData['threadId']) {
+            threadReplies.push(message);
+          } else {
+            mainMessages.push(message);
+          }
         }
 
-        // Update in NgZone
         this.ngZone.run(() => {
-          this.messages = messages;
+          // Nur Hauptnachrichten im messages Array
+          this.messages = mainMessages;
+          // Thread-Antworten in separatem Array
+          this.threadReplies = threadReplies;
           this.groupMessagesByDate();
           this.chatService.setHasMessages(this.messages.length > 0);
+          
+          if (this.messages.length > 0) {
+            setTimeout(() => {
+              const messageElements = document.querySelectorAll('.message');
+              if (messageElements.length > 0) {
+                const lastMessage = messageElements[messageElements.length - 1];
+                lastMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
+              }
+            }, 100);
+          }
+          
           this.cdr.detectChanges();
         });
       });
@@ -226,6 +269,9 @@ export class MessagesComponent implements OnInit {
   ngOnDestroy() {
     if (this.messagesSubscription) {
       this.messagesSubscription();
+    }
+    if (this.scrollTimeout) {
+      clearTimeout(this.scrollTimeout);
     }
   }
 
@@ -287,7 +333,7 @@ export class MessagesComponent implements OnInit {
 
   isCurrentUser(userId: string): boolean {
     // Für den Guest-Login (blaue Nachrichten)
-    return userId === 'a4QeEY8CNEd6CZ2KwQZVCBhlJ2z1';
+    return userId === this.currentUser?.uid;
   }
 
   async sendMessage(event?: KeyboardEvent) {
@@ -307,7 +353,9 @@ export class MessagesComponent implements OnInit {
         userId: this.currentUser.uid,
         username: this.currentUser.username || 'Unbekannt',
         channelId: this.isDirectMessage ? null : this.selectedChannel,
-        recipientId: this.isDirectMessage ? this.chatService.selectedUser : null
+        recipientId: this.isDirectMessage ? this.chatService.selectedUser : null,
+        threadId: this.selectedThread ? this.selectedThread.id : null,
+        timestamp: new Date()
       };
 
       // Nachricht über den ChatService senden
@@ -402,14 +450,20 @@ export class MessagesComponent implements OnInit {
     }
   }
 
-  async toggleReaction(message: Message, reaction: GroupedReaction) {
+  toggleReaction(message: Message, reaction: GroupedReaction) {
     try {
       const messageRef = doc(this.firestore, 'messages', message.id);
       const reactions = message.reactions || [];
+
+      const existingReaction = reactions.find(
+        (r: Reaction) => r.userId === this.currentUser.uid && r.emoji === reaction.emoji
+      );
+      console.log(existingReaction);
+
       
-      if (this.hasUserReacted(message, reaction.emoji)) {
+      if (existingReaction) {
         // Reaktion entfernen
-        await updateDoc(messageRef, {
+        updateDoc(messageRef, {
           reactions: reactions.filter((r: Reaction) => 
             !(r.userId === this.currentUser.uid && r.emoji === reaction.emoji)
           )
@@ -442,15 +496,26 @@ export class MessagesComponent implements OnInit {
   handleReactionHover(event: MouseEvent, message: Message, reaction: GroupedReaction) {
     event.stopPropagation();
     
-    // Erst alle anderen Tooltips ausblenden
     this.hideAllTooltips();
     
-    // Dann den aktuellen Tooltip anzeigen
+    const badge = (event.currentTarget as HTMLElement);
+    const badgeRect = badge.getBoundingClientRect();
+    
+    // Berechne die Position basierend auf dem Index des Badges
+    const reactionBadges = badge.parentElement?.parentElement?.querySelectorAll('.reaction-badge') || [];
+    const badgeIndex = Array.from(reactionBadges).indexOf(badge);
+    const baseOffset = 32; // Erhöhter Basis-Offset (von 112 auf 160)
+    const offsetIncrement = 48; // Zusätzlicher Offset pro Badge
+    
     const reactionKey = `${message.id}-${reaction.emoji}`;
     this.tooltipVisibility[reactionKey] = true;
     this.tooltipData[reactionKey] = {
       emoji: reaction.emoji,
-      users: reaction.users
+      users: reaction.users,
+      position: {
+        left: `${baseOffset + (badgeIndex * offsetIncrement)}px`,
+        bottom: `${window.innerHeight - badgeRect.top + 10}px`
+      }
     };
   }
 
@@ -531,5 +596,70 @@ export class MessagesComponent implements OnInit {
         this.cancelEdit(message);
       }
     });
+  }
+
+  openThread(event: Event, message: Message) {
+    event.stopPropagation();
+    this.selectedThread = message;
+    this.chatService.setThreadMessage(message);
+  }
+
+  onScroll(event: any) {
+    if (this.scrollTimeout) {
+      clearTimeout(this.scrollTimeout);
+    }
+
+    const element = event.target;
+    const currentScrollTop = element.scrollTop;
+    const maxScrollTop = element.scrollHeight - element.clientHeight;
+    
+    this.shouldScrollToBottom = maxScrollTop - currentScrollTop < 50;
+    this.isUserScrolling = true;
+    
+    this.scrollTimeout = setTimeout(() => {
+      this.isUserScrolling = false;
+    }, 300);
+  }
+
+  ngAfterViewChecked() {
+    if (this.shouldScrollToBottom && !this.isUserScrolling && this.chatContent) {
+      this.scrollToBottom();
+    }
+  }
+
+  scrollToBottomManually() {
+    if (this.chatContent) {
+      this.shouldScrollToBottom = true;
+      this.scrollToBottom();
+    }
+  }
+
+  scrollToBottom(): void {
+    if (this.chatContent) {
+      this.chatContent.nativeElement.scrollTop = this.chatContent.nativeElement.scrollHeight;
+    }
+  }
+
+  getThreadRepliesCount(messageId: string): number {
+    // Nutze das threadReplies Array für die Zählung
+    return this.threadReplies.filter(m => m.threadId === messageId).length;
+  }
+
+  async sendReply(threadMessage: Message, replyText: string) {
+    try {
+      const messageData = {
+        text: replyText,
+        userId: this.currentUser.uid,
+        username: this.currentUser.displayName || 'Anonymous',
+        timestamp: serverTimestamp(),
+        channelId: threadMessage.channelId,
+        threadId: threadMessage.id, // Wichtig: Setze die threadId auf die ID der Original-Nachricht
+        avatar: this.currentUser.avatar
+      };
+
+      await addDoc(collection(this.firestore, 'messages'), messageData);
+    } catch (error) {
+      console.error('Error sending reply:', error);
+    }
   }
 }

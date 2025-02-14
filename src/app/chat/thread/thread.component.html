@@ -1,0 +1,103 @@
+<div class="thread-container">
+  <div class="thread-header">
+    <div class="header-content">
+      <h2>Thread</h2>
+      <span class="subtitle"># {{ message?.channelId }}</span>
+    </div>
+    <button mat-icon-button (click)="close()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="thread-content">
+    <!-- Gruppierte Nachrichten -->
+    <div *ngFor="let group of messageGroups">
+      <div class="date-divider">
+        <div class="line"></div>
+        <span class="date-label">{{ group.date }}</span>
+        <div class="line"></div>
+      </div>
+
+      <!-- Messages in dieser Gruppe -->
+      <div *ngFor="let msg of group.messages" class="message" [class.guest]="isCurrentUser(msg.userId)"
+           (mouseover)="showReactionOptions($event, msg)" 
+           (mouseleave)="hideReactionOptions($event, msg)">
+        <div class="avatar-container" *ngIf="msg.avatar">
+          <img [src]="'assets/img/avatars/' + msg.avatar" [alt]="msg.username + ' avatar'" class="user-avatar">
+        </div>
+        <div class="message-content">
+          <div class="message-header">
+            <span class="username">{{ msg.username }}</span>
+            <span class="timestamp">{{ convertTimestamp(msg.timestamp) | date:'HH:mm' }} Uhr</span>
+          </div>
+          <div class="message-text">{{ msg.text }}</div>
+
+          <!-- Reaktions-Optionen -->
+          <div class="reaction-options" [class.show]="msg.showReactions">
+            <div class="quick-reactions">
+              <div class="reaction-emoji" (click)="addReaction(msg, '👍')">👍</div>
+              <div class="reaction-emoji" (click)="addReaction(msg, '❤️')">❤️</div>
+              <div class="reaction-emoji" (click)="addReaction(msg, '😂')">😂</div>
+              <div class="reaction-emoji" (click)="addReaction(msg, '🔥')">🔥</div>
+              <div class="reaction-emoji" (click)="addReaction(msg, '👏')">👏</div>
+            </div>
+          </div>
+
+          <!-- Angezeigte Reaktionen -->
+          <div class="message-reactions" *ngIf="msg.reactions && msg.reactions.length > 0">
+            <div class="reaction-wrapper" *ngFor="let reaction of groupReactions(msg.reactions)">
+                <div class="tooltip-content">
+                  <div class="users-list">
+                    <div class="user-item" *ngFor="let userId of reaction.users">
+                    </div>
+                  </div>
+                </div>
+              
+              <div class="reaction-badge" 
+                   [class.user-reacted]="hasUserReacted(msg, reaction.emoji)"
+                   (click)="addReaction(msg, reaction.emoji)"
+                   (mouseover)="handleReactionHover($event, msg, reaction)"
+                   (mouseleave)="handleReactionLeave($event, msg, reaction)">
+                <span class="reaction-emoji">{{ reaction.emoji }}</span>
+                <span class="reaction-count">{{ reaction.count }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Replies count nur nach der Original-Nachricht -->
+      <div class="replies-count" *ngIf="group.isOriginalMessage && replies.length > 0">
+        {{ replies.length }} {{ replies.length === 1 ? 'Antwort' : 'Antworten' }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Reply Input -->
+  <div class="reply-input">
+    <div class="input-container">
+      <button mat-icon-button (click)="toggleEmojiPicker()">
+        <mat-icon>sentiment_satisfied_alt</mat-icon>
+      </button>
+      <textarea 
+        [(ngModel)]="replyText"
+        placeholder="Antworten..."
+        (keydown.enter)="$event.preventDefault(); sendReply()">
+      </textarea>
+      <button mat-icon-button (click)="sendReply()">
+        <mat-icon>send</mat-icon>
+      </button>
+    </div>
+
+    <!-- Emoji Picker -->
+    <div class="emoji-picker" *ngIf="showEmojiPicker">
+      <div class="emoji-container">
+        <span *ngFor="let emoji of emojis" 
+              class="emoji" 
+              (click)="addEmoji(emoji)">
+          {{ emoji }}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
