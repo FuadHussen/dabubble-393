@@ -101,7 +101,12 @@
                 [ngClass]="{'active': isUserActive(user)}"
               >
                 <div class="user-info">
-                  <img [src]="'assets/img/avatars/' + user.avatar" alt="User Avatar" class="user-avatar">
+                  <div class="avatar-container">
+                    <img [src]="'assets/img/avatars/' + user.avatar" 
+                         alt="User Avatar" 
+                         class="user-avatar">
+                    <div class="online-status" *ngIf="!user.isOnline"></div>
+                  </div>
                   <p class="fs-18">
                     {{ user.displayName || user.username }}
                     <span class="current-user" *ngIf="user.uid === currentUserId">

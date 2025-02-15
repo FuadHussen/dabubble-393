@@ -25,12 +25,13 @@ interface Channel {
   description?: string;
 }
 
-interface User {
+export interface User {
   id: string;
   username: string;
   displayName?: string;
   uid?: string;
   avatar?: string;
+  isOnline?: boolean;
 }
 
 @Component({
@@ -155,10 +156,11 @@ export class SidenavComponent implements OnInit {
       this.users = users.map(user => {
         const mappedUser = {
           id: user['id'],
-          uid: user['uid'], // Wichtig: Wir brauchen beide IDs
+          uid: user['uid'],
           username: user['displayName'] || user['username'] || 'Unnamed User',
           displayName: user['displayName'],
-          avatar: user['avatar']
+          avatar: user['avatar'],
+          isOnline: user['isOnline'] || false
         };
         return mappedUser;
       }) as User[];

@@ -346,6 +346,25 @@ mat-nav-list {
   height: 32px;
   border-radius: 50%;
   object-fit: cover;
+  position: relative;
+}
+
+.avatar-container {
+  position: relative;
+  width: 32px;
+  height: 32px;
+
+  .online-status {
+    position: absolute;
+    bottom: 0;
+    right: -4px;
+    width: 8px;
+    height: 8px;
+    background-color: #1EC600;
+    border-radius: 50%;
+    border: 2px solid white;
+    z-index: 1;
+  }
 }
 
 .channel-list {

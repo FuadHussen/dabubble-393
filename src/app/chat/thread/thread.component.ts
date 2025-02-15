@@ -12,6 +12,7 @@ interface MessageGroup {
   date: string;
   messages: Message[];
   isOriginalMessage: boolean;
+  avatar: string;
 }
 
 interface Reaction {
@@ -31,6 +32,7 @@ interface Message extends FirebaseMessage {
   showEmojiPicker?: boolean;
   isEditing?: boolean;
   editText?: string;
+  avatar: string;
 }
 
 @Component({
@@ -43,16 +45,19 @@ interface Message extends FirebaseMessage {
 export class ThreadComponent implements OnInit {
   @Input() message: Message | null = null;
   @Output() closeThread = new EventEmitter<void>();
-  
+
   replies: Message[] = [];
   replyText: string = '';
   showEmojiPicker = false;
   currentUser: any;
-  
+
   emojis: string[] = ['😀', '😂', '😊', '😍', '🥰', '😎', '😴', '🤔'];
   messageGroups: MessageGroup[] = [];
   tooltipVisibility: { [key: string]: boolean } = {};
   tooltipData: { [key: string]: { emoji: string, users: string[] } } = {};
+
+  // Cache für gruppierte Reaktionen
+  private reactionCache: { [key: string]: GroupedReaction[] } = {};
 
   constructor(
     private chatService: ChatService,
@@ -67,6 +72,10 @@ export class ThreadComponent implements OnInit {
 
   ngOnInit() {
     this.loadReplies();
+  }
+
+  addReaction(message: Message, emoji: string) {
+    this.handleReactionClick(new Event(''), message, { emoji, count: 0, users: [] });
   }
 
   // Methode für die Anzeige des Benutzernamens
@@ -91,7 +100,7 @@ export class ThreadComponent implements OnInit {
 
   groupMessagesByDate(messages: Message[]) {
     const groups: { [key: string]: Message[] } = {};
-    
+
     messages.forEach(message => {
       const date = this.convertTimestamp(message.timestamp);
       const dateStr = date.toLocaleDateString('de-DE', {
@@ -99,7 +108,7 @@ export class ThreadComponent implements OnInit {
         day: 'numeric',
         month: 'long'
       });
-      
+
       if (!groups[dateStr]) {
         groups[dateStr] = [];
       }
@@ -109,7 +118,8 @@ export class ThreadComponent implements OnInit {
     this.messageGroups = Object.keys(groups).map(date => ({
       date,
       messages: groups[date],
-      isOriginalMessage: false
+      isOriginalMessage: false,
+      avatar: ''
     }));
   }
 
@@ -118,27 +128,39 @@ export class ThreadComponent implements OnInit {
       try {
         // Echtzeit-Listener für die Original-Nachricht
         const originalMessageRef = doc(this.firestore, 'messages', this.message.id);
-        onSnapshot(originalMessageRef, (docSnapshot) => {
+        onSnapshot(originalMessageRef, async (docSnapshot) => {
           if (docSnapshot.exists()) {
+            const messageData = docSnapshot.data();
+            
+            // Hole den User mit der userId aus der users-Sammlung
+            const userRef = doc(this.firestore, 'users', messageData['userId']);
+            const userSnap = await getDoc(userRef);
+            const userData = userSnap.data();
+            
             const originalMessageData = {
               id: docSnapshot.id,
-              ...docSnapshot.data()
+              ...messageData,
+              // Verwende den Avatar aus dem user-Dokument
+              avatar: userData?.['avatar'] || 'default-avatar.png',
+              username: userData?.['username'] || messageData['username']
             } as Message;
             
-            // Update die Original-Nachricht
+            
             this.message = originalMessageData;
             
-            // Aktualisiere die MessageGroups mit der neuen Original-Nachricht
             if (this.messageGroups.length > 0) {
-              this.messageGroups[0] = {
-                date: this.convertTimestamp(this.message.timestamp).toLocaleDateString('de-DE', {
-                  weekday: 'long',
-                  day: 'numeric',
-                  month: 'long'
+              this.messageGroups = [
+                {
+                  date: this.convertTimestamp(this.message.timestamp).toLocaleDateString('de-DE', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long'
                 }),
                 messages: [this.message],
-                isOriginalMessage: true
-              };
+                isOriginalMessage: true,
+                avatar: this.message.avatar
+              }
+            ];
             }
             
             this.cdr.detectChanges();
@@ -153,13 +175,28 @@ export class ThreadComponent implements OnInit {
           orderBy('timestamp', 'asc')
         );
 
-        onSnapshot(q, (snapshot) => {
-          this.replies = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          } as Message));
+        onSnapshot(q, async (snapshot) => {
+          // Lade für jede Antwort die User-Daten
+          this.replies = await Promise.all(
+            snapshot.docs.map(async (docSnapshot) => {
+              const messageData = docSnapshot.data();
+              
+              // Hole den User für jede Antwort
+              const userRef = doc(this.firestore, 'users', messageData['userId']);
+              const userSnap = await getDoc(userRef);
+              const userData = userSnap.data();
+              
+              return {
+                id: docSnapshot.id,
+                ...messageData,
+                // Verwende den Avatar aus dem user-Dokument
+                avatar: userData?.['avatar'] || 'default-avatar.png',
+                username: userData?.['username'] || messageData['username']
+              } as Message;
+            })
+          );
 
-          // Gruppiere Original-Nachricht und Antworten
+
           const originalMessageGroup = {
             date: this.convertTimestamp(this.message?.timestamp).toLocaleDateString('de-DE', {
               weekday: 'long',
@@ -184,7 +221,7 @@ export class ThreadComponent implements OnInit {
 
   private groupRepliesByDate(replies: Message[]): MessageGroup[] {
     const groups: { [key: string]: Message[] } = {};
-    
+
     replies.forEach(message => {
       const date = this.convertTimestamp(message.timestamp);
       const dateStr = date.toLocaleDateString('de-DE', {
@@ -192,7 +229,7 @@ export class ThreadComponent implements OnInit {
         day: 'numeric',
         month: 'long'
       });
-      
+
       if (!groups[dateStr]) {
         groups[dateStr] = [];
       }
@@ -202,7 +239,8 @@ export class ThreadComponent implements OnInit {
     return Object.keys(groups).map(date => ({
       date,
       messages: groups[date],
-      isOriginalMessage: false
+      isOriginalMessage: false,
+      avatar: ''
     }));
   }
 
@@ -218,16 +256,16 @@ export class ThreadComponent implements OnInit {
           text: this.replyText.trim(),
           userId: this.currentUser.uid,
           // Verwende die richtige Reihenfolge für den Username mit Index-Notation
-          username: userData?.['displayName'] || 
-                   userData?.['username'] || 
-                   this.currentUser['username'] || 
-                   this.currentUser.email,
+          username: userData?.['displayName'] ||
+            userData?.['username'] ||
+            this.currentUser['username'] ||
+            this.currentUser.email,
           channelId: this.message.channelId,
           threadId: this.message.id,
           timestamp: new Date(),
-          avatar: userData?.['avatar'] || 
-                  this.currentUser['avatar'] || 
-                  'default-avatar.png'
+          avatar: userData?.['avatar'] ||
+            this.currentUser['avatar'] ||
+            'default-avatar.png'
         };
 
         await this.chatService.sendMessage(replyData);
@@ -265,42 +303,61 @@ export class ThreadComponent implements OnInit {
     }
   }
 
-  async addReaction(message: Message, emoji: string) {
+  async handleReactionClick(event: Event, message: Message, reaction: GroupedReaction) {
+    event.stopPropagation();
+
+    if (!this.currentUser?.uid) return;
+
     try {
       const messageRef = doc(this.firestore, 'messages', message.id);
-      const reactions = message.reactions || [];
-      
-      const existingReaction = reactions.find(
-        r => r.userId === this.currentUser.uid && r.emoji === emoji
+      const messageDoc = await getDoc(messageRef);
+
+      if (!messageDoc.exists()) return;
+
+      const currentReactions: Reaction[] = messageDoc.data()?.['reactions'] || [];
+      const existingReactionIndex = currentReactions.findIndex(r =>
+        r.userId === this.currentUser.uid && r.emoji === reaction.emoji
       );
 
-      if (existingReaction) {
-        await updateDoc(messageRef, {
-          reactions: reactions.filter(r => 
-            !(r.userId === this.currentUser.uid && r.emoji === emoji)
-          )
-        });
+      let updatedReactions: Reaction[];
+      if (existingReactionIndex !== -1) {
+        updatedReactions = currentReactions.filter((_, index) => index !== existingReactionIndex);
       } else {
-        await updateDoc(messageRef, {
-          reactions: [...reactions, {
-            userId: this.currentUser.uid,
-            emoji: emoji,
-            timestamp: new Date()
-          }]
-        });
+        updatedReactions = [...currentReactions, {
+          userId: this.currentUser.uid,
+          emoji: reaction.emoji,
+          timestamp: new Date()
+        }];
       }
 
-      message.showReactions = false;
+      await updateDoc(messageRef, { reactions: updatedReactions });
+
+      // Cache für diese Nachricht zurücksetzen
+      Object.keys(this.reactionCache).forEach(key => {
+        if (key.startsWith(message.id)) {
+          delete this.reactionCache[key];
+        }
+      });
+
       this.cdr.detectChanges();
     } catch (error) {
       console.error('Error updating reaction:', error);
     }
   }
 
-  groupReactions(reactions: Reaction[]): GroupedReaction[] {
-    if (!reactions) return [];
-    
+  groupReactions(reactions: Reaction[], messageId: string): GroupedReaction[] {
+    const cacheKey = `${messageId}-${JSON.stringify(reactions)}`;
+
+    // Prüfe Cache
+    if (this.reactionCache[cacheKey]) {
+      return this.reactionCache[cacheKey];
+    }
+
+    if (!reactions || reactions.length === 0) return [];
+
     const grouped = reactions.reduce((acc: { [key: string]: GroupedReaction }, reaction: Reaction) => {
+      if (!reaction.emoji || !reaction.userId) return acc;
+
       if (!acc[reaction.emoji]) {
         acc[reaction.emoji] = {
           emoji: reaction.emoji,
@@ -308,41 +365,38 @@ export class ThreadComponent implements OnInit {
           users: []
         };
       }
-      acc[reaction.emoji].count++;
-      acc[reaction.emoji].users.push(reaction.userId);
+
+      if (!acc[reaction.emoji].users.includes(reaction.userId)) {
+        acc[reaction.emoji].users.push(reaction.userId);
+        acc[reaction.emoji].count++;
+      }
+
       return acc;
     }, {});
 
-    return Object.values(grouped);
+    const result = Object.values(grouped);
+    this.reactionCache[cacheKey] = result;
+    return result;
   }
 
   hasUserReacted(message: Message, emoji: string) {
-    return message.reactions?.some(r => 
+    return message.reactions?.some(r =>
       r.userId === this.currentUser.uid && r.emoji === emoji
     );
   }
 
-  handleReactionHover(event: MouseEvent, message: Message, reaction: GroupedReaction) {
+  handleReactionHover(event: Event, message: Message, reaction: GroupedReaction) {
     event.stopPropagation();
-    const reactionKey = `${message.id}-${reaction.emoji}`;
-    this.tooltipVisibility[reactionKey] = true;
-    this.tooltipData[reactionKey] = {
-      emoji: reaction.emoji,
-      users: reaction.users
-    };
+    const tooltipKey = `${message.id}-${reaction.emoji}`;
+    this.tooltipVisibility[tooltipKey] = true;
   }
 
-  handleReactionLeave(event: MouseEvent, message: Message, reaction: GroupedReaction) {
-    event.stopPropagation();
-    const reactionKey = `${message.id}-${reaction.emoji}`;
-    setTimeout(() => {
-      const target = event.relatedTarget as HTMLElement;
-      const isOverTooltip = target?.closest('.reaction-tooltip');
-      
-      if (!isOverTooltip) {
-        this.tooltipVisibility[reactionKey] = false;
-        delete this.tooltipData[reactionKey];
-      }
-    }, 100);
+  hideTooltip(tooltipKey: string) {
+    this.tooltipVisibility[tooltipKey] = false;
+  }
+
+  getAvatarPath(msg: Message): string {
+    if (!msg.avatar) return 'assets/img/avatars/default-avatar.png';
+    return `assets/img/avatars/${msg.avatar}`;
   }
 }

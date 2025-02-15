@@ -46,36 +46,39 @@
     margin-bottom: 16px;
     padding: 8px 12px;
     border-radius: 10px;
-    
+
     &.guest {
         background-color: #797EF3;
         flex-direction: row-reverse;
-        
+
         .message-content {
             .message-header {
                 flex-direction: row-reverse;
-                
-                .username, .timestamp {
+
+                .username,
+                .timestamp {
                     color: #fff;
                 }
             }
-            
+
             .message-text {
                 color: #fff;
             }
         }
     }
-    
+
     &:not(.guest) {
         background-color: #ECEEFE;
-        
+
         .message-content {
             .message-header {
-                .username, .timestamp {
+
+                .username,
+                .timestamp {
                     color: #000;
                 }
             }
-            
+
             .message-text {
                 color: #000;
             }
@@ -142,7 +145,7 @@
                     border-radius: 16px;
                     transition: background-color 0.2s ease;
                     font-size: 16px;
-                    
+
                     &:hover {
                         background-color: #ECEEFE;
                     }
@@ -166,27 +169,6 @@
 
             .reaction-wrapper {
                 position: relative;
-
-                .reaction-badge {
-                    display: flex;
-                    align-items: center;
-                    gap: 4px;
-                    padding: 2px 6px;
-                    border-radius: 12px;
-                    background: #F8F9FD;
-                    font-size: 12px;
-                    cursor: pointer;
-                    border: 1px solid transparent;
-
-                    &:hover {
-                        background: #ECEEFE;
-                    }
-
-                    &.user-reacted {
-                        border-color: #444DF2;
-                        background: #ECEEFE;
-                    }
-                }
             }
         }
     }
@@ -286,5 +268,26 @@
                 background-color: #F8F9FD;
             }
         }
+    }
+}
+
+.reaction-badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    border-radius: 12px;
+    background: #F8F9FD;
+    font-size: 12px;
+    cursor: pointer;
+    border: 1px solid transparent;
+
+    &:hover {
+        background: #fff;
+    }
+
+    &.user-reacted {
+        border-color: #444DF2;
+        background: #fff;
     }
 }

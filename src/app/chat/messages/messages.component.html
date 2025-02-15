@@ -40,9 +40,9 @@
           <!-- Reaktions-Optionen -->
           <div class="reaction-options" [class.show]="message.showReactions">
             <div class="quick-reactions">
-              <div class="reaction-emoji" (click)="addReaction(message, '👍')">👍</div>
-              <div class="reaction-emoji" (click)="addReaction(message, '❤️')">❤️</div>
-              <div class="reaction-emoji" (click)="addReaction(message, '😂')">😂</div>
+              <div class="reaction-emoji" (click)="handleReactionClick($event, message, {emoji: '👍', count: 0, users: []})">👍</div>
+              <div class="reaction-emoji" (click)="handleReactionClick($event, message, {emoji: '❤️', count: 0, users: []})">❤️</div>
+              <div class="reaction-emoji" (click)="handleReactionClick($event, message, {emoji: '😂', count: 0, users: []})">😂</div>
               <div class="reaction-emoji picker-trigger" (click)="showEmojiPickerForMessage($event, message)">
                 <mat-icon>add_reaction</mat-icon>
               </div>
@@ -60,7 +60,9 @@
           <!-- Emoji Picker -->
           <div class="message-emoji-picker" *ngIf="message.showEmojiPicker">
             <div class="emoji-container">
-              <div class="emoji" *ngFor="let emoji of emojis" (click)="addReaction(message, emoji)">
+              <div class="emoji" 
+                   *ngFor="let emoji of emojis" 
+                   (click)="handleReactionClick($event, message, {emoji: emoji, count: 0, users: []})">
                 {{ emoji }}
               </div>
             </div>
@@ -70,28 +72,29 @@
 
         <!-- Angezeigte Reaktionen unter der Nachricht -->
         <div class="badge-container">
-          <div class="message-reactions" *ngIf="message.reactions && message.reactions.length > 0">
-            <div class="reaction-wrapper" *ngFor="let reaction of groupReactions(message.reactions)">
-              <!-- Tooltip für jede einzelne Reaktion -->
-              <div *ngIf="tooltipVisibility[message.id + '-' + reaction.emoji]" class="reaction-tooltip">
+          <div class="message-reactions" *ngIf="message.reactions">
+            <button *ngFor="let reaction of groupReactions(message.reactions, message.id)"
+                    class="reaction-badge"
+                    [class.user-reacted]="hasUserReacted(message, reaction.emoji)"
+                    (click)="handleReactionClick($event, message, reaction)"
+                    (mouseover)="handleReactionHover($event, message, reaction)"
+                    (mouseleave)="hideTooltip(message.id + '-' + reaction.emoji)">
+              <span class="reaction-emoji">{{ reaction.emoji }}</span>
+              <span class="reaction-count">{{ reaction.count }}</span>
+              
+              <!-- Tooltip -->
+              <div *ngIf="tooltipVisibility[message.id + '-' + reaction.emoji]" 
+                   class="reaction-tooltip">
                 <div class="tooltip-content">
                   <div class="emoji-preview">{{ reaction.emoji }}</div>
                   <div class="users-list">
                     <div class="user-item" *ngFor="let userId of reaction.users">
-                      <span class="username">{{ getUserName(userId) }}</span>
-                      <span class="reaction-text">hat reagiert</span>
+                      {{ getUserName(userId) }}
                     </div>
                   </div>
                 </div>
               </div>
-
-              <div class="reaction-badge" [class.user-reacted]="hasUserReacted(message, reaction.emoji)"
-                [attr.data-emoji]="reaction.emoji" (mouseover)="handleReactionHover($event, message, reaction)"
-                (mouseleave)="handleReactionLeave($event, message, reaction)">
-                <span class="reaction-emoji">{{ reaction.emoji }}</span>
-                <span class="reaction-count">{{ reaction.count }}</span>
-              </div>
-            </div>
+            </button>
           </div>
 
           <!-- Neue Thread-Replies Anzeige -->

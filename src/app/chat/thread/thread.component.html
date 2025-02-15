@@ -45,23 +45,15 @@
 
           <!-- Angezeigte Reaktionen -->
           <div class="message-reactions" *ngIf="msg.reactions && msg.reactions.length > 0">
-            <div class="reaction-wrapper" *ngFor="let reaction of groupReactions(msg.reactions)">
-                <div class="tooltip-content">
-                  <div class="users-list">
-                    <div class="user-item" *ngFor="let userId of reaction.users">
-                    </div>
-                  </div>
-                </div>
-              
-              <div class="reaction-badge" 
-                   [class.user-reacted]="hasUserReacted(msg, reaction.emoji)"
-                   (click)="addReaction(msg, reaction.emoji)"
-                   (mouseover)="handleReactionHover($event, msg, reaction)"
-                   (mouseleave)="handleReactionLeave($event, msg, reaction)">
-                <span class="reaction-emoji">{{ reaction.emoji }}</span>
-                <span class="reaction-count">{{ reaction.count }}</span>
-              </div>
-            </div>
+            <button *ngFor="let reaction of groupReactions(msg.reactions, msg.id)"
+                    class="reaction-badge"
+                    [class.user-reacted]="hasUserReacted(msg, reaction.emoji)"
+                    (click)="handleReactionClick($event, msg, reaction)"
+                    (mouseover)="handleReactionHover($event, msg, reaction)"
+                    (mouseleave)="hideTooltip(msg.id + '-' + reaction.emoji)">
+              <span class="reaction-emoji">{{ reaction.emoji }}</span>
+              <span class="reaction-count">{{ reaction.count }}</span>
+            </button>
           </div>
         </div>
       </div>

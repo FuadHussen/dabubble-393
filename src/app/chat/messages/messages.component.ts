@@ -10,13 +10,13 @@ import { trigger, state, style, animate, transition } from '@angular/animations'
 import { HostListener } from '@angular/core';
 import { AudioService } from '../../services/audio.service';
 
-interface Reaction {
+export interface Reaction {
   userId: string;
   emoji: string;
   timestamp: Date;
 }
 
-interface GroupedReaction {
+export interface GroupedReaction {
   emoji: string;
   count: number;
   users: string[];
@@ -111,6 +111,9 @@ export class MessagesComponent implements OnInit {
   private scrollTimeout: any;
 
   @ViewChild('chatContent') private chatContent!: ElementRef;
+
+  // Cache für gruppierte Reaktionen
+  private reactionCache: { [key: string]: GroupedReaction[] } = {};
 
   constructor(
     private firestore: Firestore,
@@ -388,15 +391,25 @@ export class MessagesComponent implements OnInit {
   }
 
   getUserName(userId: string): string {
+    // Finde den Benutzer in der users-Liste
     const user = this.users.find(u => u.uid === userId);
-    return user?.username || 'Unbekannter Nutzer';
+    return user ? (user.displayName || user.username || 'Unbekannter Benutzer') : 'Unbekannter Benutzer';
   }
 
-  groupReactions(reactions: Reaction[]): GroupedReaction[] {
+  // Optimierte groupReactions Methode
+  groupReactions(reactions: Reaction[], messageId: string): GroupedReaction[] {
+    const cacheKey = `${messageId}-${JSON.stringify(reactions)}`;
     
-    if (!reactions) return [];
-    
+    // Prüfe Cache
+    if (this.reactionCache[cacheKey]) {
+      return this.reactionCache[cacheKey];
+    }
+
+    if (!reactions || reactions.length === 0) return [];
+
     const grouped = reactions.reduce((acc: { [key: string]: GroupedReaction }, reaction: Reaction) => {
+      if (!reaction.emoji || !reaction.userId) return acc;
+
       if (!acc[reaction.emoji]) {
         acc[reaction.emoji] = {
           emoji: reaction.emoji,
@@ -404,73 +417,67 @@ export class MessagesComponent implements OnInit {
           users: []
         };
       }
-      acc[reaction.emoji].count++;
-      acc[reaction.emoji].users.push(reaction.userId);
+      
+      if (!acc[reaction.emoji].users.includes(reaction.userId)) {
+        acc[reaction.emoji].users.push(reaction.userId);
+        acc[reaction.emoji].count++;
+      }
+      
       return acc;
     }, {});
 
     const result = Object.values(grouped);
+    this.reactionCache[cacheKey] = result;
     return result;
   }
 
-  hasUserReacted(message: any, emoji: string) {
-    return message.reactions?.some((r: any) => 
-      r.userId === this.currentUser.uid && r.emoji === emoji
+  hasUserReacted(message: Message, emoji: string): boolean {
+    if (!this.currentUser?.uid || !message.reactions) return false;
+    
+    return message.reactions.some(
+      r => r.userId === this.currentUser.uid && r.emoji === emoji
     );
   }
 
-  async addReaction(message: any, emoji: string) {
+  async handleReactionClick(event: Event, message: Message, reaction: GroupedReaction) {
+    event.stopPropagation();
+    
+    if (!this.currentUser?.uid) return;
+
     try {
       const messageRef = doc(this.firestore, 'messages', message.id);
-      const reactions = message.reactions || [];
+      const messageDoc = await getDoc(messageRef);
       
-      const existingReaction = reactions.find(
-        (r: any) => r.userId === this.currentUser.uid && r.emoji === emoji
+      if (!messageDoc.exists()) return;
+
+      const currentReactions: Reaction[] = messageDoc.data()?.['reactions'] || [];
+      const existingReactionIndex = currentReactions.findIndex(r => 
+        r.userId === this.currentUser.uid && r.emoji === reaction.emoji
       );
 
-      if (existingReaction) {
-        await updateDoc(messageRef, {
-          reactions: reactions.filter((r: any) => 
-            !(r.userId === this.currentUser.uid && r.emoji === emoji)
-          )
-        });
+      let updatedReactions: Reaction[];
+      if (existingReactionIndex !== -1) {
+        updatedReactions = currentReactions.filter((_, index) => index !== existingReactionIndex);
       } else {
-        await updateDoc(messageRef, {
-          reactions: [...reactions, {
-            userId: this.currentUser.uid,
-            emoji: emoji,
-            timestamp: new Date()
-          }]
-        });
+        updatedReactions = [...currentReactions, {
+          userId: this.currentUser.uid,
+          emoji: reaction.emoji,
+          timestamp: new Date()
+        }];
       }
 
-      message.showEmojiPicker = false;
+      await updateDoc(messageRef, { reactions: updatedReactions });
+      
+      // Cache für diese Nachricht zurücksetzen
+      Object.keys(this.reactionCache).forEach(key => {
+        if (key.startsWith(message.id)) {
+          delete this.reactionCache[key];
+        }
+      });
+      
+      this.cdr.detectChanges();
     } catch (error) {
       console.error('Error updating reaction:', error);
-    }
-  }
-
-  toggleReaction(message: Message, reaction: GroupedReaction) {
-    try {
-      const messageRef = doc(this.firestore, 'messages', message.id);
-      const reactions = message.reactions || [];
-
-      const existingReaction = reactions.find(
-        (r: Reaction) => r.userId === this.currentUser.uid && r.emoji === reaction.emoji
-      );
-      console.log(existingReaction);
-
-      
-      if (existingReaction) {
-        // Reaktion entfernen
-        updateDoc(messageRef, {
-          reactions: reactions.filter((r: Reaction) => 
-            !(r.userId === this.currentUser.uid && r.emoji === reaction.emoji)
-          )
-        });
-      }
-    } catch (error) {
-      console.error('Error toggling reaction:', error);
     }
   }
 
@@ -493,46 +500,14 @@ export class MessagesComponent implements OnInit {
     this.tooltipData = {};
   }
 
-  handleReactionHover(event: MouseEvent, message: Message, reaction: GroupedReaction) {
+  handleReactionHover(event: Event, message: Message, reaction: GroupedReaction) {
     event.stopPropagation();
-    
-    this.hideAllTooltips();
-    
-    const badge = (event.currentTarget as HTMLElement);
-    const badgeRect = badge.getBoundingClientRect();
-    
-    // Berechne die Position basierend auf dem Index des Badges
-    const reactionBadges = badge.parentElement?.parentElement?.querySelectorAll('.reaction-badge') || [];
-    const badgeIndex = Array.from(reactionBadges).indexOf(badge);
-    const baseOffset = 32; // Erhöhter Basis-Offset (von 112 auf 160)
-    const offsetIncrement = 48; // Zusätzlicher Offset pro Badge
-    
-    const reactionKey = `${message.id}-${reaction.emoji}`;
-    this.tooltipVisibility[reactionKey] = true;
-    this.tooltipData[reactionKey] = {
-      emoji: reaction.emoji,
-      users: reaction.users,
-      position: {
-        left: `${baseOffset + (badgeIndex * offsetIncrement)}px`,
-        bottom: `${window.innerHeight - badgeRect.top + 10}px`
-      }
-    };
+    const tooltipKey = `${message.id}-${reaction.emoji}`;
+    this.tooltipVisibility[tooltipKey] = true;
   }
 
-  handleReactionLeave(event: MouseEvent, message: Message, reaction: GroupedReaction) {
-    event.stopPropagation();
-    const reactionKey = `${message.id}-${reaction.emoji}`;
-    
-    // Kurze Verzögerung beim Ausblenden
-    setTimeout(() => {
-      const target = event.relatedTarget as HTMLElement;
-      const isOverTooltip = target?.closest('.reaction-tooltip');
-      
-      if (!isOverTooltip) {
-        this.tooltipVisibility[reactionKey] = false;
-        delete this.tooltipData[reactionKey];
-      }
-    }, 100);
+  hideTooltip(tooltipKey: string) {
+    this.tooltipVisibility[tooltipKey] = false;
   }
 
   private findMessageByEmoji(emoji: string) {

@@ -59,6 +59,7 @@ export class ChooseAvatarComponent {
         this.currentAvatarSrc.lastIndexOf('/') + 1
       );
       await this.userService.saveAvatar(avatarFileName);
+      this.router.navigate(['/']);
     }
   }
 
