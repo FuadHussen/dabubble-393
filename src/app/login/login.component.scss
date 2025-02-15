@@ -1,3 +1,7 @@
+div:first-child {
+  font-family: 'Nunito', sans-serif!important;
+}
+
 .startseite {
   padding: 20px 20px 0px 20px;
   display: flex;
@@ -5,15 +9,18 @@
   align-items: center;
   overflow: visible;
   background-color: #eceefe;
+  font-family: 'Nunito', sans-serif!important;
 }
 
 .background-fade {
-  width: 100vw;
+  width: 100%;
   height: 100vh;
   background-color: blue;
   position: absolute;
   top: 0;
   left: 0;
+  bottom: 0;
+  right: 0;
 }
 
 .logo-container {
@@ -47,7 +54,7 @@
 }
 
 @keyframes blink {
-  50% { 
+  50% {
     border-color: transparent;
   }
 }
@@ -56,6 +63,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+
   p {
     font-family: Nunito;
     font-size: 18px;
@@ -67,6 +75,7 @@
     color: #000000;
   }
 }
+
 /* ende startseite.component.css */
 
 .login-container {
@@ -74,11 +83,13 @@
   flex-direction: column;
   align-items: center;
   background-color: #eceefe;
+  max-width: 100%;
+  margin: 32px 64px 0;
 
   form {
     background-color: white;
-    width: 100%;
-    max-width: 500px;
+    width: 500px;
+    max-width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -149,6 +160,8 @@
           font-size: 18px;
           font-weight: 500;
           cursor: pointer;
+          max-width: 100%;
+          width: 100%;
         }
 
         img {
@@ -160,6 +173,7 @@
 
       .error-message {
         height: 20px;
+
         p {
           font-family: Nunito;
           font-size: 14px;
@@ -172,7 +186,7 @@
     }
 
     .link-text {
-      font-family: Figtree;
+      font-family: Nunito;
       font-size: 18px;
       font-weight: 400;
       border-radius: 30px;
@@ -189,7 +203,7 @@
       &:hover {
         background-color: #eceefe;
         color: #444df2;
-        font-family: Figtree;
+        font-family: Nunito;
         font-size: 18px;
         font-weight: 500;
       }
@@ -201,7 +215,7 @@
       color: #000000;
       font-size: 14px;
       margin: 20px 0;
-      gap: 10px;
+      gap: 16px;
       border-radius: 30px 0px 0px 0px;
       opacity: 0px;
       font-family: Nunito;
@@ -210,6 +224,7 @@
       text-align: left;
       text-underline-position: from-font;
       text-decoration-skip-ink: none;
+      width: 100%;
 
       .gray-line {
         width: 200px;
@@ -241,6 +256,8 @@
       font-size: 18px;
       font-weight: 400;
       cursor: pointer;
+      max-width: 100%;
+
       img {
         margin-right: 20px;
         max-width: 38px;
@@ -251,6 +268,10 @@
         border: 1px solid #535af1;
         font-weight: 600;
         color: #444df2;
+
+        @media (max-width: 500px) {
+          font-weight: 500;
+        }
       }
     }
 
@@ -304,7 +325,7 @@
 
 .signup {
   color: #797ef3;
-  font-family: Figtree;
+  font-family: Nunito;
   font-size: 18px;
   font-weight: 400;
   line-height: 21.6px;
@@ -318,6 +339,7 @@
   border: 1px solid transparent;
   cursor: pointer;
   transition: all 0.1s ease-in;
+
   &:hover {
     border: 1px solid #797ef3;
     color: #444df2;

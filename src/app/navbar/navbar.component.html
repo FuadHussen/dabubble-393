@@ -70,11 +70,11 @@
     </div>
 
     <mat-menu #menu="matMenu" class="profile-menu">
-      <button mat-menu-item (click)="openProfileSettings()">
+      <button class="profile-menu-item" mat-menu-item (click)="openProfileSettings()">
         <mat-icon class="profile-icon">account_circle</mat-icon>
         <span>Profil</span>
       </button>
-      <button mat-menu-item (click)="logout()">
+      <button class="profile-menu-item" mat-menu-item (click)="logout()">
         <mat-icon class="logout-icon">logout</mat-icon>
         <span>Log out</span>
       </button>

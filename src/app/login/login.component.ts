@@ -151,14 +151,67 @@ export class LoginComponent {
   loginSucess() {
     this.userService
       .login(this.userEmail, this.userPassword)
-      .then(() => {
-        this.router.navigate(['/workspace']); // Erfolgreicher Login
+      .then(async () => {
+        // Prüfe und füge Benutzer zum Front-End-Team Channel hinzu
+        await this.addUserToFrontEndTeam();
+        this.router.navigate(['/workspace']); 
       })
       .catch((error) => {
         if (error.code) {
-          this.passwordNotExist = true; // Fehlermeldung für daten
+          this.passwordNotExist = true;
         }
       });
+  }
+
+  private async addUserToFrontEndTeam() {
+    try {
+      const currentUser = await this.userService.getCurrentUser();
+      if (!currentUser) return;
+
+      const channelsRef = collection(this.firestore, 'channels');
+      const channelMembersRef = collection(this.firestore, 'channelMembers');
+      const messagesRef = collection(this.firestore, 'messages');
+
+      // Prüfe ob der Front-End-Team Channel existiert
+      const channelQuery = query(channelsRef, where('name', '==', 'Front-End-Team'));
+      const existingChannels = await getDocs(channelQuery);
+
+      if (!existingChannels.empty) {
+        const channelId = existingChannels.docs[0].id;
+
+        // Prüfe ob der User bereits Mitglied ist
+        const memberQuery = query(
+          channelMembersRef,
+          where('channelId', '==', channelId),
+          where('userId', '==', currentUser.uid)
+        );
+        const memberSnapshot = await getDocs(memberQuery);
+
+        // Wenn der User noch nicht Mitglied ist, füge ihn hinzu
+        if (memberSnapshot.empty) {
+          // Füge den User als Mitglied hinzu
+          const membership = {
+            channelId: channelId,
+            userId: currentUser.uid,
+            joinedAt: new Date()
+          };
+          await addDoc(channelMembersRef, membership);
+
+          // Füge eine Beitrittsnachricht hinzu
+          const joinMessage = {
+            text: 'Hallo zusammen! Ich bin neu hier und freue mich auf die Zusammenarbeit!',
+            userId: currentUser.uid,
+            username: currentUser.displayName || currentUser.email,
+            timestamp: new Date(),
+            channelId: channelId,
+            recipientId: null
+          };
+          await addDoc(messagesRef, joinMessage);
+        }
+      }
+    } catch (error) {
+      console.error('Error adding user to Front-End-Team:', error);
+    }
   }
 
   guestSucess() {

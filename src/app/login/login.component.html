@@ -1,101 +1,75 @@
-<div class="startseite">
-  <div class="background-fade" [@fadeBackground]="bgState"></div>
+<div>
+  <div class="startseite">
+    <div class="background-fade" [@fadeBackground]="bgState"></div>
 
-  <div class="logo-container" [@logoContainerAnimation]="containerState">
-    <img
-      src="./../assets/img/logo-without-text.png"
-      alt="Logo"
-      class="logo"
-      [@logoAnimation]="logoState"
-    />
-    <span class="logo-name" [@textTypingAnimation]>DABubble</span>
+    <div class="logo-container" [@logoContainerAnimation]="containerState">
+      <img src="./../assets/img/logo-without-text.png" alt="Logo" class="logo" [@logoAnimation]="logoState" />
+      <span class="logo-name" [@textTypingAnimation]>DABubble</span>
+    </div>
+    <div class="signup-container">
+      <p>Neu bei DABubble?</p>
+      <span (click)="navigateToSignUp()" class="signup">Konto erstellen</span>
+    </div>
   </div>
-  <div class="signup-container">
-    <p>Neu bei DABubble?</p>
-    <span (click)="navigateToSignUp()" class="signup">Konto erstellen</span>
-  </div>
-</div>
 
-<div class="login-container">
-  <form>
-    <div class="head-container">
-      <h2>Anmeldung</h2>
-      <h4>
-        Wir empfehlen dir, die E-Mail-Adresse zu nutzen, die du bei der Arbeit
-        verwendest.
-      </h4>
-    </div>
-    <!-- Email Input -->
-    <div class="inputs-container">
-      <div class="email-input">
-        <img [src]="userEmailSrc" alt="mail" />
-        <input
-          type="email"
-          id="email"
-          name="email"
-          required
-          placeholder="beispielname@email.com"
-          [(ngModel)]="userEmail"
-          #emailInput="ngModel"
-          (focus)="onFocus('userEmail')"
-          (blur)="onBlur('userEmail')"
-          (input)="onInput('userEmail', $event)"
-        />
+  <div class="login-container">
+    <form>
+      <div class="head-container">
+        <h2>Anmeldung</h2>
+        <h4>
+          Wir empfehlen dir, die E-Mail-Adresse zu nutzen, die du bei der Arbeit
+          verwendest.
+        </h4>
       </div>
-      <div class="error-message">
-        <p *ngIf="emailNotExist">*Diese E-Mail-Adresse existiert nicht.</p>
-      </div>
-      <!-- Password Input -->
-      <div class="password-input">
-        <img [src]="userPasswordSrc" alt="lock" />
-        <input
-          type="password"
-          id="password"
-          name="password"
-          required
-          minlength="6"
-          placeholder="Passwort"
-          (ngModel)="(userPassword)"
-          (focus)="onFocus('userPassword')"
-          (blur)="onBlur('userPassword')"
-          (input)="onInput('userPassword', $event)"
-        />
+      <!-- Email Input -->
+      <div class="inputs-container">
+        <div class="email-input">
+          <img [src]="userEmailSrc" alt="mail" />
+          <input type="email" id="email" name="email" required placeholder="beispielname@email.com"
+            [(ngModel)]="userEmail" #emailInput="ngModel" (focus)="onFocus('userEmail')" (blur)="onBlur('userEmail')"
+            (input)="onInput('userEmail', $event)" />
+        </div>
+        <div class="error-message">
+          <p *ngIf="emailNotExist">*Diese E-Mail-Adresse existiert nicht.</p>
+        </div>
+        <!-- Password Input -->
+        <div class="password-input">
+          <img [src]="userPasswordSrc" alt="lock" />
+          <input type="password" id="password" name="password" required minlength="6" placeholder="Passwort"
+            (ngModel)="(userPassword)" (focus)="onFocus('userPassword')" (blur)="onBlur('userPassword')"
+            (input)="onInput('userPassword', $event)" />
+        </div>
+
+        <div class="error-message">
+          <p *ngIf="passwordNotExist">
+            Falsches Passwort oder E-Mail. Bitte noch einmal versuchen.
+          </p>
+        </div>
       </div>
 
-      <div class="error-message">
-        <p *ngIf="passwordNotExist">
-          Falsches Passwort oder E-Mail. Bitte noch einmal versuchen.
-        </p>
+      <a (click)="navigateToForgotPassword()" class="link-text">Passwort vergessen?</a>
+
+      <div class="line-container">
+        <div class="gray-line"></div>
+        ODER
+        <div class="gray-line"></div>
       </div>
-    </div>
 
-    <a (click)="navigateToForgotPassword()" class="link-text"
-      >Passwort vergessen?</a
-    >
-
-    <div class="line-container">
-      <div class="gray-line"></div>
-      ODER
-      <div class="gray-line"></div>
-    </div>
-
-    <button class="google-btn">
-      <img src="../../assets/img/google-logo.png" alt="" />
-      Anmelden mit Google
-    </button>
-
-    <!-- Buttons -->
-    <div class="buttons-container">
-      <button
-        (click)="loginSucess()"
-        [disabled]="!isFilled"
-        [ngClass]="{ 'primary-btn': isFilled, 'disabled-btn': !isFilled }"
-      >
-        Anmelden
+      <button class="google-btn">
+        <img src="../../assets/img/google-logo.png" alt="" />
+        Anmelden mit Google
       </button>
-      <button (click)="guestSucess()" class="secondary-btn">Gäste-Login</button>
-    </div>
-  </form>
-</div>
 
-<app-footer></app-footer>
+      <!-- Buttons -->
+      <div class="buttons-container">
+        <button (click)="loginSucess()" [disabled]="!isFilled"
+          [ngClass]="{ 'primary-btn': isFilled, 'disabled-btn': !isFilled }">
+          Anmelden
+        </button>
+        <button (click)="guestSucess()" class="secondary-btn">Gäste-Login</button>
+      </div>
+    </form>
+  </div>
+
+  <app-footer></app-footer>
+</div>

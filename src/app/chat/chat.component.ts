@@ -181,47 +181,27 @@ export class ChatComponent implements OnInit, AfterViewInit {
   }
 
   async loadChannelMembers() {
-    if (this.currentChannelId) {
-      try {
+    try {
+      if (!this.currentChannelId) return;
 
-        const channelRef = doc(this.firestore, 'channels', this.currentChannelId);
-        const channelSnap = await getDoc(channelRef);
+      const channelMembersRef = collection(this.firestore, 'channelMembers');
+      const q = query(channelMembersRef, where('channelId', '==', this.currentChannelId));
+      const memberSnapshot = await getDocs(q);
+      
+      // Zuerst die Member IDs sammeln
+      this.channelMemberIds = memberSnapshot.docs.map(doc => doc.data()['userId']);
 
-        if (!channelSnap.exists()) {
-          console.error('Channel document does not exist');
-          return;
+      // Dann die vollständigen Benutzerdaten laden
+      const members = [];
+      for (const memberId of this.channelMemberIds) {
+        const userData = await this.userService.getUserById(memberId);
+        if (userData) {
+          members.push(userData);
         }
-
-        const channelData = channelSnap.data();
-        // Prüfe beide möglichen Felder
-        const creatorId = channelData['createdByUserId'] || channelData['createdBy'];
-
-        const membersRef = collection(this.firestore, 'channelMembers');
-        const q = query(membersRef, where('channelId', '==', this.currentChannelId));
-        const querySnapshot = await getDocs(q);
-
-        const memberPromises = querySnapshot.docs.map(async (memberDoc) => {
-          const memberData = memberDoc.data();
-          const userDoc = await getDoc(doc(this.firestore, 'users', memberData['userId']));
-          const userData = userDoc.data();
-
-          const isCreator = memberData['userId'] === creatorId;
-
-          const member = {
-            uid: memberData['userId'],
-            username: userData?.['username'] || 'Unbekannter Benutzer',
-            email: userData?.['email'],
-            avatar: userData?.['avatar'] || 'default-avatar.png',
-            isCreator: isCreator,
-            isOnline: userData?.['isOnline'] || false
-          };
-          return member;
-        });
-
-        this.channelMembers = await Promise.all(memberPromises);
-      } catch (error) {
-        console.error('Error loading channel members:', error);
       }
+      this.channelMembers = members;
+    } catch (error) {
+      console.error('Error loading channel members:', error);
     }
   }
 
