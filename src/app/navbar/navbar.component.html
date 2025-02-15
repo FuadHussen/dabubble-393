@@ -59,12 +59,12 @@
   <div class="navbar-right">
     <div class="user-profile">
       <span class="user-name">{{ userName }}</span>
-      <div class="avatar-container" *ngIf="userAvatar">
+      <div class="avatar-container" [matMenuTriggerFor]="menu" *ngIf="userAvatar">
         <img [src]="'assets/img/avatars/' + userAvatar" 
              [alt]="userName + ' avatar'"
              class="profile-image">
       </div>
-      <button mat-icon-button [matMenuTriggerFor]="menu">
+      <button mat-icon-button *ngIf="!isMobile" [matMenuTriggerFor]="menu">
         <mat-icon>arrow_drop_down</mat-icon>
       </button>
     </div>

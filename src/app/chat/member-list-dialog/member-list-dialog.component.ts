@@ -5,7 +5,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { ProfileInfoComponent } from '../profile-info/profile-info.component';
 import { Firestore, doc, getDoc } from '@angular/fire/firestore';
-import { Router } from '@angular/router';
 
 interface Member {
   uid: string;
@@ -31,48 +30,60 @@ export class MemberListDialogComponent implements OnInit, OnChanges {
   @Output() openAddMember = new EventEmitter<void>();
 
   selectedMember: Member | null = null;
+  private creatorId: string | null = null;
 
   constructor(
     private firestore: Firestore,
-    private router: Router
   ) {}
 
   async ngOnInit() {
     if (this.channelId) {
-      await this.updateCreatorStatus();
+      await this.loadChannelCreator();
     }
   }
 
-  async ngOnChanges(changes: SimpleChanges) {
-    if (changes['channelId'] && !changes['channelId'].firstChange) {
-      await this.updateCreatorStatus();
+  ngOnChanges(changes: SimpleChanges) {
+    if ((changes['members'] || changes['channelId']) && this.channelId && this.members.length > 0) {
+      this.updateMembersWithCreator();
     }
   }
 
-  async updateCreatorStatus() {
+  async loadChannelCreator() {
     try {
-      const channelRef = doc(this.firestore, 'channels', this.channelId);
-      const channelSnap = await getDoc(channelRef);
+      console.log('Loading channel creator for channelId:', this.channelId);
       
-      if (!channelSnap.exists()) {
-        console.error('Channel document does not exist');
+      const channelDoc = await getDoc(doc(this.firestore, 'channels', this.channelId));
+      
+      if (!channelDoc.exists()) {
+        console.log('Channel document not found');
         return;
       }
 
-      const channelData = channelSnap.data();
-      // Prüfe beide möglichen Felder
-      const creatorId = channelData['createdByUserId'] || channelData['createdBy'];
+      const channelData = channelDoc.data();
+      console.log('Channel data:', channelData);
 
-      this.members = this.members.map(member => {
-        const isCreator = member.uid === creatorId;
-        return {
-          ...member,
-          isCreator: isCreator
-        };
-      });
+      this.creatorId = channelData['createdBy'] || channelData['createdByUserId'];
+      console.log('Creator ID:', this.creatorId);
+
+      if (this.creatorId && this.members.length > 0) {
+        this.updateMembersWithCreator();
+      }
     } catch (error) {
-      console.error('Error updating creator status:', error);
+      console.error('Error in loadChannelCreator:', error);
     }
+  }
+
+  private updateMembersWithCreator() {
+    if (!this.creatorId) return;
+
+    console.log('Updating members with creator. Current members:', this.members);
+    
+    this.members = this.members.map(member => ({
+      ...member,
+      isCreator: member.uid === this.creatorId
+    }));
+
+    console.log('Updated members:', this.members);
   }
 
   close() {

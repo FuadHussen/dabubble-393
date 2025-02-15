@@ -55,13 +55,15 @@ import {
         scale:1,
         top: '50%',
         left: '50%',
+        color: '#fff',
         transform: 'translate(-50%, -50%)'
       })),
       state('end', style({
         scale:1,
         top: '20px', // Zielposition (anpassen!)
         left: '20px',
-        transform: 'translate(0, 0)'
+        transform: 'translate(0, 0)',
+        color: '#000'
       })),
       transition('start => end', [
         animate('1s ease-in-out')

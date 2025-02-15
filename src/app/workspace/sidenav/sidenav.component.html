@@ -2,6 +2,7 @@
   class="toggle-sidenav"
   (click)="drawer.toggle()"
   [class.closed]="!drawer.opened"
+  *ngIf="!isMobile"
 >
   <img
     src="assets/img/open-sidenav.png"
@@ -122,7 +123,7 @@
     </div>
   </mat-drawer>
 
-  <mat-drawer-content class="main-content">
+  <mat-drawer-content class="main-content" *ngIf="!isMobile">
     <div class="content-container" [class.with-thread]="threadMessage$ | async">
       <app-chat></app-chat>
       <app-thread *ngIf="threadMessage$ | async" 

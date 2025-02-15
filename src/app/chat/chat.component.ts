@@ -76,6 +76,7 @@ export class ChatComponent implements OnInit, AfterViewInit {
   selectedMentions: string[] = [];
   showEmojiPicker = false;
   private subscriptions: Subscription[] = [];
+  isMobile: boolean = false;  // Initial state
 
   // Emoji-Array als Property definieren
   emojis: string[] = [
@@ -149,63 +150,12 @@ export class ChatComponent implements OnInit, AfterViewInit {
         }
       })
     );
+
+    // Setze initialen Zustand beim Erstellen der Komponente
+    this.checkScreenSize();
   }
 
-  async loadChannelDetails(channelName: string) {
-    try {
-      const channelsRef = collection(this.firestore, 'channels');
-      const q = query(channelsRef, where('name', '==', channelName));
-
-      const querySnapshot = await getDocs(q);
-      if (!querySnapshot.empty) {
-        const channelDoc = querySnapshot.docs[0];
-        const channelData = channelDoc.data();
-
-        this.currentChannelId = channelDoc.id;
-        this.channelName = channelData['name'];
-        this.channelDescription = channelData['description'] || '';
-        this.channelCreatedAt = channelData['createdAt']?.toDate() || null;  // Datum laden
-
-        // Lade Channel-Mitglieder
-        await this.loadChannelMembers();
-
-        if (channelData['createdByUserId']) {
-          const userId = channelData['createdByUserId'];
-          const user = await this.userService.getUserById(userId);
-          this.createdBy = user?.username || user?.displayName || 'Unbekannt';
-        }
-      }
-    } catch (error) {
-      console.error('Fehler beim Laden der Channel-Details:', error);
-    }
-  }
-
-  async loadChannelMembers() {
-    try {
-      if (!this.currentChannelId) return;
-
-      const channelMembersRef = collection(this.firestore, 'channelMembers');
-      const q = query(channelMembersRef, where('channelId', '==', this.currentChannelId));
-      const memberSnapshot = await getDocs(q);
-      
-      // Zuerst die Member IDs sammeln
-      this.channelMemberIds = memberSnapshot.docs.map(doc => doc.data()['userId']);
-
-      // Dann die vollständigen Benutzerdaten laden
-      const members = [];
-      for (const memberId of this.channelMemberIds) {
-        const userData = await this.userService.getUserById(memberId);
-        if (userData) {
-          members.push(userData);
-        }
-      }
-      this.channelMembers = members;
-    } catch (error) {
-      console.error('Error loading channel members:', error);
-    }
-  }
-
-  async ngOnInit() {
+  ngOnInit() {
     this.route.queryParams.subscribe(params => {
       this.isNewChat = params['mode'] === 'new';
       if (this.isNewChat) {
@@ -253,7 +203,7 @@ export class ChatComponent implements OnInit, AfterViewInit {
     });
 
     // Füge existierende Nachrichtenautoren als Mitglieder hinzu
-    await this.addExistingMessageAuthorsAsMembers();
+    this.addExistingMessageAuthorsAsMembers();
 
     // Channel Subscription
     this.chatService.selectedChannel$.subscribe(async channelName => {
@@ -276,6 +226,80 @@ export class ChatComponent implements OnInit, AfterViewInit {
         this.selectedUserDisplayName = '';
       }
     });
+
+    // Setze initialen Zustand beim Initialisieren
+    this.checkScreenSize();
+  }
+
+  // Neue Methode für die Bildschirmgrößen-Überprüfung
+  private checkScreenSize() {
+    this.isMobile = window.innerWidth <= 1100;
+  }
+
+  @HostListener('window:resize', ['$event'])
+  onResize(event: any) {
+    this.isMobile = window.innerWidth <= 1100;
+  }
+
+  async loadChannelDetails(channelName: string) {
+    try {
+      const channelsRef = collection(this.firestore, 'channels');
+      const q = query(channelsRef, where('name', '==', channelName));
+
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        const channelDoc = querySnapshot.docs[0];
+        const channelData = channelDoc.data();
+
+        this.currentChannelId = channelDoc.id;
+        this.channelName = channelData['name'];
+        this.channelDescription = channelData['description'] || '';
+        this.channelCreatedAt = channelData['createdAt']?.toDate() || null;  // Datum laden
+
+        // Lade Channel-Mitglieder
+        await this.loadChannelMembers();
+
+        if (channelData['createdByUserId']) {
+          const userId = channelData['createdByUserId'];
+          const user = await this.userService.getUserById(userId);
+          this.createdBy = user?.username || user?.displayName || 'Unbekannt';
+        }
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden der Channel-Details:', error);
+    }
+  }
+
+  async loadChannelMembers() {
+    try {
+      if (!this.currentChannelId) return;
+
+      // Hole zuerst die Channel-Informationen um den Creator zu identifizieren
+      const channelDoc = await getDoc(doc(this.firestore, 'channels', this.currentChannelId));
+      const channelData = channelDoc.data();
+      const creatorId = channelData?.['createdBy'];
+
+      const channelMembersRef = collection(this.firestore, 'channelMembers');
+      const q = query(channelMembersRef, where('channelId', '==', this.currentChannelId));
+      const memberSnapshot = await getDocs(q);
+      
+      this.channelMemberIds = memberSnapshot.docs.map(doc => doc.data()['userId']);
+
+      // Dann die vollständigen Benutzerdaten laden
+      const members = [];
+      for (const memberId of this.channelMemberIds) {
+        const userData = await this.userService.getUserById(memberId);
+        if (userData) {
+          members.push({
+            ...userData,
+            isCreator: memberId === creatorId // Hier setzen wir die isCreator Property
+          });
+        }
+      }
+      this.channelMembers = members;
+    } catch (error) {
+      console.error('Error loading channel members:', error);
+    }
   }
 
   getPlaceholderText(): string {

@@ -75,6 +75,7 @@ export class NavbarComponent {
   userName: string = '';
   userEmail: string = '';
   userAvatar: string | null = null;
+  isMobile: boolean = false;
 
   constructor(
     private auth: Auth,
@@ -137,7 +138,7 @@ export class NavbarComponent {
         }
       });
     }
-
+    this.isMobile = window.innerWidth <= 1100;
   }
 
   openProfileSettings() {

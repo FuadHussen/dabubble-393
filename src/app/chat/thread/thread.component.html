@@ -33,7 +33,7 @@
           <div class="message-text">{{ msg.text }}</div>
 
           <!-- Reaktions-Optionen -->
-          <div class="reaction-options" [class.show]="msg.showReactions">
+          <div class="reaction-options" [class.show]="msg.showReactions" [class.current-user]="!isCurrentUser(msg.userId)">
             <div class="quick-reactions">
               <div class="reaction-emoji" (click)="addReaction(msg, '👍')">👍</div>
               <div class="reaction-emoji" (click)="addReaction(msg, '❤️')">❤️</div>

@@ -24,8 +24,18 @@
 
           <!-- Edit-Modus -->
           <div *ngIf="message.isEditing" class="message-edit-container">
-            <input type="text" [(ngModel)]="message.editText" class="message-edit-input"
-              (keyup.enter)="saveEditedMessage(message)" (keyup.escape)="cancelEdit(message)">
+            <div class="textarea-wrapper">
+              <textarea 
+                [(ngModel)]="message.editText" 
+                class="message-edit-input"
+                cdkTextareaAutosize 
+                cdkAutosizeMinRows="5" 
+                cdkAutosizeMaxRows="5"
+                (keyup.enter)="saveEditedMessage(message)" 
+                (keyup.escape)="cancelEdit(message)"
+                style="border-radius: 30px;">
+              </textarea>
+            </div>
 
             <div class="edit-actions">
               <button class="edit-button cancel" (click)="cancelEdit(message)">

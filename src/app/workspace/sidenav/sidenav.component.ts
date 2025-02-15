@@ -64,6 +64,7 @@ export class SidenavComponent implements OnInit {
   users$: Observable<User[]>;
   currentUserId: string | null = null;
   threadMessage$: Observable<any>;
+  isMobile: boolean = false;
 
   // Immer true für die Entwicklung
   showThread = true;
@@ -140,6 +141,7 @@ export class SidenavComponent implements OnInit {
     this.auth.onAuthStateChanged((user) => {
       this.currentUserId = user?.uid || null;
     });
+    this.isMobile = window.innerWidth <= 1100;
   }
 
 

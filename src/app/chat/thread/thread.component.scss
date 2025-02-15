@@ -129,6 +129,14 @@
             visibility: hidden;
             transition: all 0.2s ease;
 
+            @media (max-width: 1150px) {
+                right: -61px;
+            }
+
+            &.current-user {
+                right: -16px;
+            }
+            
             &.show {
                 opacity: 1;
                 visibility: visible;

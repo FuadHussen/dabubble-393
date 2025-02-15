@@ -52,6 +52,10 @@
       &::selection {
         background-color: rgba(83, 90, 241, 0.2); // Leicht transparentes Blau
       }
+
+      @media (max-width: 1150px) {
+        font-size: 14px;
+      }
     }
 
     .mat-mdc-form-field-icon-prefix {

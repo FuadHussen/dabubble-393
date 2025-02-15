@@ -64,12 +64,16 @@
         background-color: #797EF3;
         color: white;
         border-radius: 30px 0 30px 30px;
+
+        @media (max-width: 1150px) {
+          font-size: 14px;
+        }
       }
     }
 
     .reaction-options {
       right: auto;
-      left: -80px;
+      left: 0;
 
       .quick-reactions {
         .reaction-emoji {
@@ -108,6 +112,12 @@
 
   &.highlight-animation {
     animation: highlight 2s ease-out;
+  }
+
+  .message-text {
+    @media (max-width: 1150px) {
+      font-size: 14px!important;
+    }
   }
 
   .avatar-container {
@@ -192,7 +202,8 @@
 
   .reaction-options {
     position: absolute;
-    right: -80px;
+    right: 0;
+    left: auto;
     top: 8px;
     transform: translateY(-50%);
     opacity: 0;
@@ -203,6 +214,10 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     padding: 4px;
     z-index: 1;
+
+    @media (max-width: 1150px) {
+      right: -8px;
+    }
 
     &.show {
       opacity: 1;
@@ -338,6 +353,27 @@
   transition: left 0.2s ease;
   transform: translateX(32px);
 
+  @media (max-width: 1150px) {
+    transform: translateX(0);
+    width: 50px;
+    max-height: auto;
+    border-radius: 30px 30px 0 0;
+    left: -8px;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-top: 8px solid #444DF2;
+    }
+  }
+
   .tooltip-content {
     .emoji-preview {
       font-size: 24px;
@@ -375,6 +411,10 @@
   top: 8px;
   left: 80px;
 
+  @media (max-width: 1150px) {
+    top: 24px;
+    left: 56px;
+  }
 
   .edit-option {
     display: flex;
@@ -385,6 +425,9 @@
     padding: 10px 20px;
     border-radius: 30px;
 
+    @media (max-width: 1150px) {
+      padding: 8px;
+    }
 
     &:hover {
       background-color: #ECEEFE;
@@ -407,15 +450,27 @@
   flex-direction: column;
   gap: 10px;
 
+  .textarea-wrapper {
+    position: relative;
+    width: 100%;
+  }
+
   .message-edit-input {
-    max-width: 100%;
-    padding: 10px;
+    width: -webkit-fill-available;
+    min-height: 100px;
+    padding: 16px;
     border-radius: 30px;
     border: 1px solid #ADB0D9;
     font-size: 18px;
     background: white;
     color: #000;
     outline: none;
+    resize: none;
+    font-family: inherit;
+
+    @media (max-width: 1150px) {
+      font-size: 14px;
+    }
 
     &:focus {
       border-color: #444DF2;
@@ -426,6 +481,7 @@
     display: flex;
     gap: 10px;
     justify-content: flex-end;
+    margin-top: 8px;
 
     .edit-button {
       padding: 8px 20px;
