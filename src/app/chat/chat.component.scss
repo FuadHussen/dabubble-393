@@ -1,11 +1,11 @@
 .chat-container {
-  height: 100%;
+  height: -webkit-fill-available;
   padding: 24px;
   margin-left: 24px;
 }
 
 .chat-card {
-  height: calc(100% - 48px);
+  height: 100%;
   background-color: white;
   border-radius: 30px;
   display: flex;

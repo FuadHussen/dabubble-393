@@ -2,7 +2,8 @@
   height: calc(100vh - 80px);
   position: relative;
   overflow: hidden;
-  background-color: #ECEEFE;
+  background-color: #ECEEFE!important;
+  width: 100%;
 }
 
 .bold {
@@ -74,45 +75,13 @@
 .sidenav {
   background-color: #fff;
   color: #000;
-  width: 366px;
+  width: 100%;
   border-radius: 30px !important;
   margin: 24px;
   z-index: auto!important;
-
-  @media (max-width: 1100px) {
-    max-width: 100%;
-    width: -webkit-fill-available;
-  }
   
-  ::ng-deep .mdc-drawer {
-    border-radius: 30px !important;
-  }
-
-  ::ng-deep {
-    .mat-drawer-inner-container {
-      overflow: unset;
-    }
-
-    .mat-expansion-panel {
-      background: transparent;
-      color: white;
-    }
-
-    .mat-expansion-panel-header {
-      padding: 0 16px;
-    }
-
-    .mat-expansion-indicator::after {
-      color: white;
-    }
-
-    .mat-list-item {
-      color: white;
-    }
-
-    .mat-expansion-panel-body {
-      padding: 0 65px 16px;
-    }
+  @media (max-width: 1100px) {
+    width: -webkit-fill-available!important;
   }
 }
 
@@ -211,6 +180,7 @@ mat-nav-list {
 
 ::ng-deep .mat-drawer-content {
   overflow: unset;
+  transition: margin-left 0.3s ease;
 }
 
 ::ng-deep mat-drawer-container {
@@ -438,9 +408,17 @@ mat-nav-list {
 }
 
 @media (max-width: 1100px) {
-  ::ng-deep .mat-drawer-content {
-    display: none!important;
+  .sidenav-container {
+    ::ng-deep .mat-drawer-content {
+      display: none !important;
+    }
+  }
+
+  .sidenav {
+    width: 100%;
   }
 }
 
-
+::ng-deep .mat-drawer-backdrop {
+  position: relative!important;
+}

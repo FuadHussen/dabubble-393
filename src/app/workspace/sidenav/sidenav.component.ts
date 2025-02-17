@@ -1,4 +1,4 @@
-import { Component, signal, OnInit } from '@angular/core';
+import { Component, signal, OnInit, ViewEncapsulation } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatExpansionModule } from '@angular/material/expansion';
@@ -50,7 +50,8 @@ export interface User {
     ThreadComponent
   ],
   templateUrl: './sidenav.component.html',
-  styleUrl: './sidenav.component.scss'
+  styleUrl: './sidenav.component.scss',
+  encapsulation: ViewEncapsulation.None
 })
 export class SidenavComponent implements OnInit {
   isActive: boolean = false;
@@ -108,6 +109,18 @@ export class SidenavComponent implements OnInit {
     this.chatService.selectedUser$.subscribe(user => {
       this.selectedUser = user || '';
     });
+
+    // Initial check for mobile
+    this.checkScreenSize();
+    
+    // Listen for window resize
+    window.addEventListener('resize', () => {
+      this.checkScreenSize();
+    });
+  }
+
+  private checkScreenSize() {
+    this.isMobile = window.innerWidth <= 1100;
   }
 
   async ngOnInit() {
@@ -141,9 +154,15 @@ export class SidenavComponent implements OnInit {
     this.auth.onAuthStateChanged((user) => {
       this.currentUserId = user?.uid || null;
     });
-    this.isMobile = window.innerWidth <= 1100;
+    this.checkScreenSize(); // Check again on init
   }
 
+  ngOnDestroy() {
+    // Remove event listener
+    window.removeEventListener('resize', () => {
+      this.checkScreenSize();
+    });
+  }
 
   loadChannels() {
     const channelsCollection = collection(this.firestore, 'channels');
@@ -167,7 +186,6 @@ export class SidenavComponent implements OnInit {
         return mappedUser;
       }) as User[];
     });
-
   }
 
   async selectUser(user: any) {
