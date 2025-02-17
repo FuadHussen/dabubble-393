@@ -1,5 +1,5 @@
 <div class="chat-container" [class.mobile]="isMobile" *ngIf="showChat">
-  <div class="chat-header">
+  <div class="chat-header" *ngIf="isMobile">
     <!-- Back Button für Mobile -->
     <button mat-icon-button 
             class="back-button" 

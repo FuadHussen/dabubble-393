@@ -455,3 +455,11 @@ mat-nav-list {
 .mat-drawer {
   z-index: 1000 !important;
 }
+
+.mat-drawer-side{
+  width: 350px !important;
+}
+
+.mat-drawer-content{
+  overflow: unset !important;
+}
