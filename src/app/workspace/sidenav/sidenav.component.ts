@@ -1,4 +1,4 @@
-import { Component, signal, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, signal, OnInit, ViewEncapsulation, ViewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatExpansionModule } from '@angular/material/expansion';
@@ -10,14 +10,15 @@ import { NavbarComponent } from '../../navbar/navbar.component';
 import { MatDialog } from '@angular/material/dialog';
 import { AddNewChannelComponent } from './add-new-channel/add-new-channel.component';
 import { MatExpansionPanel } from '@angular/material/expansion';
-import { Firestore, collection, addDoc, collectionData, query, where, getDocs } from '@angular/fire/firestore';
-import { Observable } from 'rxjs';
-import { take } from 'rxjs/operators';
+import { Firestore, collection, addDoc, collectionData, query, where, getDocs, doc, getDoc } from '@angular/fire/firestore';
+import { Observable, Subscription } from 'rxjs';
 import { ChatService } from '../../services/chat.service';
-import { getAuth } from '@angular/fire/auth';
 import { Auth } from '@angular/fire/auth';
 import { UserService } from '../../services/user.service';
-import { Router } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
+import { HostListener } from '@angular/core';
+import { ChangeDetectorRef } from '@angular/core';
+import { NgZone } from '@angular/core';
 import { ThreadComponent } from '../../chat/thread/thread.component';
 
 interface Channel {
@@ -66,9 +67,14 @@ export class SidenavComponent implements OnInit {
   currentUserId: string | null = null;
   threadMessage$: Observable<any>;
   isMobile: boolean = false;
+  drawerOpened: boolean = true;
+  showChat: boolean = false;
+  @ViewChild('drawer') drawer: any;
 
-  // Immer true für die Entwicklung
-  showThread = true;
+  // Immer false für die Entwicklung
+  showThread = false;
+
+  private subscriptions: Subscription[] = [];
 
   constructor(
     private dialog: MatDialog,
@@ -76,7 +82,9 @@ export class SidenavComponent implements OnInit {
     private chatService: ChatService,
     private auth: Auth,
     private userService: UserService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
   ) {
     this.channels$ = collectionData(collection(this.firestore, 'channels')) as Observable<Channel[]>;
     this.users$ = collectionData(collection(this.firestore, 'users')) as Observable<User[]>;
@@ -84,43 +92,100 @@ export class SidenavComponent implements OnInit {
     
     // Users aus Firestore laden mit ID
     const usersCollection = collection(this.firestore, 'users');
-    collectionData(usersCollection, { idField: 'id' }).subscribe(users => {
-      this.users = users.map(user => ({
-        ...user,
-        avatar: user['avatar'] || null
-      })) as User[];
-    });
+    this.subscriptions.push(
+      collectionData(usersCollection, { idField: 'id' }).subscribe(users => {
+        setTimeout(() => {
+          this.users = users.map(user => ({
+            ...user,
+            avatar: user['avatar'] || null
+          })) as User[];
+        });
+      })
+    );
 
     // Subscribe to channels
-    this.channels$.subscribe(channels => {
-      if (channels && channels.length > 0) {
-        this.channels = channels;
-        if (!this.selectedChannel) {
-          this.selectChannel(channels[0].name);
-        }
-      }
-    });
+    this.subscriptions.push(
+      this.channels$.subscribe(channels => {
+        setTimeout(() => {
+          if (channels && channels.length > 0) {
+            this.channels = channels;
+            if (!this.selectedChannel) {
+              this.selectChannel(channels[0].name);
+            }
+          }
+        });
+      })
+    );
 
     // Subscribe to chat service changes
-    this.chatService.isDirectMessage$.subscribe(isDM => {
-      this.isDirectMessage = isDM;
-    });
+    this.subscriptions.push(
+      this.chatService.isDirectMessage$.subscribe(isDM => {
+        setTimeout(() => {
+          this.isDirectMessage = isDM;
+        });
+      })
+    );
     
-    this.chatService.selectedUser$.subscribe(user => {
-      this.selectedUser = user || '';
-    });
+    this.subscriptions.push(
+      this.chatService.selectedUser$.subscribe(user => {
+        setTimeout(() => {
+          this.selectedUser = user || '';
+        });
+      })
+    );
 
-    // Initial check for mobile
     this.checkScreenSize();
-    
-    // Listen for window resize
-    window.addEventListener('resize', () => {
-      this.checkScreenSize();
-    });
+
+    // Auf Route-Änderungen reagieren
+    this.subscriptions.push(
+      this.router.events.subscribe((event) => {
+        if (event instanceof NavigationEnd) {
+          setTimeout(() => {
+            this.updateChatView();
+          });
+        }
+      })
+    );
+
+    // Thread-Message Subscription
+    this.subscriptions.push(
+      this.threadMessage$.subscribe(message => {
+        setTimeout(() => {
+          this.showThread = !!message;
+          this.cdr.detectChanges();
+        });
+      })
+    );
   }
 
   private checkScreenSize() {
     this.isMobile = window.innerWidth <= 1100;
+    if (this.isMobile) {
+      this.drawerOpened = true;
+      this.showChat = false;
+    }
+  }
+
+  // Neue Methode zum Aktualisieren der Chat-Ansicht
+  private async updateChatView() {
+    const url = this.router.url;
+    if (url.includes('/channel/') || url.includes('/dm/')) {
+      if (this.isMobile) {
+        this.showChat = true;
+        this.drawerOpened = false;
+      }
+    }
+  }
+
+  ngAfterViewInit() {
+    setTimeout(() => {
+      this.drawerOpened = true;
+    });
+  }
+
+  @HostListener('window:resize', ['$event'])
+  onResize() {
+    this.checkScreenSize();
   }
 
   async ngOnInit() {
@@ -158,6 +223,7 @@ export class SidenavComponent implements OnInit {
   }
 
   ngOnDestroy() {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
     // Remove event listener
     window.removeEventListener('resize', () => {
       this.checkScreenSize();
@@ -190,8 +256,28 @@ export class SidenavComponent implements OnInit {
 
   async selectUser(user: any) {
     try {
-      // Only handle navigation, guard will setup the state
-      await this.router.navigate(['/dm', user.uid]);
+      console.log('Selecting user:', user);
+      
+      // Erst die Services aktualisieren
+      await this.chatService.setIsDirectMessage(true);
+      await this.chatService.selectUser(user.uid);
+      
+      // Dann UI-Status aktualisieren
+      this.selectedUser = user.displayName || user.username;
+      this.selectedChannel = '';
+      this.isDirectMessage = true;
+      
+      if (this.isMobile) {
+        console.log('Mobile: Setting drawer and chat state');
+        this.drawerOpened = false;
+        this.showChat = true;
+      }
+      
+      // Navigation als letztes
+      await this.router.navigate(['workspace', 'dm', user.uid]);
+      
+      // Force change detection
+      this.cdr.detectChanges();
     } catch (error) {
       console.error('Error selecting user:', error);
     }
@@ -199,13 +285,7 @@ export class SidenavComponent implements OnInit {
 
   async selectChannel(channelName: string) {
     try {
-      // Reset user selection
-      this.selectedUser = '';
-      this.isDirectMessage = false;
-      
-      // Update chat service
-      await this.chatService.setIsDirectMessage(false);
-      await this.chatService.selectUser('');
+      console.log('Selecting channel:', channelName);
       
       const channelsCollection = collection(this.firestore, 'channels');
       const q = query(channelsCollection, where('name', '==', channelName));
@@ -215,13 +295,26 @@ export class SidenavComponent implements OnInit {
         const channelDoc = querySnapshot.docs[0];
         const channelId = channelDoc.id;
 
-        // Set channel selection
-        this.selectedChannel = channelName;
-        this.chatService.setCurrentChannelId(channelId);
-        await this.chatService.selectChannel(channelName);
-        
-        // Navigate
-        await this.router.navigate(['/channel', channelName, channelId]);
+        this.ngZone.run(async () => {
+          // UI-Status aktualisieren
+          this.selectedChannel = channelName;
+          this.selectedUser = '';
+          this.isDirectMessage = false;
+          this.showChat = true;
+
+          if (this.isMobile) {
+            console.log('Mobile: Setting drawer and chat state');
+            this.drawerOpened = false;
+          }
+
+          // Services aktualisieren
+          await this.chatService.setIsDirectMessage(false);
+          await this.chatService.selectChannel(channelName);
+          this.chatService.setCurrentChannelId(channelId);
+          
+          // Navigation
+          await this.router.navigate(['workspace', 'channel', channelId]);
+        });
       }
     } catch (error) {
       console.error('Error selecting channel:', error);
@@ -276,5 +369,31 @@ export class SidenavComponent implements OnInit {
 
   closeThread() {
     this.chatService.setThreadMessage(null);
+  }
+
+  // Optional: Methode zum Laden der Channel-Details
+  async getChannelDetails(channelId: string) {
+    try {
+      const channelDocRef = doc(this.firestore, 'channels', channelId);
+      const channelSnap = await getDoc(channelDocRef);
+      
+      if (channelSnap.exists()) {
+        return channelSnap.data();
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting channel details:', error);
+      return null;
+    }
+  }
+
+  // Methode für den Back-Button
+  onBackClicked() {
+    this.drawerOpened = true;
+    this.showChat = false;
+    // Optional: Zurück zur Basis-Route
+    if (this.isMobile) {
+      this.router.navigate(['workspace']);
+    }
   }
 }

@@ -7,17 +7,24 @@ import { ImprintComponent } from './shared/imprint/imprint.component';
 import { PrivacyPolicyComponent } from './shared/privacy-policy/privacy-policy.component';
 import { NewPasswordComponent } from './login/reset-password/new-password/new-password.component';
 import { WorkspaceComponent } from './workspace/workspace.component';
+import { ChatComponent } from './chat/chat.component';
 
 export const routes: Routes = [
-    { path: '', component: LoginComponent },
+    { path: '', redirectTo: 'workspace', pathMatch: 'full' },
     { path: 'login', component: LoginComponent },
     { path: 'reset-password', component: ResetPasswordComponent },
     { path: 'new-password', component: NewPasswordComponent },
     { path: 'signup', component: SignupComponent },
     { path: 'choose-avatar', component: ChooseAvatarComponent },
-    { path: 'workspace', component: WorkspaceComponent },
+    { 
+        path: 'workspace', 
+        component: WorkspaceComponent,
+        children: [
+            { path: '', component: ChatComponent },
+            { path: 'channel/:id', component: ChatComponent },
+            { path: 'dm/:userId', component: ChatComponent }
+        ]
+    },
     { path: 'imprint', component: ImprintComponent },
     { path: 'privacy-policy', component: PrivacyPolicyComponent },
-    { path: 'channel/:channelName/:id', component: WorkspaceComponent },
-    { path: 'dm/:userId', component: WorkspaceComponent },
 ];

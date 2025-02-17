@@ -85,3 +85,15 @@
   .p-18 {
     font-size: 18px;
   }
+
+  .mat-drawer-backdrop.mat-drawer-shown,
+  .mdc-drawer-backdrop.mdc-drawer-shown {
+    background-color: transparent !important;
+  }
+
+
+
+  :root {
+    --mat-sidenav-scrim-color: transparent !important;
+    --mdc-sidenav-scrim-color: transparent !important;
+  }

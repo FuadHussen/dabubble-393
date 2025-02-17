@@ -1,13 +1,46 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, OnInit, HostListener } from '@angular/core';
+import { RouterOutlet, Router } from '@angular/router';
+import { Auth } from '@angular/fire/auth';
+import { WorkspaceComponent } from './workspace/workspace.component';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, WorkspaceComponent, CommonModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   title = 'dabubble-393';
+  isMobile: boolean = false;
+  isLoggedIn: boolean = false;
+
+  constructor(
+    private auth: Auth,
+    private router: Router
+  ) {
+    this.checkScreenSize();
+  }
+
+  ngOnInit() {
+    this.auth.onAuthStateChanged((user) => {
+      this.isLoggedIn = !!user;
+      if (this.isLoggedIn && this.isMobile) {
+        this.router.navigate(['/workspace']);
+      }
+    });
+  }
+
+  @HostListener('window:resize', ['$event'])
+  onResize() {
+    this.checkScreenSize();
+  }
+
+  private checkScreenSize() {
+    this.isMobile = window.innerWidth <= 1100;
+    if (this.isLoggedIn && this.isMobile) {
+      this.router.navigate(['/workspace']);
+    }
+  }
 }

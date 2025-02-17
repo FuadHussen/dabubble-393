@@ -1,4 +1,14 @@
-<div class="chat-container" *ngIf="!isMobile">
+<div class="chat-container" [class.mobile]="isMobile" *ngIf="showChat">
+  <div class="chat-header">
+    <!-- Back Button für Mobile -->
+    <button mat-icon-button 
+            class="back-button" 
+            *ngIf="isMobile" 
+            (click)="onBackClick()">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <!-- Rest des Headers -->
+  </div>
   <mat-card class="chat-card">
     <mat-card-header class="chat-header">
       <div class="channel-info">
@@ -110,8 +120,8 @@
         </div>
       </ng-container>
 
-      <!-- Messages Component nur anzeigen wenn kein neuer Chat -->
-      <app-messages *ngIf="!isNewChat"></app-messages>
+      <!-- Messages Component -->
+      <app-messages></app-messages>
       
     </mat-card-content>
 

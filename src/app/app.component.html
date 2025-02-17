@@ -1,1 +1,4 @@
-<router-outlet></router-outlet>
+<div class="app-container">
+  <router-outlet *ngIf="!isMobile || (isMobile && !isLoggedIn)"></router-outlet>
+  <app-workspace *ngIf="isMobile && isLoggedIn"></app-workspace>
+</div>

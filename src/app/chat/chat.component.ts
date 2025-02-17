@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked, AfterViewInit, HostListener, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, AfterViewInit, HostListener, ChangeDetectorRef, Input, Output, EventEmitter, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
@@ -75,8 +75,10 @@ export class ChatComponent implements OnInit, AfterViewInit {
   cursorPosition: number = 0;
   selectedMentions: string[] = [];
   showEmojiPicker = false;
+  @Input() isMobile: boolean = false;
+  @Output() backClicked = new EventEmitter<void>();
+  showChat: boolean = false;
   private subscriptions: Subscription[] = [];
-  isMobile: boolean = false;  // Initial state
 
   // Emoji-Array als Property definieren
   emojis: string[] = [
@@ -94,7 +96,8 @@ export class ChatComponent implements OnInit, AfterViewInit {
     private route: ActivatedRoute,
     private router: Router,
     private audioService: AudioService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
   ) {
     // Aktuellen User ID speichern
     this.userService.currentUser$.subscribe(user => {
@@ -137,25 +140,48 @@ export class ChatComponent implements OnInit, AfterViewInit {
       this.isDirectMessage = isDM;
     });
 
-    // Single route subscription
-    this.subscriptions.push(
-      this.route.params.subscribe(async params => {
-        if (params['userId']) {
-          await this.chatService.setIsDirectMessage(true);
-          await this.chatService.selectUser(params['userId']);
-          this.selectedChannel = null;
-        } else if (params['channelId']) {
-          await this.chatService.setIsDirectMessage(false);
-          await this.chatService.selectChannel(params['channelId']);
-        }
-      })
-    );
-
-    // Setze initialen Zustand beim Erstellen der Komponente
     this.checkScreenSize();
   }
 
   ngOnInit() {
+    console.log('Chat component initialized');
+    
+    // Route params subscription
+    this.subscriptions.push(
+      this.route.params.subscribe(params => {
+        this.ngZone.run(() => {
+          console.log('Route params changed:', params);
+          if (params['userId'] || params['channelId']) {
+            this.showChat = true;
+            setTimeout(() => {
+              if (params['userId']) {
+                this.chatService.setIsDirectMessage(true);
+                this.chatService.selectUser(params['userId']);
+              } else if (params['channelId']) {
+                this.chatService.setIsDirectMessage(false);
+                this.chatService.selectChannel(params['channelId']);
+              }
+            });
+          }
+        });
+      })
+    );
+
+    // Chat service subscriptions
+    this.subscriptions.push(
+      this.chatService.selectedChannel$.subscribe(channel => {
+        this.ngZone.run(() => {
+          console.log('Selected channel changed:', channel);
+          if (channel) {
+            this.showChat = true;
+            setTimeout(() => {
+              this.loadChannelDetails(channel);
+            });
+          }
+        });
+      })
+    );
+
     this.route.queryParams.subscribe(params => {
       this.isNewChat = params['mode'] === 'new';
       if (this.isNewChat) {
@@ -227,47 +253,72 @@ export class ChatComponent implements OnInit, AfterViewInit {
       }
     });
 
-    // Setze initialen Zustand beim Initialisieren
-    this.checkScreenSize();
+    // Verbesserte Subscriptions
+    this.subscriptions.push(
+      this.chatService.selectedChannel$.subscribe(async channel => {
+        console.log('Selected channel changed in chat:', channel);
+        if (channel) {
+          await this.loadChannelDetails(channel);
+        }
+      }),
+
+      this.chatService.isDirectMessage$.subscribe(isDM => {
+        console.log('Is DM changed in chat:', isDM);
+        this.isDirectMessage = isDM;
+      }),
+
+      this.chatService.selectedUser$.subscribe(async userId => {
+        console.log('Selected user changed in chat:', userId);
+        if (userId) {
+          const user = await this.userService.getUserById(userId);
+          if (user) {
+            this.selectedUserDisplayName = user.username;
+            this.selectedUserAvatar = user.avatar;
+          }
+        }
+      })
+    );
   }
 
-  // Neue Methode für die Bildschirmgrößen-Überprüfung
+  ngOnDestroy() {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
   private checkScreenSize() {
     this.isMobile = window.innerWidth <= 1100;
+    console.log('Screen size check - isMobile:', this.isMobile);
   }
 
   @HostListener('window:resize', ['$event'])
-  onResize(event: any) {
-    this.isMobile = window.innerWidth <= 1100;
+  onResize() {
+    this.ngZone.run(() => {
+      this.checkScreenSize();
+    });
   }
 
   async loadChannelDetails(channelName: string) {
-    try {
-      const channelsRef = collection(this.firestore, 'channels');
-      const q = query(channelsRef, where('name', '==', channelName));
-
-      const querySnapshot = await getDocs(q);
-      if (!querySnapshot.empty) {
-        const channelDoc = querySnapshot.docs[0];
-        const channelData = channelDoc.data();
-
-        this.currentChannelId = channelDoc.id;
-        this.channelName = channelData['name'];
-        this.channelDescription = channelData['description'] || '';
-        this.channelCreatedAt = channelData['createdAt']?.toDate() || null;  // Datum laden
-
-        // Lade Channel-Mitglieder
-        await this.loadChannelMembers();
-
-        if (channelData['createdByUserId']) {
-          const userId = channelData['createdByUserId'];
-          const user = await this.userService.getUserById(userId);
-          this.createdBy = user?.username || user?.displayName || 'Unbekannt';
+    this.ngZone.run(async () => {
+      console.log('Loading channel details for:', channelName);
+      try {
+        const channelsRef = collection(this.firestore, 'channels');
+        const q = query(channelsRef, where('name', '==', channelName));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          const channelDoc = querySnapshot.docs[0];
+          const channelData = channelDoc.data();
+          
+          this.currentChannelId = channelDoc.id;
+          this.channelName = channelData['name'];
+          this.channelDescription = channelData['description'] || '';
+          
+          await this.loadChannelMembers();
+          console.log('Channel details loaded successfully');
         }
+      } catch (error) {
+        console.error('Error loading channel details:', error);
       }
-    } catch (error) {
-      console.error('Fehler beim Laden der Channel-Details:', error);
-    }
+    });
   }
 
   async loadChannelMembers() {
@@ -735,8 +786,14 @@ export class ChatComponent implements OnInit, AfterViewInit {
     }
   }
 
-  ngOnDestroy() {
-    // Clean up subscriptions
-    this.subscriptions.forEach(sub => sub.unsubscribe());
+  onBackClick() {
+    this.ngZone.run(() => {
+      console.log('Back button clicked');
+      this.showChat = false;
+      this.backClicked.emit();
+      if (this.isMobile) {
+        this.router.navigate(['/workspace']);
+      }
+    });
   }
 }

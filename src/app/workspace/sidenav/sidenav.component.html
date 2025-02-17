@@ -28,9 +28,9 @@
 <app-navbar></app-navbar>
 
 <mat-drawer-container class="sidenav-container">
-  <mat-drawer #drawer class="sidenav" 
-             [mode]="isMobile ? 'over' : 'side'" 
-             [opened]="true">
+  <mat-drawer #drawer [mode]="isMobile ? 'over' : 'side'" 
+             [opened]="drawerOpened" 
+             class="sidenav">
     <div class="sidenav-header">
       <div class="sidenav-header-icons">
         <img src="assets/img/devspace-logo.png" alt="Devspace Logo" />
@@ -124,10 +124,16 @@
       </div>
     </div>
   </mat-drawer>
-
-  <mat-drawer-content>
-    <div class="content-container" [class.with-thread]="threadMessage$ | async">
-      <app-chat></app-chat>
+  
+  <mat-drawer-content [class.mobile-view]="isMobile" 
+                     [class.show-chat]="showChat">
+    <div class="content-container">
+      <app-chat *ngIf="showChat" 
+                [isMobile]="isMobile"
+                (backClicked)="onBackClicked()"
+                class="mobile-chat"
+                [class.show]="showChat">
+      </app-chat>
       <app-thread *ngIf="threadMessage$ | async" 
                  [message]="threadMessage$ | async"
                  (closeThread)="closeThread()">

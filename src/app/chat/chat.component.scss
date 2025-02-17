@@ -2,6 +2,31 @@
   height: -webkit-fill-available;
   padding: 24px;
   margin-left: 24px;
+  
+  &.mobile {
+    margin-left: 0;
+    padding: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    background-color: white;
+    
+    .chat-card {
+      border-radius: 0;
+      height: 100vh;
+    }
+    
+    .back-button {
+      display: block;
+    }
+  }
+
+  @media (max-width: 1100px) {
+    animation: slideIn 0.3s ease-out;
+  }
 }
 
 .chat-card {
@@ -155,7 +180,7 @@
 }
 
 .chat-header {
-  padding: 16px 24px;
+  // padding: 16px 24px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.12);
   display: flex;
   justify-content: space-between;
@@ -515,4 +540,27 @@
 // Stelle sicher, dass der Container relativ positioniert ist
 .chat-input-field {
   position: relative;
+}
+
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.back-button {
+  margin-right: 16px;
+  
+  @media (min-width: 1101px) {
+    display: none;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
