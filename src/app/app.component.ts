@@ -20,27 +20,11 @@ export class AppComponent implements OnInit {
     private auth: Auth,
     private router: Router
   ) {
-    this.checkScreenSize();
   }
 
   ngOnInit() {
     this.auth.onAuthStateChanged((user) => {
       this.isLoggedIn = !!user;
-      if (this.isLoggedIn && this.isMobile) {
-        this.router.navigate(['/workspace']);
-      }
     });
-  }
-
-  @HostListener('window:resize', ['$event'])
-  onResize() {
-    this.checkScreenSize();
-  }
-
-  private checkScreenSize() {
-    this.isMobile = window.innerWidth <= 1100;
-    if (this.isLoggedIn && this.isMobile) {
-      this.router.navigate(['/workspace']);
-    }
   }
 }

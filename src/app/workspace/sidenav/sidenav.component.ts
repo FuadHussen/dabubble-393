@@ -86,6 +86,8 @@ export class SidenavComponent implements OnInit {
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone
   ) {
+    this.checkScreenSize();
+    
     this.channels$ = collectionData(collection(this.firestore, 'channels')) as Observable<Channel[]>;
     this.users$ = collectionData(collection(this.firestore, 'users')) as Observable<User[]>;
     this.threadMessage$ = this.chatService.threadMessage$;
@@ -134,8 +136,6 @@ export class SidenavComponent implements OnInit {
       })
     );
 
-    this.checkScreenSize();
-
     // Auf Route-Änderungen reagieren
     this.subscriptions.push(
       this.router.events.subscribe((event) => {
@@ -158,12 +158,21 @@ export class SidenavComponent implements OnInit {
     );
   }
 
+  @HostListener('window:resize', ['$event'])
+  onResize() {
+    this.checkScreenSize();
+  }
+
   private checkScreenSize() {
-    this.isMobile = window.innerWidth <= 1100;
+    this.isMobile = window.innerWidth <= 1175;
     if (this.isMobile) {
       this.drawerOpened = true;
       this.showChat = false;
+    } else {
+      this.drawerOpened = true;
+      this.showChat = true;
     }
+    console.log('Screen size checked - Mobile:', this.isMobile, 'Drawer:', this.drawerOpened, 'ShowChat:', this.showChat);
   }
 
   // Neue Methode zum Aktualisieren der Chat-Ansicht
@@ -183,16 +192,33 @@ export class SidenavComponent implements OnInit {
     });
   }
 
-  @HostListener('window:resize', ['$event'])
-  onResize() {
+  ngOnInit() {
     this.checkScreenSize();
-  }
-
-  async ngOnInit() {
-    // Initialer Load der Channels
     this.loadChannels();
-    // Initialer Load der Users
     this.loadUsers();
+
+    // Nur in Desktop-Ansicht automatisch ersten Channel laden
+    if (!this.isMobile) {
+      this.subscriptions.push(
+        this.channels$.subscribe(channels => {
+          if (channels && channels.length > 0 && !this.selectedChannel) {
+            this.selectChannel(channels[0].name);
+          }
+        })
+      );
+    }
+
+    // Router-Events überwachen
+    this.router.events.subscribe((event) => {
+      if (event instanceof NavigationEnd) {
+        // Bei Navigation zurück zum Workspace in mobiler Ansicht
+        if (event.url === '/workspace' && this.isMobile) {
+          this.drawerOpened = true;
+          this.showChat = false;
+        }
+      }
+    });
+
     // Subscribe to chatService to keep track of selected states
     this.chatService.selectedChannel$.subscribe(channel => {
       this.selectedChannel = channel;
@@ -219,7 +245,6 @@ export class SidenavComponent implements OnInit {
     this.auth.onAuthStateChanged((user) => {
       this.currentUserId = user?.uid || null;
     });
-    this.checkScreenSize(); // Check again on init
   }
 
   ngOnDestroy() {
@@ -285,7 +310,13 @@ export class SidenavComponent implements OnInit {
 
   async selectChannel(channelName: string) {
     try {
-      console.log('Selecting channel:', channelName);
+      console.log('Selecting channel:', channelName, 'isMobile:', this.isMobile);
+      
+      // Wenn mobile, dann früh returnen
+      if (this.isMobile) {
+        console.log('Mobile view detected, preventing automatic channel selection');
+        return;
+      }
       
       const channelsCollection = collection(this.firestore, 'channels');
       const q = query(channelsCollection, where('name', '==', channelName));
@@ -296,28 +327,62 @@ export class SidenavComponent implements OnInit {
         const channelId = channelDoc.id;
 
         this.ngZone.run(async () => {
-          // UI-Status aktualisieren
           this.selectedChannel = channelName;
           this.selectedUser = '';
           this.isDirectMessage = false;
+
+          // Desktop-Ansicht
+          this.drawerOpened = true;
           this.showChat = true;
-
-          if (this.isMobile) {
-            console.log('Mobile: Setting drawer and chat state');
-            this.drawerOpened = false;
-          }
-
-          // Services aktualisieren
+          
           await this.chatService.setIsDirectMessage(false);
           await this.chatService.selectChannel(channelName);
           this.chatService.setCurrentChannelId(channelId);
           
-          // Navigation
-          await this.router.navigate(['workspace', 'channel', channelId]);
+          await this.router.navigate(['/workspace/channel', channelId]);
+          
+          this.cdr.detectChanges();
         });
       }
     } catch (error) {
       console.error('Error selecting channel:', error);
+    }
+  }
+
+  // Neue Methode für manuelle Channel-Auswahl
+  async manualChannelSelect(channelName: string) {
+    try {
+      console.log('Manual channel selection:', channelName, 'isMobile:', this.isMobile);
+      
+      const channelsCollection = collection(this.firestore, 'channels');
+      const q = query(channelsCollection, where('name', '==', channelName));
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        const channelDoc = querySnapshot.docs[0];
+        const channelId = channelDoc.id;
+
+        this.ngZone.run(async () => {
+          this.selectedChannel = channelName;
+          this.selectedUser = '';
+          this.isDirectMessage = false;
+
+          if (this.isMobile) {
+            this.drawerOpened = false;
+            this.showChat = true;
+          }
+
+          await this.chatService.setIsDirectMessage(false);
+          await this.chatService.selectChannel(channelName);
+          this.chatService.setCurrentChannelId(channelId);
+          
+          await this.router.navigate(['/workspace/channel', channelId]);
+          
+          this.cdr.detectChanges();
+        });
+      }
+    } catch (error) {
+      console.error('Error in manual channel selection:', error);
     }
   }
 
@@ -389,11 +454,10 @@ export class SidenavComponent implements OnInit {
 
   // Methode für den Back-Button
   onBackClicked() {
-    this.drawerOpened = true;
-    this.showChat = false;
-    // Optional: Zurück zur Basis-Route
     if (this.isMobile) {
-      this.router.navigate(['workspace']);
+      this.drawerOpened = true;
+      this.showChat = false;
+      this.router.navigate(['/workspace']);
     }
   }
 }

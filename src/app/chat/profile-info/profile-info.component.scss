@@ -17,6 +17,8 @@
   width: 400px;
   max-width: 90%;
   padding: 24px;
+  display: flex;
+  flex-direction: column;
 }
 
 .profile-header {
@@ -24,6 +26,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 32px;
+  width: 100%;
 
   h1 {
     margin: 0;
@@ -35,6 +38,8 @@
 .profile-content {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  width: 100%;
 }
 
 .avatar-container {
@@ -42,6 +47,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  width: 100%;
+  height: auto;
 
   .user-avatar {
     width: 200px;
@@ -55,20 +62,24 @@
     width: 200px;
     height: 200px;
     color: #444DF2;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: auto;
   }
 }
 
 .user-info {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  .username-display {
+    width: 100%;
+  }
 
   .username {
     margin: 0 0 12px 0;
     font-size: 32px;
     font-weight: 700;
+    text-align: center;
   }
 
   .status {
@@ -77,6 +88,7 @@
     gap: 8px;
     margin-bottom: 24px;
     font-size: 20px;
+    width: 100%;
 
     .status-dot {
       width: 16px;
@@ -96,13 +108,12 @@
   .email-container {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
     gap: 8px;
     margin-bottom: 24px;
+    width: 100%;
 
     .email-header {
       display: flex;
-      align-items: center;
       gap: 8px;
       font-weight: 700;
 
@@ -120,9 +131,10 @@
     .email-link {
       color: #1381FF;
       text-decoration: none;
-      margin-left: 40px;
       font-size: 18px;
-      
+      margin-left: 38px;
+
+
       &:hover {
         text-decoration: underline;
       }
@@ -146,6 +158,41 @@
     mat-icon {
       font-size: 20px;
       transform: scaleX(-1);
+    }
+  }
+}
+
+.username-container {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+@media (max-width: 500px) {
+  .profile-card {
+    height: auto;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .avatar-container {
+
+    .user-avatar,
+    .avatar-icon {
+      width: 150px;
+      height: 150px;
+      font-size: 150px;
+    }
+  }
+
+  .user-info {
+    .username {
+      font-size: 24px;
+    }
+
+    .status,
+    .email-container .email-label {
+      font-size: 16px;
     }
   }
 }

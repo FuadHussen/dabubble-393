@@ -97,3 +97,73 @@
     --mat-sidenav-scrim-color: transparent !important;
     --mdc-sidenav-scrim-color: transparent !important;
   }
+
+  @media (max-width: 1175px) {
+    .mdc-card__actions{
+      height: 32vh!important;
+    }
+  }
+
+  @media (max-width: 500px) {
+
+    p{
+      font-size: 16px!important;
+    }
+
+    span {
+      font-size: 14px;
+    }
+
+    .sidenav-header{
+      padding: 16px!important;
+    }
+
+    .mat-expansion-panel-body{
+      padding: 0!important;
+    }
+
+    .mdc-button{
+      width: 100%!important;
+    }
+
+    h1{
+      font-size: 22px!important;
+    }
+
+    h2{
+      font-size: 18px!important;
+    }
+
+    h3{
+      font-size: 16px!important;
+    } 
+
+    .channel-name{
+      font-size: 16px!important;
+
+      mat-icon{
+        font-size: 24px!important;
+        height: 24px!important;
+        width: 24px!important;
+      }
+    }
+
+    .dialog-card {
+      right: auto!important;
+    }
+
+    .navbar-left {
+      .app-name{
+        font-size: 18px!important;
+
+        img{
+          height: auto!important;
+          width: 48px!important;
+        }
+      }
+    }
+
+    .edit-actions{
+      flex-direction: column;
+    }
+  }

@@ -10,7 +10,7 @@ import { WorkspaceComponent } from './workspace/workspace.component';
 import { ChatComponent } from './chat/chat.component';
 
 export const routes: Routes = [
-    { path: '', redirectTo: 'workspace', pathMatch: 'full' },
+    { path: '', redirectTo: 'login', pathMatch: 'full' },
     { path: 'login', component: LoginComponent },
     { path: 'reset-password', component: ResetPasswordComponent },
     { path: 'new-password', component: NewPasswordComponent },

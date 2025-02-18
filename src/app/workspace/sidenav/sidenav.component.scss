@@ -26,10 +26,10 @@
 
 @keyframes slideIn {
   from {
-    transform: translateX(100%);
+    transform: none;
   }
   to {
-    transform: translateX(0);
+    transform: none;
   }
 }
 
@@ -107,7 +107,7 @@
   margin: 24px 24px 24px 0;
   z-index: auto !important;
 
-  @media (max-width: 1100px) {
+  @media (max-width: 1175px) {
     width: -webkit-fill-available !important;
     margin: 24px;
   }
@@ -158,7 +158,7 @@ mat-nav-list {
   cursor: pointer;
   width: 32px;
   height: 32px;
-  z-index: 1000;
+  z-index: 100;
 
   img {
     position: absolute;
@@ -440,7 +440,7 @@ mat-nav-list {
   }
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1175px) {
   .sidenav-container {
     ::ng-deep .mat-drawer-content {
       display: block !important;
@@ -452,8 +452,10 @@ mat-nav-list {
   }
 }
 
-.mat-drawer {
-  z-index: 1000 !important;
+@media (max-width: 1175px) {
+  .mat-drawer {
+    z-index: 1000 !important;
+  }
 }
 
 .mat-drawer-side{
@@ -463,3 +465,9 @@ mat-nav-list {
 .mat-drawer-content{
   overflow: unset !important;
 }
+
+  @media (max-width: 500px) {
+    .mat-expansion-indicator {
+      display: none !important;
+    }
+  }

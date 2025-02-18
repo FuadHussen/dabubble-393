@@ -66,7 +66,7 @@
                 class="hover-btn"
                 mat-list-item
                 *ngFor="let channel of channels"
-                (click)="selectChannel(channel.name)"
+                (click)="manualChannelSelect(channel.name)"
                 [ngClass]="{'active': isChannelActive(channel.name)}"
               >
                 <mat-icon class="material-symbols-outlined" matListItemIcon>tag</mat-icon>

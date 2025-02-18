@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, HostListener } from '@angular/core';
 import {
   trigger,
   state,
@@ -73,8 +73,24 @@ import {
 })
 export class LoginComponent {
   private firestore: Firestore = inject(Firestore);
+  isMobile: boolean = false;
 
-  constructor(private router: Router, private userService: UserService) {}
+  constructor(private router: Router, private userService: UserService) {
+    // Initialisiere isMobile beim Komponenten-Start
+    this.checkScreenSize();
+  }
+
+  // Überprüfe Bildschirmgröße bei Initialisierung und Resize
+  @HostListener('window:resize', ['$event'])
+  onResize() {
+    this.checkScreenSize();
+  }
+
+  private checkScreenSize() {
+    this.isMobile = window.innerWidth <= 1175;
+    console.log('Screen size checked:', this.isMobile ? 'mobile' : 'desktop');
+  }
+
   bgState = 'visible';
   logoState = 'start';
   textTypingAnimation = 'start';
@@ -151,14 +167,34 @@ export class LoginComponent {
   }
 
   loginSucess() {
+    // Prüfe die Bildschirmgröße direkt vor dem Login
+    this.checkScreenSize();
+    console.log('Login attempt, isMobile:', this.isMobile);
+
     this.userService
       .login(this.userEmail, this.userPassword)
       .then(async () => {
-        // Prüfe und füge Benutzer zum Front-End-Team Channel hinzu
         await this.addUserToFrontEndTeam();
-        this.router.navigate(['/workspace']); 
+        
+        if (this.isMobile) {
+          console.log('Navigating to workspace (mobile)');
+          await this.router.navigate(['/workspace']);
+        } else {
+          console.log('Checking channels for desktop navigation');
+          const channelsRef = collection(this.firestore, 'channels');
+          const querySnapshot = await getDocs(channelsRef);
+          if (!querySnapshot.empty) {
+            const firstChannel = querySnapshot.docs[0];
+            console.log('Navigating to channel:', firstChannel.id);
+            await this.router.navigate(['/workspace/channel', firstChannel.id]);
+          } else {
+            console.log('No channels found, navigating to workspace');
+            await this.router.navigate(['/workspace']);
+          }
+        }
       })
       .catch((error) => {
+        console.error('Login error:', error);
         if (error.code) {
           this.passwordNotExist = true;
         }
@@ -217,14 +253,34 @@ export class LoginComponent {
   }
 
   guestSucess() {
+    // Prüfe die Bildschirmgröße direkt vor dem Gäste-Login
+    this.checkScreenSize();
+    console.log('Guest login attempt, isMobile:', this.isMobile);
+
     this.userService
       .login('gäste@login.login', 'gästelogin')
       .then(async () => {
         await this.initializeGuestChat();
-        this.router.navigate(['/workspace']);
+        
+        if (this.isMobile) {
+          console.log('Navigating to workspace (mobile guest)');
+          await this.router.navigate(['/workspace']);
+        } else {
+          console.log('Checking channels for desktop navigation (guest)');
+          const channelsRef = collection(this.firestore, 'channels');
+          const querySnapshot = await getDocs(channelsRef);
+          if (!querySnapshot.empty) {
+            const firstChannel = querySnapshot.docs[0];
+            console.log('Navigating to channel:', firstChannel.id);
+            await this.router.navigate(['/workspace/channel', firstChannel.id]);
+          } else {
+            console.log('No channels found, navigating to workspace');
+            await this.router.navigate(['/workspace']);
+          }
+        }
       })
       .catch((error) => {
-        console.error('Login fehlgeschlagen', error);
+        console.error('Guest login error:', error);
         alert('Fehler beim Login: ' + error.message);
       });
   }
