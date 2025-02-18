@@ -16,4 +16,8 @@ export interface Message {
   editedAt?: any;
   parentId?: string; // Für Thread-Nachrichten
   isThread?: boolean;
+  showReactions?: boolean;
+  showEmojiPicker?: boolean;
+  isEditing?: boolean;
+  editText?: string;
 } 

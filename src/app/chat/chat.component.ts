@@ -17,8 +17,11 @@ import { UserService } from '../services/user.service';
 import { AddMemberDialogComponent } from './add-member-dialog/add-member-dialog.component';
 import { MemberListDialogComponent } from './member-list-dialog/member-list-dialog.component';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, Observable } from 'rxjs';
 import { AudioService } from '../services/audio.service';
+import { trigger, state, style, animate, transition } from '@angular/animations';
+import { ThreadComponent } from './thread/thread.component';
+import { Message } from '../models/message.model';
 
 @Component({
   selector: 'app-chat',
@@ -36,10 +39,35 @@ import { AudioService } from '../services/audio.service';
     FormsModule,
     MessagesComponent,
     AddMemberDialogComponent,
-    MemberListDialogComponent
+    MemberListDialogComponent,
+    ThreadComponent
   ],
   templateUrl: './chat.component.html',
-  styleUrls: ['./chat.component.scss']
+  styleUrls: ['./chat.component.scss'],
+  animations: [
+    trigger('chatSlide', [
+      state('chat', style({
+        transform: 'translateX(0)'
+      })),
+      state('thread', style({
+        transform: 'translateX(-100%)'
+      })),
+      transition('chat <=> thread', [
+        animate('300ms ease-in-out')
+      ])
+    ]),
+    trigger('threadSlide', [
+      state('visible', style({
+        transform: 'translateX(0)'
+      })),
+      state('hidden', style({
+        transform: 'translateX(100%)'
+      })),
+      transition('visible <=> hidden', [
+        animate('300ms ease-in-out')
+      ])
+    ])
+  ]
 })
 
 export class ChatComponent implements OnInit, AfterViewInit {
@@ -79,6 +107,8 @@ export class ChatComponent implements OnInit, AfterViewInit {
   @Output() backClicked = new EventEmitter<void>();
   showChat: boolean = false;
   private subscriptions: Subscription[] = [];
+  threadVisible: boolean = false;
+  threadMessage$: Observable<Message | null>;
 
   // Emoji-Array als Property definieren
   emojis: string[] = [
@@ -141,6 +171,7 @@ export class ChatComponent implements OnInit, AfterViewInit {
     });
 
     this.checkScreenSize();
+    this.threadMessage$ = this.chatService.threadMessage$;
   }
 
   ngOnInit() {
@@ -795,5 +826,15 @@ export class ChatComponent implements OnInit, AfterViewInit {
         this.router.navigate(['/workspace']);
       }
     });
+  }
+
+  openThread(message: Message) {
+    this.threadVisible = true;
+    this.chatService.setThreadMessage(message);
+  }
+
+  closeThread() {
+    this.threadVisible = false;
+    this.chatService.setThreadMessage(null);
   }
 }

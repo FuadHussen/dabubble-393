@@ -6,7 +6,7 @@ import { Firestore } from '@angular/fire/firestore';
 import { Auth } from '@angular/fire/auth';
 import { User } from '../models/user.model';
 import { AudioService } from './audio.service';
-import { Message } from './../models/message.model';
+import { Message } from '../models/message.model';
 
 @Injectable({
   providedIn: 'root'
@@ -19,7 +19,7 @@ export class ChatService {
   private hasMessagesSubject = new BehaviorSubject<boolean>(false);
   private isNewChatMode = new BehaviorSubject<boolean>(false);
   private selectedUserDataSubject = new BehaviorSubject<any>(null);
-  private threadMessageSource = new BehaviorSubject<Message | null>(null);
+  private threadMessageSubject = new BehaviorSubject<Message | null>(null);
 
   currentChannelId$ = this.currentChannelIdSubject.asObservable();
   isDirectMessage$ = this.isDirectMessageSubject.asObservable();
@@ -28,7 +28,7 @@ export class ChatService {
   hasMessages$ = this.hasMessagesSubject.asObservable();
   isNewChatMode$ = this.isNewChatMode.asObservable();
   selectedUserData$ = this.selectedUserDataSubject.asObservable();
-  threadMessage$ = this.threadMessageSource.asObservable();
+  threadMessage$ = this.threadMessageSubject.asObservable();
 
   constructor(
     private firestore: Firestore,
@@ -261,7 +261,7 @@ export class ChatService {
   }
 
   setThreadMessage(message: Message | null) {
-    this.threadMessageSource.next(message);
+    this.threadMessageSubject.next(message);
   }
 
   async getThreadReplies(messageId: string): Promise<Message[]> {

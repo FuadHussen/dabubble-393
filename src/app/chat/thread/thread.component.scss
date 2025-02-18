@@ -1,10 +1,23 @@
 .thread-container {
     height: -webkit-fill-available;
+    width: 350px;
+    background: white;
+    z-index: 1000;
     display: flex;
     flex-direction: column;
-    background-color: white;
     border-radius: 30px;
     margin: 24px 24px 24px 0;
+
+    @media (max-width: 1175px) {
+        width: 100%;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        margin: 0;
+        border-radius: 0;
+    }
 }
 
 .thread-header {
@@ -136,7 +149,7 @@
             &.current-user {
                 right: -16px;
             }
-            
+
             &.show {
                 opacity: 1;
                 visibility: visible;

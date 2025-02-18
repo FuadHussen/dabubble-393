@@ -16,7 +16,7 @@
           <span class="username">{{ message.username }}</span>
           <span class="timestamp">{{ message.timestamp | date:'HH:mm' }} Uhr</span>
         </div>
-        <div class="message-text">
+        <div class="message-text-container">
           <!-- Normaler Text oder Edit-Modus -->
           <div *ngIf="!message.isEditing" class="message-text">
             {{ message.text }}

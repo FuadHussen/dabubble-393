@@ -4,9 +4,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { FormsModule } from '@angular/forms';
 import { Firestore, collection, query, where, orderBy, onSnapshot, doc, getDoc, Timestamp, updateDoc } from '@angular/fire/firestore';
-import { Message as FirebaseMessage } from './../../models/message.model';
+import { Message } from '../../models/message.model';
 import { ChatService } from './../../services/chat.service';
 import { Auth } from '@angular/fire/auth';
+import { trigger, transition, style, animate } from '@angular/animations';
 
 interface MessageGroup {
   date: string;
@@ -27,23 +28,32 @@ interface GroupedReaction {
   users: string[];
 }
 
-interface Message extends FirebaseMessage {
-  showReactions?: boolean;
-  showEmojiPicker?: boolean;
-  isEditing?: boolean;
-  editText?: string;
-  avatar: string;
-}
-
 @Component({
   selector: 'app-thread',
   standalone: true,
-  imports: [CommonModule, MatIconModule, MatButtonModule, FormsModule],
+  imports: [
+    CommonModule, 
+    MatIconModule, 
+    MatButtonModule, 
+    FormsModule
+  ],
   templateUrl: './thread.component.html',
-  styleUrls: ['./thread.component.scss']
+  styleUrls: ['./thread.component.scss'],
+  animations: [
+    trigger('slideInOut', [
+      transition(':enter', [
+        style({ transform: 'translateX(100%)' }),
+        animate('300ms ease-out', style({ transform: 'translateX(0)' }))
+      ]),
+      transition(':leave', [
+        animate('300ms ease-in', style({ transform: 'translateX(100%)' }))
+      ])
+    ])
+  ]
 })
 export class ThreadComponent implements OnInit {
   @Input() message: Message | null = null;
+  @Input() isMobile: boolean = false;
   @Output() closeThread = new EventEmitter<void>();
 
   replies: Message[] = [];
@@ -145,22 +155,25 @@ export class ThreadComponent implements OnInit {
               username: userData?.['username'] || messageData['username']
             } as Message;
             
-            
             this.message = originalMessageData;
             
+            // Erstelle die Gruppe für die Original-Nachricht
+            const originalMessageGroup = {
+              date: this.convertTimestamp(originalMessageData.timestamp).toLocaleDateString('de-DE', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long'
+              }),
+              messages: [originalMessageData],
+              isOriginalMessage: true,
+              avatar: originalMessageData.avatar || 'default-avatar.png'
+            };
+
+            // Wenn es bereits Gruppen gibt, ersetze die erste (Original-Nachricht)
             if (this.messageGroups.length > 0) {
-              this.messageGroups = [
-                {
-                  date: this.convertTimestamp(this.message.timestamp).toLocaleDateString('de-DE', {
-                    weekday: 'long',
-                    day: 'numeric',
-                    month: 'long'
-                }),
-                messages: [this.message],
-                isOriginalMessage: true,
-                avatar: this.message.avatar
-              }
-            ];
+              this.messageGroups[0] = originalMessageGroup;
+            } else {
+              this.messageGroups = [originalMessageGroup];
             }
             
             this.cdr.detectChanges();
@@ -196,19 +209,11 @@ export class ThreadComponent implements OnInit {
             })
           );
 
-
-          const originalMessageGroup = {
-            date: this.convertTimestamp(this.message?.timestamp).toLocaleDateString('de-DE', {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'long'
-            }),
-            messages: [this.message],
-            isOriginalMessage: true
-          };
-
+          // Gruppiere die Antworten nach Datum
           const replyGroups = this.groupRepliesByDate(this.replies);
-          this.messageGroups = [originalMessageGroup as MessageGroup, ...replyGroups];
+          
+          // Behalte die Original-Nachricht-Gruppe und füge die Antwort-Gruppen hinzu
+          this.messageGroups = [this.messageGroups[0], ...replyGroups];
           
           this.cdr.detectChanges();
         });

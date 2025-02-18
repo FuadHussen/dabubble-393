@@ -166,4 +166,22 @@
     .edit-actions{
       flex-direction: column;
     }
+
+    .dialog-container{
+      padding: 20px!important;
+    }
+
+    .message-content{
+      
+      .message-header{
+
+        span{
+          font-size: 15px!important;
+        }
+      }
+
+      .message-text{
+        font-size: 14px!important;
+      }
+    }
   }

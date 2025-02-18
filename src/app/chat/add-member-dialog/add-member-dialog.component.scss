@@ -183,3 +183,9 @@
       }
     }
   }
+
+  @media (max-width: 768px) {
+    .add-actions{
+      align-items: flex-end!important;
+    }
+  }
