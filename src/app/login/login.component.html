@@ -1,14 +1,30 @@
 <div class="startseite-container">
-  <div class="startseite">
+  <div class="startSide">
     <div class="background-fade" [@fadeBackground]="bgState"></div>
 
     <div class="logo-container" [@logoContainerAnimation]="containerState">
-      <img src="./../assets/img/logo-without-text.png" alt="Logo" class="logo" [@logoAnimation]="logoState" />
-      <span class="logo-name" [@textTypingAnimation]>DABubble</span>
+      <img
+        src="./../assets/img/logo-without-text.png"
+        alt="Logo"
+        class="logo"
+        [@logoAnimation]="logoState"
+      />
+      <div class="hiddenBox">
+        <span
+          [ngClass]="{
+            'textcontainer-black-text': introPlayed,
+            'textcontainer-animated-text': !introPlayed
+          }"
+          >DABubble</span
+        >
+      </div>
     </div>
-    <div class="signup-container">
-      <p>Neu bei DABubble?</p>
-      <span (click)="navigateToSignUp()" class="signup">Konto erstellen</span>
+    
+    <div class="signupBox">
+      <div class="signup-container">
+        <p>Neu bei DABubble?</p>
+        <span (click)="navigateToSignUp()" class="signup">Konto erstellen</span>
+      </div>
     </div>
   </div>
 
@@ -16,6 +32,9 @@
     <form>
       <div class="head-container">
         <h2>Anmeldung</h2>
+        <button (click)="resetIntro()" class="reset-button">
+          Intro zurücksetzen
+        </button>
         <h4>
           Wir empfehlen dir, die E-Mail-Adresse zu nutzen, die du bei der Arbeit
           verwendest.
@@ -25,9 +44,18 @@
       <div class="inputs-container">
         <div class="email-input">
           <img [src]="userEmailSrc" alt="mail" />
-          <input type="email" id="email" name="email" required placeholder="beispielname@email.com"
-            [(ngModel)]="userEmail" #emailInput="ngModel" (focus)="onFocus('userEmail')" (blur)="onBlur('userEmail')"
-            (input)="onInput('userEmail', $event)" />
+          <input
+            type="email"
+            id="email"
+            name="email"
+            required
+            placeholder="beispielname@email.com"
+            [(ngModel)]="userEmail"
+            #emailInput="ngModel"
+            (focus)="onFocus('userEmail')"
+            (blur)="onBlur('userEmail')"
+            (input)="onInput('userEmail', $event)"
+          />
         </div>
         <div class="error-message">
           <p *ngIf="emailNotExist">*Diese E-Mail-Adresse existiert nicht.</p>
@@ -35,9 +63,18 @@
         <!-- Password Input -->
         <div class="password-input">
           <img [src]="userPasswordSrc" alt="lock" />
-          <input type="password" id="password" name="password" required minlength="6" placeholder="Passwort"
-            (ngModel)="(userPassword)" (focus)="onFocus('userPassword')" (blur)="onBlur('userPassword')"
-            (input)="onInput('userPassword', $event)" />
+          <input
+            type="password"
+            id="password"
+            name="password"
+            required
+            minlength="6"
+            placeholder="Passwort"
+            (ngModel)="(userPassword)"
+            (focus)="onFocus('userPassword')"
+            (blur)="onBlur('userPassword')"
+            (input)="onInput('userPassword', $event)"
+          />
         </div>
 
         <div class="error-message">
@@ -47,7 +84,9 @@
         </div>
       </div>
 
-      <a (click)="navigateToForgotPassword()" class="link-text">Passwort vergessen?</a>
+      <a (click)="navigateToForgotPassword()" class="link-text"
+        >Passwort vergessen?</a
+      >
 
       <div class="line-container">
         <div class="gray-line"></div>
@@ -62,11 +101,16 @@
 
       <!-- Buttons -->
       <div class="buttons-container">
-        <button (click)="loginSucess()" [disabled]="!isFilled"
-          [ngClass]="{ 'primary-btn': isFilled, 'disabled-btn': !isFilled }">
+        <button
+          (click)="loginSucess()"
+          [disabled]="!isFilled"
+          [ngClass]="{ 'primary-btn': isFilled, 'disabled-btn': !isFilled }"
+        >
           Anmelden
         </button>
-        <button (click)="guestSucess()" class="secondary-btn">Gäste-Login</button>
+        <button (click)="guestSucess()" class="secondary-btn">
+          Gäste-Login
+        </button>
       </div>
     </form>
   </div>

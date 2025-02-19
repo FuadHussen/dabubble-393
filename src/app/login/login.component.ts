@@ -30,45 +30,43 @@ import {
     trigger('fadeBackground', [
       state('visible', style({ opacity: 1, visibility: 'visible' })),
       state('hidden', style({ opacity: 0, visibility: 'hidden' })),
-      transition('visible => hidden', [
-        animate('1s ease-in-out')
-      ])
+      transition('visible => hidden', [animate('1s ease-in-out')]),
     ]),
-  
+
     trigger('logoAnimation', [
-      state('start', style({ transform: 'translateX(200%)' })), // Start ganz rechts
+      state('start', style({ transform: 'translateX(100%)' })), // Start ganz rechts
       state('end', style({ transform: 'translateX(0)' })), // Endposition normal
-      transition('start => end', [
-        animate('1s ease-in-out')
-      ])
+      transition('start => end', [animate('0.7s ease-in-out')]),
     ]),
-  
-    trigger('textTypingAnimation', [
-      transition(':enter', [
-        style({ width: '0', overflow: 'hidden' }), // Start: Kein Text sichtbar
-        animate('2s steps(10, end)', style({ width: '100%' })) // Schrittweises Tippen
-      ])
-    ]),
-  
+
     trigger('logoContainerAnimation', [
-      state('start', style({
-        scale:1,
-        top: '50%',
-        left: '50%',
-        color: '#fff',
-        transform: 'translate(-50%, -50%)'
-      })),
-      state('end', style({
-        scale:1,
-        top: '20px', // Zielposition (anpassen!)
-        left: '20px',
-        transform: 'translate(0, 0)',
-        color: '#000'
-      })),
-      transition('start => end', [
-        animate('1s ease-in-out')
-      ])
-    ])
+      state(
+        'start',
+        style({
+          scale: 1,
+          top: '50%',
+          left: '50%',
+          color: '#fff',
+          transform: 'translate(-50%, -50%)',
+        })
+      ),
+      state(
+        'end',
+        style({
+          scale: 1,
+          top: '20px', // Zielposition (anpassen!)
+          left: '20px',
+          transform: 'translate(0, 0)',
+          color: '#000',
+        })
+      ),
+      transition('start => end', [animate('1s ease-in-out')]),
+    ]),
+    trigger('textAnimation', [
+      state('start', style({ transform: 'translateX(-100%)', color: 'white' })),
+      state('end', style({ transform: 'translateX(0)', color: 'black' })),
+      transition('start => end', [animate('0.5s 0.65s ease-in-out')]),
+    ]),
   ],
 })
 export class LoginComponent {
@@ -95,19 +93,34 @@ export class LoginComponent {
   logoState = 'start';
   textTypingAnimation = 'start';
   containerState = 'start';
+  textAnimationState = 'start';
+  introPlayed: boolean = false;
+
   ngOnInit() {
-    setTimeout(() => {
-      this.logoState = 'end'; // Logo-Bild bewegt sich rein
-    }, 500);
+    this.introPlayed = sessionStorage.getItem('introPlayed') !== null;
   
-    setTimeout(() => {
-      this.textTypingAnimation = 'end'; // Logo-Name Schreibanimation startet erst jetzt
-    }, 3000); // Verzögerung angepasst: erst nach der Logo-Animation starten
+    if (this.introPlayed) {
+      this.logoState = 'end';
+      this.bgState = 'hidden';
+      this.containerState = 'end';
+      this.textAnimationState = 'end';
+    } else {
+      setTimeout(() => {
+        this.logoState = 'end';
+      }, 200);
   
-    setTimeout(() => {
-      this.bgState = 'hidden'; // Hintergrund ausblenden
-      this.containerState = 'end'; // Logo-Container bewegt sich an Zielposition
-    }, 3000);
+      setTimeout(() => {
+        this.bgState = 'hidden';
+        this.containerState = 'end';
+        this.textAnimationState = 'end';
+        sessionStorage.setItem('introPlayed', 'true');
+      }, 2400);
+    }
+  }
+
+  resetIntro() {
+    sessionStorage.removeItem('introPlayed'); // Entferne den gespeicherten Wert
+    location.reload(); // Lade die Seite neu, um die Animation erneut zu starten
   }
 
   userEmail: string = '';
@@ -175,7 +188,7 @@ export class LoginComponent {
       .login(this.userEmail, this.userPassword)
       .then(async () => {
         await this.addUserToFrontEndTeam();
-        
+
         if (this.isMobile) {
           console.log('Navigating to workspace (mobile)');
           await this.router.navigate(['/workspace']);
@@ -211,7 +224,10 @@ export class LoginComponent {
       const messagesRef = collection(this.firestore, 'messages');
 
       // Prüfe ob der Front-End-Team Channel existiert
-      const channelQuery = query(channelsRef, where('name', '==', 'Front-End-Team'));
+      const channelQuery = query(
+        channelsRef,
+        where('name', '==', 'Front-End-Team')
+      );
       const existingChannels = await getDocs(channelQuery);
 
       if (!existingChannels.empty) {
@@ -231,7 +247,7 @@ export class LoginComponent {
           const membership = {
             channelId: channelId,
             userId: currentUser.uid,
-            joinedAt: new Date()
+            joinedAt: new Date(),
           };
           await addDoc(channelMembersRef, membership);
 
@@ -242,7 +258,7 @@ export class LoginComponent {
             username: currentUser.displayName || currentUser.email,
             timestamp: new Date(),
             channelId: channelId,
-            recipientId: null
+            recipientId: null,
           };
           await addDoc(messagesRef, joinMessage);
         }
@@ -261,7 +277,7 @@ export class LoginComponent {
       .login('gäste@login.login', 'gästelogin')
       .then(async () => {
         await this.initializeGuestChat();
-        
+
         if (this.isMobile) {
           console.log('Navigating to workspace (mobile guest)');
           await this.router.navigate(['/workspace']);
@@ -299,14 +315,20 @@ export class LoginComponent {
       }
       console.log('Current user:', currentUser);
 
-      const guestUserId = 'a4QeEY8CNEd6CZ2KwQZVCBhlJ2z1';   // Gäste-Login ID
-      const sofiasId = 'a4QeEY8CNEd6CZ2KwQZVCBhlJ2z0';     // Sofia's ID
-      const saschasId = 'NbMgkSxq3fULESFz01t7Sk7jDxw2';    // Sascha's ID
+      const guestUserId = 'a4QeEY8CNEd6CZ2KwQZVCBhlJ2z1'; // Gäste-Login ID
+      const sofiasId = 'a4QeEY8CNEd6CZ2KwQZVCBhlJ2z0'; // Sofia's ID
+      const saschasId = 'NbMgkSxq3fULESFz01t7Sk7jDxw2'; // Sascha's ID
 
       // Prüfe ob der Front-End-Team Channel existiert
-      const channelQuery = query(channelsRef, where('name', '==', 'Front-End-Team'));
+      const channelQuery = query(
+        channelsRef,
+        where('name', '==', 'Front-End-Team')
+      );
       const existingChannels = await getDocs(channelQuery);
-      console.log('Existing channels:', existingChannels.empty ? 'No channels found' : 'Channel exists');
+      console.log(
+        'Existing channels:',
+        existingChannels.empty ? 'No channels found' : 'Channel exists'
+      );
 
       let channelId;
 
@@ -317,9 +339,9 @@ export class LoginComponent {
           name: 'Front-End-Team',
           description: 'Channel für Frontend-Entwicklung',
           createdBy: sofiasId,
-          createdAt: new Date()
+          createdAt: new Date(),
         };
-        
+
         try {
           const channelDoc = await addDoc(channelsRef, newChannel);
           channelId = channelDoc.id;
@@ -329,7 +351,7 @@ export class LoginComponent {
           const sofiaMembership = {
             channelId: channelId,
             userId: sofiasId,
-            joinedAt: new Date()
+            joinedAt: new Date(),
           };
           await addDoc(channelMembersRef, sofiaMembership);
           console.log('Sofia added as member');
@@ -338,7 +360,7 @@ export class LoginComponent {
           const saschaMembership = {
             channelId: channelId,
             userId: saschasId,
-            joinedAt: new Date()
+            joinedAt: new Date(),
           };
           await addDoc(channelMembersRef, saschaMembership);
           console.log('Sascha added as member');
@@ -350,7 +372,7 @@ export class LoginComponent {
             username: 'Sofia Weber',
             timestamp: new Date(),
             channelId: channelId,
-            recipientId: null
+            recipientId: null,
           };
           await addDoc(messagesRef, welcomeMessage);
           console.log('Welcome message added');
@@ -362,7 +384,7 @@ export class LoginComponent {
             username: 'Sascha Lenz',
             timestamp: new Date(),
             channelId: channelId,
-            recipientId: null
+            recipientId: null,
           };
           await addDoc(messagesRef, saschaMessage);
           console.log('Sascha message added');
@@ -390,7 +412,7 @@ export class LoginComponent {
         const guestMembership = {
           channelId: channelId,
           userId: guestUserId,
-          joinedAt: new Date()
+          joinedAt: new Date(),
         };
         await addDoc(channelMembersRef, guestMembership);
 
@@ -401,7 +423,7 @@ export class LoginComponent {
           username: 'Gäste Login',
           timestamp: new Date(),
           channelId: channelId,
-          recipientId: null
+          recipientId: null,
         };
         await addDoc(messagesRef, guestMessage);
         console.log('Guest message added');
@@ -414,4 +436,3 @@ export class LoginComponent {
     }
   }
 }
-
