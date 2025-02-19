@@ -548,7 +548,7 @@
 }
 
 .back-button {
-  margin-right: 16px;
+  margin-left: 16px;
   
   @media (min-width: 1101px) {
     display: none;
@@ -562,4 +562,30 @@
   to {
     transform: translateX(0);
   }
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  background-color: #ECEEFE;
+
+  app-navbar {
+    background-color: white !important;
+    width: 100%;
+
+    ::ng-deep {
+      .navbar {
+        // background-color: white !important;
+        padding-left: 0;
+
+        .navbar-left {
+          img{
+            width: 32px;
+            height: 32px;
+            object-fit: cover;
+          }
+        }
+      }
+    }
+  } 
 }

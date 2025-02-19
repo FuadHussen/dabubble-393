@@ -22,6 +22,7 @@ import { AudioService } from '../services/audio.service';
 import { trigger, state, style, animate, transition } from '@angular/animations';
 import { ThreadComponent } from './thread/thread.component';
 import { Message } from '../models/message.model';
+import { NavbarComponent } from '../navbar/navbar.component';
 
 @Component({
   selector: 'app-chat',
@@ -40,7 +41,8 @@ import { Message } from '../models/message.model';
     MessagesComponent,
     AddMemberDialogComponent,
     MemberListDialogComponent,
-    ThreadComponent
+    ThreadComponent,
+    NavbarComponent
   ],
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.scss'],
@@ -109,6 +111,8 @@ export class ChatComponent implements OnInit, AfterViewInit {
   private subscriptions: Subscription[] = [];
   threadVisible: boolean = false;
   threadMessage$: Observable<Message | null>;
+  customTitle: string = 'Devspace';
+  customImage: string = 'assets/img/devspace-logo.png';
 
   // Emoji-Array als Property definieren
   emojis: string[] = [

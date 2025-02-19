@@ -1,6 +1,13 @@
 <mat-toolbar class="navbar">
   <div class="navbar-left">
-    <span class="app-name"> <img src="assets/img/logo-without-text.png" alt="DABubble" class="logo"> DABubble</span>
+    <span class="app-name" *ngIf="!customMode">
+      <img src="assets/img/logo-without-text.png" alt="DABubble" class="logo">
+      DABubble
+    </span>
+    <span class="app-name" *ngIf="customMode">
+      <img [src]="customImage" [alt]="customTitle" class="logo">
+      {{ customTitle }}
+    </span>
   </div>
 
   <div class="navbar-center">

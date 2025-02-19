@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, HostListener } from '@angular/core';
+import { Component, ViewChild, ElementRef, HostListener, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatInputModule } from '@angular/material/input';
@@ -76,6 +76,9 @@ export class NavbarComponent {
   userEmail: string = '';
   userAvatar: string | null = null;
   isMobile: boolean = false;
+  @Input() customMode: boolean = false;
+  @Input() customTitle: string = '';
+  @Input() customImage: string = '';
 
   constructor(
     private auth: Auth,

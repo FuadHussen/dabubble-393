@@ -1,13 +1,18 @@
 <div class="chat-container" [class.mobile]="isMobile" *ngIf="showChat">
-  <div class="chat-header" *ngIf="isMobile">
-    <!-- Back Button für Mobile -->
-    <button mat-icon-button 
-            class="back-button" 
-            *ngIf="isMobile" 
-            (click)="onBackClick()">
-      <mat-icon>arrow_back</mat-icon>
-    </button>
-    <!-- Rest des Headers -->
+  <!-- Mobile Navigation Bar -->
+  <div class="mobile-header" *ngIf="isMobile">
+    <div class="header-left">
+      <button mat-icon-button 
+              class="back-button" 
+              (click)="onBackClick()">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <app-navbar 
+        [customMode]="true"
+        [customTitle]="customTitle"
+        [customImage]="customImage">
+      </app-navbar>
+    </div>
   </div>
   <mat-card class="chat-card">
     <mat-card-header class="chat-header">
