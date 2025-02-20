@@ -130,7 +130,7 @@
       
     </mat-card-content>
 
-    <mat-card-actions class="chat-input-actions">
+    <mat-card-actions *ngIf="!isNewChat" class="chat-input-actions">
       <mat-form-field class="chat-input-field" appearance="outline">
         <button mat-icon-button matPrefix (click)="toggleEmojiPicker($event)">
           <mat-icon>sentiment_satisfied_alt</mat-icon>
