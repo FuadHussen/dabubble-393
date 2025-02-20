@@ -100,7 +100,7 @@
 
   @media (max-width: 1175px) {
     .mdc-card__actions{
-      height: 32vh!important;
+      height: 40vh!important;
     }
   }
 
@@ -120,6 +120,9 @@
 
     .mat-expansion-panel-body{
       padding: 0!important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 8px !important;
     }
 
     .mdc-button{
@@ -184,4 +187,11 @@
         font-size: 14px!important;
       }
     }
+  }
+
+  .mat-expansion-panel-body{
+    padding: 0!important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
   }
