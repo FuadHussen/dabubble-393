@@ -35,5 +35,6 @@
     [avatar]="selectedMember?.avatar || ''"
     [isOnline]="selectedMember?.isOnline || false"
     [userId]="selectedMember?.uid || ''"
-    (closeInfo)="closeProfile()">
+    (closeInfo)="closeProfile()"
+    (startMessage)="handleDirectMessageStart()">
   </app-profile-info>

@@ -113,6 +113,7 @@ export class ChatComponent implements OnInit, AfterViewInit {
   threadMessage$: Observable<Message | null>;
   customTitle: string = 'Devspace';
   customImage: string = 'assets/img/devspace-logo.png';
+  showMemberList = false;  // Property zum Steuern der Sichtbarkeit
 
   // Emoji-Array als Property definieren
   emojis: string[] = [
@@ -176,16 +177,51 @@ export class ChatComponent implements OnInit, AfterViewInit {
 
     this.checkScreenSize();
     this.threadMessage$ = this.chatService.threadMessage$;
+
+    this.chatService.currentChannelId$.subscribe(channelId => {
+      if (channelId) {
+        this.currentChannelId = channelId;
+        this.loadChannelData(); // Lade die Channel-Daten neu
+      }
+    });
+
+    // Subscription für ausgewählten User
+    this.chatService.selectedUserData$.subscribe(userData => {
+      if (userData) {
+        this.selectedUserDisplayName = userData.username || userData.displayName || '';
+        this.selectedUserAvatar = userData.avatar;
+        this.isDirectMessage = true;
+        this.selectedChannel = null;
+        this.showWelcomeMessage = false;
+      }
+    });
+
+    // Subscription für Channel-Auswahl
+    this.chatService.selectedChannel$.subscribe(channel => {
+      this.selectedChannel = channel;
+      if (channel) {
+        this.isDirectMessage = false;
+        this.selectedUserDisplayName = '';
+        this.selectedUserAvatar = null;
+      }
+    });
+
+    // Subscription für DM/Channel Status
+    this.chatService.isDirectMessage$.subscribe(isDM => {
+      this.isDirectMessage = isDM;
+      if (!isDM) {
+        this.selectedUserDisplayName = '';
+        this.selectedUserAvatar = null;
+      }
+    });
   }
 
   ngOnInit() {
-    console.log('Chat component initialized');
     
     // Route params subscription
     this.subscriptions.push(
       this.route.params.subscribe(params => {
         this.ngZone.run(() => {
-          console.log('Route params changed:', params);
           if (params['userId'] || params['channelId']) {
             this.showChat = true;
             setTimeout(() => {
@@ -206,7 +242,6 @@ export class ChatComponent implements OnInit, AfterViewInit {
     this.subscriptions.push(
       this.chatService.selectedChannel$.subscribe(channel => {
         this.ngZone.run(() => {
-          console.log('Selected channel changed:', channel);
           if (channel) {
             this.showChat = true;
             setTimeout(() => {
@@ -291,19 +326,16 @@ export class ChatComponent implements OnInit, AfterViewInit {
     // Verbesserte Subscriptions
     this.subscriptions.push(
       this.chatService.selectedChannel$.subscribe(async channel => {
-        console.log('Selected channel changed in chat:', channel);
         if (channel) {
           await this.loadChannelDetails(channel);
         }
       }),
 
       this.chatService.isDirectMessage$.subscribe(isDM => {
-        console.log('Is DM changed in chat:', isDM);
         this.isDirectMessage = isDM;
       }),
 
       this.chatService.selectedUser$.subscribe(async userId => {
-        console.log('Selected user changed in chat:', userId);
         if (userId) {
           const user = await this.userService.getUserById(userId);
           if (user) {
@@ -321,7 +353,6 @@ export class ChatComponent implements OnInit, AfterViewInit {
 
   private checkScreenSize() {
     this.isMobile = window.innerWidth <= 1100;
-    console.log('Screen size check - isMobile:', this.isMobile);
   }
 
   @HostListener('window:resize', ['$event'])
@@ -333,7 +364,6 @@ export class ChatComponent implements OnInit, AfterViewInit {
 
   async loadChannelDetails(channelName: string) {
     this.ngZone.run(async () => {
-      console.log('Loading channel details for:', channelName);
       try {
         const channelsRef = collection(this.firestore, 'channels');
         const q = query(channelsRef, where('name', '==', channelName));
@@ -348,7 +378,6 @@ export class ChatComponent implements OnInit, AfterViewInit {
           this.channelDescription = channelData['description'] || '';
           
           await this.loadChannelMembers();
-          console.log('Channel details loaded successfully');
         }
       } catch (error) {
         console.error('Error loading channel details:', error);
@@ -550,15 +579,21 @@ export class ChatComponent implements OnInit, AfterViewInit {
   }
 
   openMemberList() {
-    this.isMemberListOpen = true;
+    this.showMemberList = true;
   }
 
   closeMemberList() {
-    this.isMemberListOpen = false;
+    this.showMemberList = false;
+  }
+
+  onMemberListClose() {
+    this.showMemberList = false;
   }
 
   getFormattedCreationDate(): string {
-    if (!this.channelCreatedAt) return '';
+    if (!this.channelCreatedAt) {
+      return '';
+    }
 
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -577,7 +612,6 @@ export class ChatComponent implements OnInit, AfterViewInit {
     } else if (creationDay.getTime() === yesterday.getTime()) {
       return 'gestern';
     } else {
-      // Formatierung auf dd.mm.yyyy ändern
       const day = creationDate.getDate().toString().padStart(2, '0');
       const month = (creationDate.getMonth() + 1).toString().padStart(2, '0');
       const year = creationDate.getFullYear().toString();
@@ -823,7 +857,6 @@ export class ChatComponent implements OnInit, AfterViewInit {
 
   onBackClick() {
     this.ngZone.run(() => {
-      console.log('Back button clicked');
       this.showChat = false;
       this.backClicked.emit();
       if (this.isMobile) {
@@ -840,5 +873,23 @@ export class ChatComponent implements OnInit, AfterViewInit {
   closeThread() {
     this.threadVisible = false;
     this.chatService.setThreadMessage(null);
+  }
+
+  async loadChannelData() {
+    try {
+      if (!this.currentChannelId) return;
+      
+      const channelRef = doc(this.firestore, 'channels', this.currentChannelId);
+      const channelSnap = await getDoc(channelRef);
+      
+      if (channelSnap.exists()) {
+        const channelData = channelSnap.data();
+        this.channelCreatedAt = channelData['createdAt']?.toDate() || null;
+        this.channelName = channelData['name'] || '';
+        this.channelDescription = channelData['description'] || '';
+      }
+    } catch (error) {
+      console.error('Error loading channel data:', error);
+    }
   }
 }

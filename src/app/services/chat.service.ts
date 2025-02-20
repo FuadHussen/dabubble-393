@@ -17,7 +17,7 @@ export class ChatService {
   private selectedUserSubject = new BehaviorSubject<string>('');
   private selectedChannelSubject = new BehaviorSubject<string>('');
   private hasMessagesSubject = new BehaviorSubject<boolean>(false);
-  private isNewChatMode = new BehaviorSubject<boolean>(false);
+  private isNewChatModeSubject = new BehaviorSubject<boolean>(false);
   private selectedUserDataSubject = new BehaviorSubject<any>(null);
   private threadMessageSubject = new BehaviorSubject<Message | null>(null);
 
@@ -26,7 +26,7 @@ export class ChatService {
   selectedUser$ = this.selectedUserSubject.asObservable();
   selectedChannel$ = this.selectedChannelSubject.asObservable();
   hasMessages$ = this.hasMessagesSubject.asObservable();
-  isNewChatMode$ = this.isNewChatMode.asObservable();
+  isNewChatMode$ = this.isNewChatModeSubject.asObservable();
   selectedUserData$ = this.selectedUserDataSubject.asObservable();
   threadMessage$ = this.threadMessageSubject.asObservable();
 
@@ -216,7 +216,14 @@ export class ChatService {
   }
 
   setNewChatMode(value: boolean) {
-    this.isNewChatMode.next(value);
+    this.isNewChatModeSubject.next(value);
+    if (value) {
+      // Reset andere States wenn neue Nachricht gestartet wird
+      this.selectedChannelSubject.next('');
+      this.selectedUserSubject.next('');
+      this.selectedUserDataSubject.next(null);
+      this.isDirectMessageSubject.next(false);
+    }
   }
 
   async selectChannel(channelName: string) {

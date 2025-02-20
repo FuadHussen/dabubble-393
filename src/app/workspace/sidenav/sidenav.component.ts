@@ -172,7 +172,6 @@ export class SidenavComponent implements OnInit {
       this.drawerOpened = true;
       this.showChat = true;
     }
-    console.log('Screen size checked - Mobile:', this.isMobile, 'Drawer:', this.drawerOpened, 'ShowChat:', this.showChat);
   }
 
   // Neue Methode zum Aktualisieren der Chat-Ansicht
@@ -281,7 +280,6 @@ export class SidenavComponent implements OnInit {
 
   async selectUser(user: any) {
     try {
-      console.log('Selecting user:', user);
       
       // Erst die Services aktualisieren
       await this.chatService.setIsDirectMessage(true);
@@ -293,7 +291,6 @@ export class SidenavComponent implements OnInit {
       this.isDirectMessage = true;
       
       if (this.isMobile) {
-        console.log('Mobile: Setting drawer and chat state');
         this.drawerOpened = false;
         this.showChat = true;
       }
@@ -310,11 +307,9 @@ export class SidenavComponent implements OnInit {
 
   async selectChannel(channelName: string) {
     try {
-      console.log('Selecting channel:', channelName, 'isMobile:', this.isMobile);
       
       // Wenn mobile, dann früh returnen
       if (this.isMobile) {
-        console.log('Mobile view detected, preventing automatic channel selection');
         return;
       }
       
@@ -352,7 +347,6 @@ export class SidenavComponent implements OnInit {
   // Neue Methode für manuelle Channel-Auswahl
   async manualChannelSelect(channelName: string) {
     try {
-      console.log('Manual channel selection:', channelName, 'isMobile:', this.isMobile);
       
       const channelsCollection = collection(this.firestore, 'channels');
       const q = query(channelsCollection, where('name', '==', channelName));

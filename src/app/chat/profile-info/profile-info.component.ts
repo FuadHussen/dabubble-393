@@ -5,6 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { Router } from '@angular/router';
+import { ChatService } from '../../services/chat.service';
 import { trigger, state, style, animate, transition } from '@angular/animations';
 
 @Component({
@@ -46,19 +47,30 @@ export class ProfileInfoComponent {
   @Input() avatar: string | null = null;
   @Input() userId: string = '';
   @Output() closeInfo = new EventEmitter<void>();
+  @Output() startMessage = new EventEmitter<void>();
 
-  constructor(private router: Router) {}
-
-  close(event: MouseEvent) {
-    event.stopPropagation();
-    this.closeInfo.emit();
-  }
+  constructor(
+    private router: Router,
+    private chatService: ChatService
+  ) {}
 
   async startDirectMessage(event: MouseEvent) {
     event.stopPropagation();
     if (this.userId) {
-      await this.router.navigate(['/dm', this.userId]);
+      await this.chatService.startDirectMessage(this.userId);
+      this.startMessage.emit();
       this.closeInfo.emit();
+      await this.router.navigate(['/workspace'], { 
+        queryParams: { 
+          type: 'dm',
+          userId: this.userId 
+        }
+      });
     }
+  }
+
+  close(event: MouseEvent) {
+    event.stopPropagation();
+    this.closeInfo.emit();
   }
 }

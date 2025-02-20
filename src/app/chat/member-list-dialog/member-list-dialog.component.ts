@@ -50,20 +50,16 @@ export class MemberListDialogComponent implements OnInit, OnChanges {
 
   async loadChannelCreator() {
     try {
-      console.log('Loading channel creator for channelId:', this.channelId);
       
       const channelDoc = await getDoc(doc(this.firestore, 'channels', this.channelId));
       
       if (!channelDoc.exists()) {
-        console.log('Channel document not found');
         return;
       }
 
       const channelData = channelDoc.data();
-      console.log('Channel data:', channelData);
 
       this.creatorId = channelData['createdBy'] || channelData['createdByUserId'];
-      console.log('Creator ID:', this.creatorId);
 
       if (this.creatorId && this.members.length > 0) {
         this.updateMembersWithCreator();
@@ -76,17 +72,16 @@ export class MemberListDialogComponent implements OnInit, OnChanges {
   private updateMembersWithCreator() {
     if (!this.creatorId) return;
 
-    console.log('Updating members with creator. Current members:', this.members);
     
     this.members = this.members.map(member => ({
       ...member,
       isCreator: member.uid === this.creatorId
     }));
 
-    console.log('Updated members:', this.members);
   }
 
   close() {
+    this.selectedMember = null;
     this.closeDialog.emit();
   }
 
@@ -101,5 +96,14 @@ export class MemberListDialogComponent implements OnInit, OnChanges {
 
   closeProfile() {
     this.selectedMember = null;
+  }
+
+  onMessageStarted() {
+    this.selectedMember = null;
+    this.closeDialog.emit();
+  }
+
+  handleDirectMessageStart() {
+    this.onMessageStarted();
   }
 }
