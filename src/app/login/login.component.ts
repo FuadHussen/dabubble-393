@@ -43,6 +43,15 @@ import {
       state(
         'start',
         style({
+          scale: 2,
+          top: '50%',
+          left: '50%',
+          color: '#fff',
+          transform: 'translate(-50%, -50%)',
+        })
+      ),state(
+        'mobieleStart',
+        style({
           scale: 1,
           top: '50%',
           left: '50%',
@@ -51,16 +60,28 @@ import {
         })
       ),
       state(
+        'mobileEnd',
+        style({
+          scale: 1,
+          top: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          color: '#000',
+        })
+      ),
+      state(
         'end',
         style({
           scale: 1,
-          top: '20px', // Zielposition (anpassen!)
+          top: '20px',
           left: '20px',
           transform: 'translate(0, 0)',
           color: '#000',
         })
       ),
-      transition('start => end', [animate('1s ease-in-out')]),
+      transition('start => end, mobileStart => mobileEnd', [
+        animate('1s ease-in-out'),
+      ]),
     ]),
     trigger('textAnimation', [
       state('start', style({ transform: 'translateX(-100%)', color: 'white' })),
@@ -71,7 +92,6 @@ import {
 })
 export class LoginComponent {
   private firestore: Firestore = inject(Firestore);
-  isMobile: boolean = false;
 
   constructor(private router: Router, private userService: UserService) {
     // Initialisiere isMobile beim Komponenten-Start
@@ -86,6 +106,7 @@ export class LoginComponent {
 
   private checkScreenSize() {
     this.isMobile = window.innerWidth <= 1175;
+    this.containerState = this.isMobile ? 'mobileStart' : 'start';
     console.log('Screen size checked:', this.isMobile ? 'mobile' : 'desktop');
   }
 
@@ -95,27 +116,37 @@ export class LoginComponent {
   containerState = 'start';
   textAnimationState = 'start';
   introPlayed: boolean = false;
+  isMobile: boolean = false;
 
   ngOnInit() {
+    this.checkScreenSize(); 
     this.introPlayed = sessionStorage.getItem('introPlayed') !== null;
   
     if (this.introPlayed) {
-      this.logoState = 'end';
-      this.bgState = 'hidden';
-      this.containerState = 'end';
-      this.textAnimationState = 'end';
+      this.setEndState();
     } else {
-      setTimeout(() => {
-        this.logoState = 'end';
-      }, 200);
-  
-      setTimeout(() => {
-        this.bgState = 'hidden';
-        this.containerState = 'end';
-        this.textAnimationState = 'end';
-        sessionStorage.setItem('introPlayed', 'true');
-      }, 2400);
+      this.playIntroAnimation();
     }
+  }
+  
+  private setEndState() {
+    this.logoState = this.isMobile ? 'mobileEnd' : 'end';
+    this.bgState = 'hidden';
+    this.containerState = 'end';
+    this.textAnimationState = 'end';
+  }
+  
+  private playIntroAnimation() {
+    this.logoState = this.isMobile ? 'mobileStart' : 'start';
+  
+    setTimeout(() => {
+      this.logoState = this.isMobile ? 'mobileEnd' : 'end';
+    }, 200);
+  
+    setTimeout(() => {
+      this.setEndState();
+      sessionStorage.setItem('introPlayed', 'true');
+    }, 2400);
   }
 
   resetIntro() {

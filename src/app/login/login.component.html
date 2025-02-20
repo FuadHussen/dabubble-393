@@ -32,9 +32,7 @@
     <form>
       <div class="head-container">
         <h2>Anmeldung</h2>
-        <button (click)="resetIntro()" class="reset-button">
-          Intro zurücksetzen
-        </button>
+
         <h4>
           Wir empfehlen dir, die E-Mail-Adresse zu nutzen, die du bei der Arbeit
           verwendest.
@@ -94,7 +92,7 @@
         <div class="gray-line"></div>
       </div>
 
-      <button class="google-btn">
+      <button (click)="resetIntro()" class="google-btn">
         <img src="../../assets/img/google-logo.png" alt="" />
         Anmelden mit Google
       </button>

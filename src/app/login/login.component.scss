@@ -1,13 +1,18 @@
+$font-primary: "Nunito", sans-serif;
+$color-primary: #444df2;
+$color-secondary: #eceefe;
+$color-accent: #797ef3;
+$color-dark: black;
+$color-white: white;
+$color-error: #ed1e79;
+
 .startseite-container {
   font-family: "Nunito", sans-serif !important;
-
-  @media (min-width: 1920px) {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-  }
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
 }
 
 .startSide {
@@ -16,15 +21,16 @@
   justify-content: flex-end;
   align-items: center;
   overflow: visible;
-  background-color: #eceefe;
+  background-color: $color-secondary;
   font-family: "Nunito", sans-serif !important;
 }
 
 .background-fade {
   width: 100%;
   height: 100vh;
-  background-color: blue;
+  background: linear-gradient(1.46deg, #313ae6 1.22%, $color-accent 98.76%);
   position: absolute;
+  z-index: 20;
   top: 0;
   left: 0;
   bottom: 0;
@@ -56,24 +62,24 @@
 }
 
 .textcontainer-black-text {
-  font-size: 60px;
+  font-size: 24px;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   display: inline-block;
-  color: black;
+  color: $color-dark;
 }
 
 .textcontainer-animated-text {
   transform: translateX(-100%);
-  font-size: 60px;
+  font-size: 24px;
   font-weight: 700;
-  color: white;
+  color: $color-white;
   white-space: nowrap;
   overflow: hidden;
   display: inline-block;
   animation: moveRight 0.5s 0.65s ease-in-out forwards,
-             changeHeadline 0.5s 2.8s forwards;
+    changeHeadline 0.5s 2.8s forwards;
 }
 
 @keyframes moveRight {
@@ -87,22 +93,17 @@
 
 @keyframes changeHeadline {
   from {
-    color: white;
+    color: $color-white;
   }
   to {
-    color: black; /* Oder eine andere Farbe */
+    color: $color-dark; /* Oder eine andere Farbe */
   }
 }
 
 .logo {
-  width: 100px;
-  height: 100px;
+  height: 70px;
+  width: 70px;
   z-index: 19;
-
-  @media (max-width: 500px) {
-    width: 50px;
-    height: 50px;
-  }
 }
 
 .logo-name {
@@ -132,10 +133,12 @@
 
 .signup-container {
   display: flex;
+  align-items: center;
+  justify-content: center;
   flex-direction: column;
-  align-items: flex-end;
 
   p {
+    margin: 0px;
     font-family: Nunito;
     font-size: 18px;
     font-weight: 400;
@@ -147,19 +150,15 @@
   }
 }
 
-/* ende startseite.component.css */
-
 .login-container {
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  background-color: #eceefe;
+  background-color: $color-secondary;
   max-width: 100%;
-  margin: 32px 64px 0;
 
   form {
-    background-color: white;
-    width: 500px;
+    background-color: $color-white;
     max-width: 100%;
     display: flex;
     flex-direction: column;
@@ -178,8 +177,8 @@
       text-align: center;
       text-underline-position: from-font;
       text-decoration-skip-ink: none;
-      color: #444df2;
-      margin: 0px 0px 25px 0px;
+      color: $color-primary;
+      margin: 0px 0px 30px 0px;
     }
 
     h4 {
@@ -210,7 +209,7 @@
         gap: 10px;
         border-radius: 100px;
         opacity: 0px;
-        background-color: #eceefe;
+        background-color: $color-secondary;
         border: 1px solid transparent;
         cursor: pointer;
 
@@ -226,7 +225,7 @@
           flex: 1;
           border: none;
           outline: none;
-          background-color: #eceefe;
+          background-color: $color-secondary;
           font-family: Nunito;
           font-size: 18px;
           font-weight: 500;
@@ -250,7 +249,7 @@
           font-size: 14px;
           font-weight: 400;
           text-decoration-skip-ink: none;
-          color: #ed1e79;
+          color: $color-error;
           margin-top: -5px;
         }
       }
@@ -268,12 +267,12 @@
       gap: 10px;
       opacity: 0px;
       background-color: transparent;
-      color: #797ef3;
+      color: $color-accent;
       cursor: pointer;
 
       &:hover {
-        background-color: #eceefe;
-        color: #444df2;
+        background-color: $color-secondary;
+        color: $color-primary;
         font-family: Nunito;
         font-size: 18px;
         font-weight: 500;
@@ -316,14 +315,14 @@
       width: 500px;
       border-radius: 100px;
       height: 60px;
-      background-color: #eceefe;
+      background-color: $color-secondary;
       margin-bottom: 43px;
       display: flex;
       align-items: center;
       justify-content: center;
       border: none;
       outline: none;
-      color: #444df2;
+      color: $color-primary;
       font-size: 18px;
       font-weight: 400;
       cursor: pointer;
@@ -338,11 +337,7 @@
       &:hover {
         border: 1px solid #535af1;
         font-weight: 600;
-        color: #444df2;
-
-        @media (max-width: 500px) {
-          font-weight: 500;
-        }
+        color: $color-primary;
       }
     }
 
@@ -363,7 +358,7 @@
         cursor: pointer;
 
         &.primary-btn {
-          background-color: #444df2;
+          background-color: $color-primary;
           color: #ffffff;
           border: none;
         }
@@ -377,11 +372,11 @@
 
         &.secondary-btn {
           background-color: #ffffff;
-          color: #444df2;
-          border: 1px solid #797ef3;
+          color: $color-primary;
+          border: 1px solid $color-accent;
 
           &:hover {
-            background-color: #444df2;
+            background-color: $color-primary;
             color: #ffffff;
           }
         }
@@ -394,13 +389,13 @@
   }
 }
 
-.signupBox{
+.signupBox {
   position: absolute;
   top: 20px;
   right: 20px;
 }
 .signup {
-  color: #444df2;
+  color: $color-primary;
   font-family: Nunito;
   font-size: 18px;
   font-weight: 400;
@@ -412,13 +407,95 @@
   gap: 10px;
   opacity: 0px;
   border-radius: 25px;
-  border: 1px solid #444df2;
+  border: 1px solid $color-primary;
   cursor: pointer;
   transition: all 0.1s ease-in;
 
   &:hover {
-    border: 1px solid #444df2;
-    color: #444df2;
+    border: 1px solid $color-primary;
+    color: $color-primary;
     font-weight: bold;
+  }
+}
+
+@media (max-width: 1175px) {
+  .signupBox {
+    top: auto;
+    bottom: 20px !important;
+    left: 50%;
+    right: auto; 
+    transform: translateX(-50%);
+  }
+  .login-container {
+    form {
+      max-width: 500px;
+      padding: 32px 16px 32px 16px !important;
+
+      .inputs-container {
+        gap: 0px !important;
+      }
+      .google-btn {
+        margin-bottom: 16px !important;
+      }
+    }
+  }
+
+  .inputs-container {
+    padding: 18px 0px 0px 0px !important;
+  }
+}
+
+@media (max-width: 550px) {
+  .login-container {
+    form {
+      max-width: 400px;
+    }
+  }
+}
+
+@media (max-width: 500px) {
+  .head-container {
+    h2 {
+      font-size: 32px !important;
+      margin: 0px 0px 15px 0px !important;
+    }
+    h4 {
+      font-size: 17px !important;
+    }
+  }
+  .inputs-container {
+    .email-input,
+    .password-input {
+      padding: 16px 16px 16px 16px !important;
+    }
+    img {
+      margin-right: 0px !important;
+    }
+  }
+}
+
+@media (max-width: 450px) {
+  .login-container {
+    form {
+      max-width: 320px;
+      padding: 16px 8px 16px 8px !important;
+    }
+  }
+}
+
+@media (max-width: 400px) {
+  .login-container {
+    form {
+      max-width: 280px;
+      padding: 16px 8px 16px 8px !important;
+    }
+  }
+  .buttons-container {
+    .primary-btn,
+    .secondary-btn,
+    .disabled-btn {
+      padding: 12px 12px 12px 12px !important;
+      opacity: 0px;
+    }
   }
 }
