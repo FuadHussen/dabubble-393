@@ -218,7 +218,6 @@ export class ChatService {
   setNewChatMode(value: boolean) {
     this.isNewChatModeSubject.next(value);
     if (value) {
-      // Reset andere States wenn neue Nachricht gestartet wird
       this.selectedChannelSubject.next('');
       this.selectedUserSubject.next('');
       this.selectedUserDataSubject.next(null);

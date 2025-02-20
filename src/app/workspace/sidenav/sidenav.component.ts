@@ -156,6 +156,19 @@ export class SidenavComponent implements OnInit {
         });
       })
     );
+
+    // Debug Subscription für NewChat-Modus
+    this.subscriptions.push(
+      this.chatService.isNewChatMode$.subscribe(isNewChat => {
+        this.isActive = isNewChat;
+      })
+    );
+
+    // Debug Subscription für ausgewählten User
+    this.subscriptions.push(
+      this.chatService.selectedUser$.subscribe(userId => {
+      })
+    );
   }
 
   @HostListener('window:resize', ['$event'])
@@ -278,31 +291,32 @@ export class SidenavComponent implements OnInit {
     });
   }
 
-  async selectUser(user: any) {
-    try {
-      
-      // Erst die Services aktualisieren
-      await this.chatService.setIsDirectMessage(true);
-      await this.chatService.selectUser(user.uid);
-      
-      // Dann UI-Status aktualisieren
-      this.selectedUser = user.displayName || user.username;
-      this.selectedChannel = '';
-      this.isDirectMessage = true;
-      
-      if (this.isMobile) {
-        this.drawerOpened = false;
-        this.showChat = true;
-      }
-      
-      // Navigation als letztes
-      await this.router.navigate(['workspace', 'dm', user.uid]);
-      
-      // Force change detection
-      this.cdr.detectChanges();
-    } catch (error) {
-      console.error('Error selecting user:', error);
+  startNewChat() {
+    this.isActive = true;
+    this.chatService.setNewChatMode(true);
+    if (this.isMobile) {
+      this.drawerOpened = false;
+      this.showChat = true;
     }
+  }
+
+  async selectUser(user: User) {
+    this.isActive = false;
+    this.chatService.setNewChatMode(false);
+    this.chatService.setIsDirectMessage(true);
+    this.chatService.setSelectedUser(user.uid || '');
+    
+    if (this.isMobile) {
+      this.drawerOpened = false;
+      this.showChat = true;
+    }
+
+    await this.router.navigate(['/workspace'], {
+      queryParams: {
+        type: 'dm',
+        userId: user.uid
+      }
+    });
   }
 
   async selectChannel(channelName: string) {
@@ -346,8 +360,10 @@ export class SidenavComponent implements OnInit {
 
   // Neue Methode für manuelle Channel-Auswahl
   async manualChannelSelect(channelName: string) {
+    this.isActive = false; // Deaktiviere den Button-Status
+    this.chatService.setNewChatMode(false); // Deaktiviere den NewChat-Modus
+    
     try {
-      
       const channelsCollection = collection(this.firestore, 'channels');
       const q = query(channelsCollection, where('name', '==', channelName));
       const querySnapshot = await getDocs(q);
@@ -420,10 +436,6 @@ export class SidenavComponent implements OnInit {
   isUserActive(user: User): boolean {
     const userIdentifier = user.displayName || user.username || '';
     return this.selectedUser === userIdentifier && this.isDirectMessage;
-  }
-
-  startNewChat() {
-    this.chatService.setNewChatMode(true);
   }
 
   closeThread() {

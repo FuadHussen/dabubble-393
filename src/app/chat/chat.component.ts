@@ -691,19 +691,32 @@ export class ChatComponent implements OnInit, AfterViewInit {
     }
   }
 
-  selectResult(result: any) {
-    if (result.type === 'channel') {
-      this.chatService.selectChannel(result.name);
-    } else if (result.type === 'user') {
-      this.chatService.selectUser(result.id);
-    }
+  async selectResult(result: any) {
+    console.log('CHAT: selectResult called with:', result);
     
-    // Reset aller relevanten Zustände
-    this.recipientInput = '';
-    this.showResults = false;
-    this.filteredResults = [];
-    this.isNewChat = false;
-    this.chatService.setNewChatMode(false);
+    if (result.type === 'user') {
+      // Erst die Navigation und User-Selektion
+      await this.router.navigate(['/workspace'], { 
+        queryParams: { 
+          type: 'dm',
+          userId: result.id 
+        }
+      });
+      
+      this.chatService.setSelectedUser(result.id);
+      this.chatService.setIsDirectMessage(true);
+      
+      // Dann erst den NewChat-Modus deaktivieren
+      this.chatService.setNewChatMode(false);
+      this.isNewChat = false;
+      
+      // Reset der Eingabefelder
+      this.recipientInput = '';
+      this.showResults = false;
+      this.filteredResults = [];
+    } else if (result.type === 'channel') {
+      // ... Channel-Logik bleibt gleich ...
+    }
   }
 
   // Diese Methode aufrufen, wenn ein Channel ausgewählt wird
