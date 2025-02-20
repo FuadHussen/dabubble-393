@@ -277,11 +277,10 @@ export class ChatComponent implements OnInit, AfterViewInit {
     });
 
     this.chatService.isNewChatMode$.subscribe(isNewChat => {
+      console.log('CHAT: NewChat mode changed:', isNewChat);
       this.isNewChat = isNewChat;
-      if (isNewChat) {
-        this.showWelcomeMessage = false;
-        this.selectedChannel = '';
-        this.selectedUserDisplayName = '';
+      if (this.isMobile) {
+        this.showChat = true;
       }
     });
 
@@ -345,6 +344,22 @@ export class ChatComponent implements OnInit, AfterViewInit {
         }
       })
     );
+
+    // Subscription für NewChat-Modus
+    this.chatService.isNewChatMode$.subscribe(isNewChat => {
+      this.isNewChat = isNewChat;
+      if (isNewChat) {
+        this.showChat = true; // Zeige Chat-Komponente wenn NewChat aktiv ist
+      }
+    });
+
+    // Subscription für selectedUser
+    this.chatService.selectedUser$.subscribe(userId => {
+      console.log('CHAT: Selected user changed:', userId);
+      if (userId && this.isMobile) {
+        this.showChat = true;
+      }
+    });
   }
 
   ngOnDestroy() {
@@ -869,13 +884,10 @@ export class ChatComponent implements OnInit, AfterViewInit {
   }
 
   onBackClick() {
-    this.ngZone.run(() => {
-      this.showChat = false;
-      this.backClicked.emit();
-      if (this.isMobile) {
-        this.router.navigate(['/workspace']);
-      }
-    });
+    console.log('CHAT: Back button clicked');
+    this.showChat = false;
+    this.isNewChat = false;
+    this.backClicked.emit();
   }
 
   openThread(message: Message) {

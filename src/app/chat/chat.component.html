@@ -1,4 +1,4 @@
-<div class="chat-container" [class.mobile]="isMobile" *ngIf="showChat">
+<div class="chat-container" [class.mobile]="isMobile" *ngIf="showChat || isNewChat">
   <!-- Mobile Navigation Bar -->
   <div class="mobile-header" *ngIf="isMobile">
     <div class="header-left">

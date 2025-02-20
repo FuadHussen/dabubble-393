@@ -1,10 +1,7 @@
 <div class="thread-container" [@slideInOut]>
   <div class="thread-header">
     <div class="header-left">
-      <!-- Zurück-Button nur in mobiler Ansicht -->
-      <button mat-icon-button class="back-button" (click)="close()">
-        <mat-icon>arrow_back</mat-icon>
-      </button>
+      
       <div class="header-content">
         <h2>Thread</h2>
         <span class="subtitle"># {{ message?.channelId }}</span>
