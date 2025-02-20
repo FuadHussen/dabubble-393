@@ -49,6 +49,10 @@
 .chat-input-actions {
   padding: 24px;
 
+  @media (max-width: 1175px) {
+    padding-bottom: 100px;
+  }
+
   .chat-input-field {
     width: 100%;
 
