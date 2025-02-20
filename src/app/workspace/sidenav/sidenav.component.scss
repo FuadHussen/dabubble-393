@@ -140,7 +140,12 @@
 }
 
 mat-nav-list {
-  padding-top: 0;
+  padding: 0 !important;
+  display: flex !important;
+
+  a{
+    height: 40px !important;
+  }
 }
 
 .mat-expansion-panel-header-title {
