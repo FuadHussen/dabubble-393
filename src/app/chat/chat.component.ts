@@ -647,29 +647,30 @@ export class ChatComponent implements OnInit, AfterViewInit {
       if (input.startsWith('#')) {
         // Suche nach Channels
         const channelsRef = collection(this.firestore, 'channels');
-        const q = query(
-          channelsRef,
-          where('name', '>=', input.substring(1)),
-          where('name', '<=', input.substring(1) + '\uf8ff')
-        );
-        const querySnapshot = await getDocs(q);
-        this.filteredResults = querySnapshot.docs.map(doc => ({
-          type: 'channel',
-          id: doc.id,
-          name: doc.data()['name'],
-          icon: 'tag'
-        }));
+        const querySnapshot = await getDocs(channelsRef);
+        this.filteredResults = querySnapshot.docs
+          .filter(doc => {
+            const channelName = doc.data()['name'].toLowerCase();
+            const searchTerm = input.substring(1).toLowerCase();
+            return channelName.includes(searchTerm);
+          })
+          .map(doc => ({
+            type: 'channel',
+            id: doc.id,
+            name: doc.data()['name'],
+            icon: 'tag'
+          }));
 
       } else if (input.startsWith('@')) {
         // Suche nach Benutzern
         const usersRef = collection(this.firestore, 'users');
-        const q = query(
-          usersRef,
-          where('username', '>=', input.substring(1)),
-          where('username', '<=', input.substring(1) + '\uf8ff')
-        );
-        const querySnapshot = await getDocs(q);
+        const querySnapshot = await getDocs(usersRef);
         this.filteredResults = querySnapshot.docs
+          .filter(doc => {
+            const username = (doc.data()['username'] || '').toLowerCase();
+            const searchTerm = input.substring(1).toLowerCase();
+            return username.includes(searchTerm);
+          })
           .map(doc => ({
             type: 'user',
             id: doc.id,
@@ -683,13 +684,14 @@ export class ChatComponent implements OnInit, AfterViewInit {
       } else {
         // Suche nach E-Mail (mit oder ohne @)
         const usersRef = collection(this.firestore, 'users');
-        const q = query(
-          usersRef,
-          where('email', '>=', input),
-          where('email', '<=', input + '\uf8ff')
-        );
-        const querySnapshot = await getDocs(q);
+        const querySnapshot = await getDocs(usersRef);
         this.filteredResults = querySnapshot.docs
+          .filter(doc => {
+            const email = (doc.data()['email'] || '').toLowerCase();
+            const username = (doc.data()['username'] || '').toLowerCase();
+            const searchTerm = input.toLowerCase();
+            return email.includes(searchTerm) || username.includes(searchTerm);
+          })
           .map(doc => ({
             type: 'user',
             id: doc.id,

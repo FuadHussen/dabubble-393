@@ -311,4 +311,4 @@ export class ChatService {
       throw error;
     }
   }
-} 
+}
