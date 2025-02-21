@@ -148,7 +148,7 @@ $color-error: #ed1e79;
   }
 }
 
-.login-container {
+.main-container {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -424,7 +424,7 @@ $color-error: #ed1e79;
     right: auto;
     transform: translateX(-50%);
   }
-  .login-container {
+  .main-container {
     form {
       max-width: 500px;
       padding: 32px 16px 32px 16px !important;
@@ -444,7 +444,7 @@ $color-error: #ed1e79;
 }
 
 @media (max-width: 550px) {
-  .login-container {
+  .main-container {
     form {
       max-width: 400px;
     }
@@ -487,7 +487,7 @@ $color-error: #ed1e79;
 }
 
 @media (max-width: 450px) {
-  .login-container {
+  .main-container {
     form {
       padding: 16px 8px 16px 8px !important;
     }
@@ -495,7 +495,7 @@ $color-error: #ed1e79;
 }
 
 @media (max-width: 420px) {
-  .login-container {
+  .main-container {
     form {
       max-width: 280px;
       padding: 16px 8px 16px 8px !important;
