@@ -66,7 +66,7 @@
   <div class="navbar-right">
     <div class="user-profile">
       <span class="user-name">{{ userName }}</span>
-      <div  [matMenuTriggerFor]="menu" *ngIf="userAvatar">
+      <div class="profile-image-container" [matMenuTriggerFor]="menu" *ngIf="userAvatar">
         <img [src]="'assets/img/avatars/' + userAvatar" 
              [alt]="userName + ' avatar'"
              class="profile-image">

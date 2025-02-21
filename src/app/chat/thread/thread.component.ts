@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -51,7 +51,7 @@ interface GroupedReaction {
     ])
   ]
 })
-export class ThreadComponent implements OnInit {
+export class ThreadComponent implements OnInit, OnDestroy {
   @Input() message: Message | null = null;
   @Input() isMobile: boolean = false;
   @Output() closeThread = new EventEmitter<void>();
@@ -68,6 +68,7 @@ export class ThreadComponent implements OnInit {
 
   // Cache für gruppierte Reaktionen
   private reactionCache: { [key: string]: GroupedReaction[] } = {};
+  private unsubscribes: (() => void)[] = [];
 
   constructor(
     private chatService: ChatService,
@@ -138,7 +139,7 @@ export class ThreadComponent implements OnInit {
       try {
         // Echtzeit-Listener für die Original-Nachricht
         const originalMessageRef = doc(this.firestore, 'messages', this.message.id);
-        onSnapshot(originalMessageRef, async (docSnapshot) => {
+        const unsubscribeOriginal = onSnapshot(originalMessageRef, async (docSnapshot) => {
           if (docSnapshot.exists()) {
             const messageData = docSnapshot.data();
             
@@ -179,6 +180,7 @@ export class ThreadComponent implements OnInit {
             this.cdr.detectChanges();
           }
         });
+        this.unsubscribes.push(unsubscribeOriginal);
 
         // Echtzeit-Listener für die Antworten
         const messagesRef = collection(this.firestore, 'messages');
@@ -188,7 +190,7 @@ export class ThreadComponent implements OnInit {
           orderBy('timestamp', 'asc')
         );
 
-        onSnapshot(q, async (snapshot) => {
+        const unsubscribeReplies = onSnapshot(q, async (snapshot) => {
           // Lade für jede Antwort die User-Daten
           this.replies = await Promise.all(
             snapshot.docs.map(async (docSnapshot) => {
@@ -217,6 +219,7 @@ export class ThreadComponent implements OnInit {
           
           this.cdr.detectChanges();
         });
+        this.unsubscribes.push(unsubscribeReplies);
 
       } catch (error) {
         console.error('Error loading thread:', error);
@@ -291,6 +294,9 @@ export class ThreadComponent implements OnInit {
   }
 
   close() {
+    console.log('Thread closing, cleaning up subscriptions');
+    this.unsubscribes.forEach(unsubscribe => unsubscribe());
+    this.unsubscribes = [];
     this.closeThread.emit();
   }
 
@@ -417,5 +423,12 @@ export class ThreadComponent implements OnInit {
     
     // Toggle den Emoji-Picker für die aktuelle Nachricht
     message.showEmojiPicker = !message.showEmojiPicker;
+  }
+
+  ngOnDestroy() {
+    // Cleanup aller Unsubscribe-Funktionen
+    console.log('Thread component destroying, cleaning up subscriptions');
+    this.unsubscribes.forEach(unsubscribe => unsubscribe());
+    this.unsubscribes = [];
   }
 }

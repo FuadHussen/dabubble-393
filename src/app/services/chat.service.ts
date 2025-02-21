@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { switchMap, map, take } from 'rxjs/operators';
-import { collection, query, where, collectionData, getDocs, addDoc, doc, getDoc, orderBy, serverTimestamp } from '@angular/fire/firestore';
+import { collection, query, where, collectionData, getDocs, addDoc, doc, getDoc, orderBy, serverTimestamp, Query, DocumentData } from '@angular/fire/firestore';
 import { Firestore } from '@angular/fire/firestore';
 import { Auth } from '@angular/fire/auth';
 import { User } from '../models/user.model';
@@ -20,6 +20,8 @@ export class ChatService {
   private isNewChatModeSubject = new BehaviorSubject<boolean>(false);
   private selectedUserDataSubject = new BehaviorSubject<any>(null);
   private threadMessageSubject = new BehaviorSubject<Message | null>(null);
+  private messageSubscription: any;  // Subscription speichern
+  private messagesSubject = new BehaviorSubject<Message[]>([]);
 
   currentChannelId$ = this.currentChannelIdSubject.asObservable();
   isDirectMessage$ = this.isDirectMessageSubject.asObservable();
@@ -29,6 +31,7 @@ export class ChatService {
   isNewChatMode$ = this.isNewChatModeSubject.asObservable();
   selectedUserData$ = this.selectedUserDataSubject.asObservable();
   threadMessage$ = this.threadMessageSubject.asObservable();
+  messages$ = this.messagesSubject.asObservable();
 
   constructor(
     private firestore: Firestore,
@@ -310,5 +313,73 @@ export class ChatService {
       console.error('Error sending thread reply:', error);
       throw error;
     }
+  }
+
+  // Methode zum Laden der Nachrichten
+  async loadMessages(channelId: string | null, recipientId: string | null) {
+    console.log('LoadMessages called with:', { channelId, recipientId });
+    
+    // Erst alte Subscription beenden
+    if (this.messageSubscription) {
+      console.log('Unsubscribing from old subscription');
+      this.messageSubscription.unsubscribe();
+    }
+
+    const messagesRef = collection(this.firestore, 'messages');
+    let q: Query<DocumentData>;
+
+    if (channelId) {
+      console.log('Creating channel query for:', channelId);
+      q = query(
+        messagesRef,
+        where('channelId', '==', channelId),
+        orderBy('timestamp', 'asc')
+      );
+    } else if (recipientId) {
+      console.log('Creating DM query for recipient:', recipientId);
+      const currentUser = await this.getCurrentUser();
+      console.log('Current user:', currentUser.uid);
+      q = query(
+        messagesRef,
+        where('recipientId', 'in', [recipientId, currentUser.uid]),
+        where('userId', 'in', [recipientId, currentUser.uid]),
+        orderBy('timestamp', 'asc')
+      );
+    } else {
+      console.log('Creating fallback query');
+      q = query(messagesRef, orderBy('timestamp', 'asc'));
+    }
+
+    // Neue Subscription speichern
+    this.messageSubscription = collectionData(q).subscribe(messages => {
+      console.log('Received messages:', messages.length);
+      console.log('Message details:', messages.map(m => ({
+        id: m['id'],
+        userId: m['userId'],
+        channelId: m['channelId'],
+        recipientId: m['recipientId']
+      })));
+      
+      // Deduplizierung der Nachrichten basierend auf ID
+      const uniqueMessages = Array.from(
+        new Map(messages.map(m => [m['id'], m])).values()
+      );
+      
+      if (messages.length !== uniqueMessages.length) {
+        console.log('Duplicates found and removed:', messages.length - uniqueMessages.length);
+      }
+      
+      this.messagesSubject.next(uniqueMessages as Message[]);
+    });
+  }
+
+  // Cleanup Methode
+  cleanup() {
+    console.log('Cleanup called');
+    if (this.messageSubscription) {
+      console.log('Unsubscribing in cleanup');
+      this.messageSubscription.unsubscribe();
+    }
+    this.messagesSubject.next([]);
   }
 }

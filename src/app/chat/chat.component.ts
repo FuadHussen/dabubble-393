@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, HostListener, ChangeDetectorRef, Input, Output, EventEmitter, NgZone } from '@angular/core';
+import { Component, OnInit, AfterViewInit, HostListener, ChangeDetectorRef, Input, Output, EventEmitter, NgZone, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
@@ -72,7 +72,7 @@ import { NavbarComponent } from '../navbar/navbar.component';
   ]
 })
 
-export class ChatComponent implements OnInit, AfterViewInit {
+export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
   isSettingsOpen = false;
   currentChannelId = '';
   channelName = '';
@@ -217,6 +217,11 @@ export class ChatComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit() {
+    this.subscriptions.push(
+      this.chatService.messages$.subscribe(messages => {
+        // Handle messages
+      })
+    );
     
     // Route params subscription
     this.subscriptions.push(
