@@ -34,8 +34,8 @@ import {
     ]),
 
     trigger('logoAnimation', [
-      state('start', style({ transform: 'translateX(100%)' })), // Start ganz rechts
-      state('end', style({ transform: 'translateX(0)' })), // Endposition normal
+      state('start', style({ transform: 'translateX(100%)' })),
+      state('end', style({ transform: 'translateX(0)' })),
       transition('start => end', [animate('0.7s ease-in-out')]),
     ]),
 
@@ -44,19 +44,33 @@ import {
         'start',
         style({
           scale: 2,
+          position: 'absolute',
           top: '50%',
           left: '50%',
           color: '#fff',
           transform: 'translate(-50%, -50%)',
         })
-      ),state(
-        'mobieleStart',
+      ),
+      state(
+        'mobileStart',
         style({
           scale: 1,
+          position: 'absolute',
           top: '50%',
           left: '50%',
           color: '#fff',
           transform: 'translate(-50%, -50%)',
+        })
+      ),
+      state(
+        'end',
+        style({
+          scale: 1,
+          position: 'absolute',
+          top: '20px',
+          left: '20px',
+          transform: 'translate(0, 0)',
+          color: '#000',
         })
       ),
       state(
@@ -65,28 +79,13 @@ import {
           scale: 1,
           top: '20px',
           left: '50%',
-          transform: 'translateX(-50%)',
+          transform: 'translate(-50%, 0%)',
           color: '#000',
+          position: 'absolute',
         })
       ),
-      state(
-        'end',
-        style({
-          scale: 1,
-          top: '20px',
-          left: '20px',
-          transform: 'translate(0, 0)',
-          color: '#000',
-        })
-      ),
-      transition('start => end, mobileStart => mobileEnd', [
-        animate('1s ease-in-out'),
-      ]),
-    ]),
-    trigger('textAnimation', [
-      state('start', style({ transform: 'translateX(-100%)', color: 'white' })),
-      state('end', style({ transform: 'translateX(0)', color: 'black' })),
-      transition('start => end', [animate('0.5s 0.65s ease-in-out')]),
+      transition('start => end', [animate('1s ease-in-out')]),
+      transition('mobileStart => mobileEnd', [animate('1s ease-in-out')]),
     ]),
   ],
 })
@@ -119,34 +118,39 @@ export class LoginComponent {
   isMobile: boolean = false;
 
   ngOnInit() {
-    this.checkScreenSize(); 
+    this.checkScreenSize();
     this.introPlayed = sessionStorage.getItem('introPlayed') !== null;
-  
+
     if (this.introPlayed) {
       this.setEndState();
     } else {
       this.playIntroAnimation();
     }
   }
-  
+
   private setEndState() {
-    this.logoState = this.isMobile ? 'mobileEnd' : 'end';
+    this.logoState = 'end';
     this.bgState = 'hidden';
-    this.containerState = 'end';
-    this.textAnimationState = 'end';
+    this.containerState = this.isMobile ? 'mobileEnd' : 'end';
   }
-  
+
   private playIntroAnimation() {
-    this.logoState = this.isMobile ? 'mobileStart' : 'start';
-  
+    this.logoState = 'start';
+    this.containerState = this.isMobile ? 'mobileStart' : 'start';
+
     setTimeout(() => {
-      this.logoState = this.isMobile ? 'mobileEnd' : 'end';
+      this.logoState = 'end';
     }, 200);
-  
+
+    setTimeout(() => {
+      this.containerState = this.isMobile ? 'mobileEnd' : 'end';
+      this.textAnimationState = 'end';
+    }, 1400);
+
     setTimeout(() => {
       this.setEndState();
       sessionStorage.setItem('introPlayed', 'true');
-    }, 2400);
+    }, 1400);
   }
 
   resetIntro() {

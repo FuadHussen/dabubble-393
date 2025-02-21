@@ -19,13 +19,7 @@
         >
       </div>
     </div>
-    
-    <div class="signupBox">
-      <div class="signup-container">
-        <p>Neu bei DABubble?</p>
-        <span (click)="navigateToSignUp()" class="signup">Konto erstellen</span>
-      </div>
-    </div>
+
   </div>
 
   <div class="login-container">
@@ -113,5 +107,12 @@
     </form>
   </div>
 
-  <app-footer></app-footer>
+  <div class="signupBox">
+    <div class="signup-container">
+      <p>Neu bei DABubble?</p>
+      <span (click)="navigateToSignUp()" class="signup">Konto erstellen</span>
+    </div>
+  </div>
+
+  <app-footer *ngIf="!isMobile"></app-footer>
 </div>

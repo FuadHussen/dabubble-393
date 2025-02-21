@@ -38,12 +38,10 @@ $color-error: #ed1e79;
 }
 
 .logo-container {
-  position: absolute;
   display: flex;
   align-items: center;
   gap: 10px;
   z-index: 20;
-  white-space: nowrap;
 }
 
 .text-box {
@@ -79,7 +77,7 @@ $color-error: #ed1e79;
   overflow: hidden;
   display: inline-block;
   animation: moveRight 0.5s 0.65s ease-in-out forwards,
-    changeHeadline 0.5s 2.8s forwards;
+    changeHeadline 1.5s 1.5s forwards;
 }
 
 @keyframes moveRight {
@@ -421,9 +419,9 @@ $color-error: #ed1e79;
 @media (max-width: 1175px) {
   .signupBox {
     top: auto;
-    bottom: 20px !important;
+    bottom: 12px !important;
     left: 50%;
-    right: auto; 
+    right: auto;
     transform: translateX(-50%);
   }
   .login-container {
@@ -466,36 +464,44 @@ $color-error: #ed1e79;
   .inputs-container {
     .email-input,
     .password-input {
-      padding: 16px 16px 16px 16px !important;
+      padding: 8px 8px 8px 8px !important;
     }
     img {
       margin-right: 0px !important;
     }
+  }
+  .line-container {
+    margin: 4px 0 !important;
+    font-size: 17px !important;
+  }
+  .buttons-container {
+    .primary-btn,
+    .secondary-btn,
+    .disabled-btn {
+      padding: 8px 8px 8px 8px !important;
+    }
+  }
+  .google-btn {
+    height: auto !important;
   }
 }
 
 @media (max-width: 450px) {
   .login-container {
     form {
-      max-width: 320px;
       padding: 16px 8px 16px 8px !important;
     }
   }
 }
 
-@media (max-width: 400px) {
+@media (max-width: 420px) {
   .login-container {
     form {
       max-width: 280px;
       padding: 16px 8px 16px 8px !important;
     }
   }
-  .buttons-container {
-    .primary-btn,
-    .secondary-btn,
-    .disabled-btn {
-      padding: 12px 12px 12px 12px !important;
-      opacity: 0px;
-    }
+  .inputs-container {
+    padding: 12px 0px 0px 0px !important;
   }
 }
