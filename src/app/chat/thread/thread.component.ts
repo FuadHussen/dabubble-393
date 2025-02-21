@@ -404,4 +404,18 @@ export class ThreadComponent implements OnInit {
     if (!msg.avatar) return 'assets/img/avatars/default-avatar.png';
     return `assets/img/avatars/${msg.avatar}`;
   }
+
+  toggleReactionPicker(message: Message) {
+    // Schließe alle anderen offenen Emoji-Picker
+    this.messageGroups.forEach(group => {
+      group.messages.forEach(msg => {
+        if (msg.id !== message.id) {
+          msg.showEmojiPicker = false;
+        }
+      });
+    });
+    
+    // Toggle den Emoji-Picker für die aktuelle Nachricht
+    message.showEmojiPicker = !message.showEmojiPicker;
+  }
 }

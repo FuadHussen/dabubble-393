@@ -49,7 +49,7 @@
                 color="primary" 
                 [disabled]="selectedUsers.length === 0"
                 (click)="addMember()">
-          {{ selectedUsers.length }} Personen hinzufügen
+          {{ selectedUsers.length }} Person{{ selectedUsers.length === 1 ? '' : 'en' }} hinzufügen
         </button>
       </mat-card-actions>
     </mat-card>

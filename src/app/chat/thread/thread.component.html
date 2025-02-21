@@ -1,7 +1,7 @@
 <div class="thread-container" [@slideInOut]>
   <div class="thread-header">
     <div class="header-left">
-      
+
       <div class="header-content">
         <h2>Thread</h2>
         <span class="subtitle"># {{ message?.channelId }}</span>
@@ -24,8 +24,7 @@
 
       <!-- Messages in dieser Gruppe -->
       <div *ngFor="let msg of group.messages" class="message" [class.guest]="isCurrentUser(msg.userId)"
-           (mouseover)="showReactionOptions($event, msg)" 
-           (mouseleave)="hideReactionOptions($event, msg)">
+        (mouseover)="showReactionOptions($event, msg)" (mouseleave)="hideReactionOptions($event, msg)">
         <div class="avatar-container" *ngIf="msg.avatar">
           <img [src]="'assets/img/avatars/' + msg.avatar" [alt]="msg.username + ' avatar'" class="user-avatar">
         </div>
@@ -35,33 +34,34 @@
             <span class="timestamp">{{ convertTimestamp(msg.timestamp) | date:'HH:mm' }} Uhr</span>
           </div>
           <div class="message-text">{{ msg.text }}</div>
+        </div>
+      </div>
 
-          <!-- Reaktions-Optionen -->
-          <div class="reaction-options" [class.show]="msg.showReactions" [class.current-user]="!isCurrentUser(msg.userId)">
-            <div class="quick-reactions">
-              <div class="reaction-emoji" (click)="addReaction(msg, '👍')">👍</div>
-              <div class="reaction-emoji" (click)="addReaction(msg, '❤️')">❤️</div>
-              <div class="reaction-emoji" (click)="addReaction(msg, '😂')">😂</div>
-              <div class="reaction-emoji" (click)="addReaction(msg, '🔥')">🔥</div>
-              <div class="reaction-emoji" (click)="addReaction(msg, '👏')">👏</div>
+      <!-- Emoji Picker mit korrigierter Position -->
+      <div class="reaction-container" *ngFor="let msg of group.messages" [class.guest]="isCurrentUser(msg.userId)">
+        <div class="message-emoji-picker" *ngIf="msg.showEmojiPicker">
+          <div class="emoji-container">
+            <div class="emoji" *ngFor="let emoji of emojis"
+              (click)="handleReactionClick($event, msg, {emoji: emoji, count: 0, users: []})">
+              {{ emoji }}
             </div>
           </div>
-
+        </div>
+        <div class="reaction-container" *ngFor="let msg of group.messages" [class.guest]="isCurrentUser(msg.userId)">
+          <mat-icon (click)="toggleReactionPicker(msg)">add_reaction</mat-icon>
           <!-- Angezeigte Reaktionen -->
           <div class="message-reactions" *ngIf="msg.reactions && msg.reactions.length > 0">
-            <button *ngFor="let reaction of groupReactions(msg.reactions, msg.id)"
-                    class="reaction-badge"
-                    [class.user-reacted]="hasUserReacted(msg, reaction.emoji)"
-                    (click)="handleReactionClick($event, msg, reaction)"
-                    (mouseover)="handleReactionHover($event, msg, reaction)"
-                    (mouseleave)="hideTooltip(msg.id + '-' + reaction.emoji)">
+            <button *ngFor="let reaction of groupReactions(msg.reactions, msg.id)" class="reaction-badge"
+              [class.user-reacted]="hasUserReacted(msg, reaction.emoji)"
+              (click)="handleReactionClick($event, msg, reaction)"
+              (mouseover)="handleReactionHover($event, msg, reaction)"
+              (mouseleave)="hideTooltip(msg.id + '-' + reaction.emoji)">
               <span class="reaction-emoji">{{ reaction.emoji }}</span>
               <span class="reaction-count">{{ reaction.count }}</span>
             </button>
           </div>
         </div>
       </div>
-
       <!-- Replies count nur nach der Original-Nachricht -->
       <div class="replies-count" *ngIf="group.isOriginalMessage && replies.length > 0">
         {{ replies.length }} {{ replies.length === 1 ? 'Antwort' : 'Antworten' }}
@@ -75,9 +75,7 @@
       <button mat-icon-button (click)="toggleEmojiPicker()">
         <mat-icon>sentiment_satisfied_alt</mat-icon>
       </button>
-      <textarea 
-        [(ngModel)]="replyText"
-        placeholder="Antworten..."
+      <textarea [(ngModel)]="replyText" placeholder="Antworten..."
         (keydown.enter)="$event.preventDefault(); sendReply()">
       </textarea>
       <button mat-icon-button (click)="sendReply()">
@@ -88,9 +86,7 @@
     <!-- Emoji Picker -->
     <div class="emoji-picker" *ngIf="showEmojiPicker">
       <div class="emoji-container">
-        <span *ngFor="let emoji of emojis" 
-              class="emoji" 
-              (click)="addEmoji(emoji)">
+        <span *ngFor="let emoji of emojis" class="emoji" (click)="addEmoji(emoji)">
           {{ emoji }}
         </span>
       </div>
