@@ -300,6 +300,14 @@ export class ThreadComponent implements OnInit, OnDestroy {
     this.closeThread.emit();
   }
 
+  closeEmojiPicker() {
+    this.messageGroups.forEach(group => {
+      group.messages.forEach(msg => {
+        msg.showEmojiPicker = false;
+      });
+    });
+  }
+
   // Reaktions-Methoden
   showReactionOptions(event: MouseEvent, message: Message) {
     event.stopPropagation();

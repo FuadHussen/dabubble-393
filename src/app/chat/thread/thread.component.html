@@ -40,6 +40,9 @@
       <!-- Emoji Picker mit korrigierter Position -->
       <div class="reaction-container" *ngFor="let msg of group.messages" [class.guest]="isCurrentUser(msg.userId)">
         <div class="message-emoji-picker" *ngIf="msg.showEmojiPicker">
+          <button mat-icon-button class="close-emoji-picker" (click)="closeEmojiPicker()">
+            <mat-icon>close</mat-icon>
+          </button>
           <div class="emoji-container">
             <div class="emoji" *ngFor="let emoji of emojis"
               (click)="handleReactionClick($event, msg, {emoji: emoji, count: 0, users: []})">
