@@ -9,7 +9,7 @@
   
       <div class="profile-content">
         <div class="avatar-container">
-          <img *ngIf="userAvatar" [src]="'assets/img/avatars/' + userAvatar" [alt]="username + ' avatar'"
+          <img *ngIf="userAvatar" [src]="userAvatar ? getAvatarSrc(userAvatar) : ''" [alt]="username + ' avatar'"
             class="profile-image">
         </div>
 

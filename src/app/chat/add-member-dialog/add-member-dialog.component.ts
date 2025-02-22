@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../services/user.service';
 import { Firestore, collection, addDoc } from '@angular/fire/firestore';
+import { AvatarService } from '../../services/avatar.service';
 
 interface UserData {
   uid: string;
@@ -43,7 +44,8 @@ export class AddMemberDialogComponent {
 
   constructor(
     private userService: UserService,
-    private firestore: Firestore
+    private firestore: Firestore,
+    private avatarService: AvatarService
   ) {}
 
   close() {
@@ -105,5 +107,15 @@ export class AddMemberDialogComponent {
 
   isUserSelected(user: UserData): boolean {
     return this.selectedUsers.some(u => u.uid === user.uid);
+  }
+
+  getAvatarSrc(avatar: string | null): string {
+    if (!avatar) return '';
+    
+    if (this.avatarService.isGoogleAvatar(avatar)) {
+      return this.avatarService.transformGooglePhotoUrl(avatar);
+    }
+    
+    return 'assets/img/avatars/' + avatar;
   }
 }

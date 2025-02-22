@@ -11,7 +11,7 @@ import { Router } from '@angular/router';
 import { ChatService } from '../../services/chat.service';
 import { trigger, state, style, animate, transition } from '@angular/animations';
 import { Auth } from '@angular/fire/auth';
-
+import { AvatarService } from '../../services/avatar.service';
 interface Member {
   uid: string;
   username: string;
@@ -72,7 +72,8 @@ export class ChannelSettingsComponent implements OnInit, OnChanges {
     private firestore: Firestore,
     private router: Router,
     private chatService: ChatService,
-    private auth: Auth
+    private auth: Auth,
+    private avatarService: AvatarService
   ) {}
 
   ngOnInit() {
@@ -116,7 +117,7 @@ export class ChannelSettingsComponent implements OnInit, OnChanges {
         const member: Member = {
           uid: creatorId,
           username: userData['username'] || 'Unbekannter Benutzer',
-          avatar: userData['avatar'] || 'default-avatar.png',
+          avatar: userData['avatar'],
           email: userData['email'],
           isCreator: true,
           isOnline: userData['isOnline'] || false
@@ -202,5 +203,15 @@ export class ChannelSettingsComponent implements OnInit, OnChanges {
     } catch (error) {
       console.error('Fehler beim Verlassen des Channels:', error);
     }
+  }
+
+  getAvatarSrc(avatar: string | null): string {
+    if (!avatar) return '';
+    
+    if (this.avatarService.isGoogleAvatar(avatar)) {
+      return this.avatarService.transformGooglePhotoUrl(avatar);
+    }
+    
+    return 'assets/img/avatars/' + avatar;
   }
 }

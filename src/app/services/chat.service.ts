@@ -303,7 +303,7 @@ export class ChatService {
         timestamp: serverTimestamp(),
         parentId: threadMessage.id,
         channelId: threadMessage.channelId,
-        avatar: currentUser.avatar || 'default-avatar.png',
+        avatar: currentUser.avatar,
         isThread: true
       };
 

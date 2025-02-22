@@ -1,44 +1,18 @@
-<div
-  class="toggle-sidenav"
-  (click)="drawer.toggle()"
-  [class.closed]="!drawer.opened"
-  *ngIf="!isMobile"
->
-  <img
-    src="assets/img/open-sidenav.png"
-    alt="Toggle Sidenav"
-    class="open-default"
-  />
-  <img
-    src="assets/img/open-sidenav-hover.png"
-    alt="Toggle Sidenav"
-    class="open-hover"
-  />
-  <img
-    src="assets/img/close-sidenav.png"
-    alt="Toggle Sidenav"
-    class="close-default"
-  />
-  <img
-    src="assets/img/close-sidenav-hover.png"
-    alt="Toggle Sidenav"
-    class="close-hover"
-  />
+<div class="toggle-sidenav" (click)="drawer.toggle()" [class.closed]="!drawer.opened" *ngIf="!isMobile">
+  <img src="assets/img/open-sidenav.png" alt="Toggle Sidenav" class="open-default" />
+  <img src="assets/img/open-sidenav-hover.png" alt="Toggle Sidenav" class="open-hover" />
+  <img src="assets/img/close-sidenav.png" alt="Toggle Sidenav" class="close-default" />
+  <img src="assets/img/close-sidenav-hover.png" alt="Toggle Sidenav" class="close-hover" />
 </div>
 <app-navbar></app-navbar>
 
 <mat-drawer-container class="sidenav-container" [hasBackdrop]="false">
-  <mat-drawer #drawer [mode]="isMobile ? 'over' : 'side'" 
-             [opened]="drawerOpened" 
-             class="sidenav">
+  <mat-drawer #drawer [mode]="isMobile ? 'over' : 'side'" [opened]="drawerOpened" class="sidenav">
     <div class="sidenav-header">
       <div class="sidenav-header-icons">
         <img src="assets/img/devspace-logo.png" alt="Devspace Logo" />
         <h1>Devspace</h1>
-        <div
-          class="edit-icon"
-          [class.active]="isActive"
-        >
+        <div class="edit-icon" [class.active]="isActive">
           <button class="new-chat-button" mat-icon-button (click)="startNewChat()">
             <mat-icon class="bold material-symbols-outlined">edit_square</mat-icon>
           </button>
@@ -53,32 +27,19 @@
                 <mat-icon class="material-symbols-outlined">workspaces</mat-icon>
                 <p class="fs-18">Channels</p>
               </mat-panel-title>
-              <button
-                class="new-chat-button"
-                (click)="$event.stopPropagation(); openAddChannelDialog()"
-                mat-icon-button
-              >
+              <button class="new-chat-button" (click)="$event.stopPropagation(); openAddChannelDialog()"
+                mat-icon-button>
                 <mat-icon class="bold material-symbols-outlined">add</mat-icon>
               </button>
             </mat-expansion-panel-header>
             <mat-nav-list class="channel-list">
-              <a
-                class="hover-btn"
-                mat-list-item
-                *ngFor="let channel of channels"
-                (click)="manualChannelSelect(channel.name)"
-                [ngClass]="{'active': isChannelActive(channel.name)}"
-              >
+              <a class="hover-btn" mat-list-item *ngFor="let channel of channels"
+                (click)="manualChannelSelect(channel.name)" [ngClass]="{'active': isChannelActive(channel.name)}">
                 <mat-icon class="material-symbols-outlined" matListItemIcon>tag</mat-icon>
                 <p class="fs-18">{{ channel.name }}</p>
               </a>
             </mat-nav-list>
-            <button 
-              class="new-channel-btn" 
-              (click)="openAddChannelDialog()" 
-              mat-button 
-              color="primary"
-            >
+            <button class="new-channel-btn" (click)="openAddChannelDialog()" mat-button color="primary">
               <mat-icon class="material-symbols-outlined">add_circle</mat-icon>
               <p class="fs-18">Channel hinzufügen</p>
             </button>
@@ -96,19 +57,12 @@
               </mat-panel-title>
             </mat-expansion-panel-header>
             <mat-nav-list class="user-list">
-              <a
-                class="hover-btn"
-                mat-list-item
-                *ngFor="let user of users"
-                (click)="selectUser(user)"
-                [ngClass]="{'active': isUserActive(user)}"
-              >
+              <a class="hover-btn" mat-list-item *ngFor="let user of users" (click)="selectUser(user)"
+                [ngClass]="{'active': isUserActive(user)}">
                 <div class="user-info">
                   <div class="avatar-container">
-                    <img [src]="'assets/img/avatars/' + user.avatar" 
-                         alt="User Avatar" 
-                         class="user-avatar">
-                    <div class="online-status" *ngIf="!user.isOnline"></div>
+                    <img class="user-avatar" [src]="user?.avatar ? getAvatarSrc(user.avatar) : ''">
+                    <div class="online-status" *ngIf="!user?.isOnline"></div>
                   </div>
                   <p class="fs-18">
                     {{ user.displayName || user.username }}
@@ -124,19 +78,13 @@
       </div>
     </div>
   </mat-drawer>
-  
-  <mat-drawer-content [class.mobile-view]="isMobile" 
-                     [class.show-chat]="showChat">
+
+  <mat-drawer-content [class.mobile-view]="isMobile" [class.show-chat]="showChat">
     <div class="content-container">
-      <app-chat *ngIf="showChat" 
-                [isMobile]="isMobile"
-                (backClicked)="onBackClicked()"
-                class="mobile-chat"
-                [class.show]="showChat">
+      <app-chat *ngIf="showChat" [isMobile]="isMobile" (backClicked)="onBackClicked()" class="mobile-chat"
+        [class.show]="showChat">
       </app-chat>
-      <app-thread *ngIf="threadMessage$ | async" 
-                 [message]="threadMessage$ | async"
-                 (closeThread)="closeThread()">
+      <app-thread *ngIf="threadMessage$ | async" [message]="threadMessage$ | async" (closeThread)="closeThread()">
       </app-thread>
     </div>
   </mat-drawer-content>

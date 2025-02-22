@@ -143,7 +143,7 @@ export class AddChannelMembersComponent implements OnInit {
           uid: user.uid,
           displayName: user.displayName || user.username || user.email || 'Unbekannter Benutzer',
           email: user.email || '',
-          avatar: user.avatar || 'default-avatar.png',
+          avatar: user.avatar,
           selected: false
         }));
       this.filterUsers();

@@ -27,7 +27,7 @@
             <mat-icon class="material-symbols-outlined" *ngIf="!isDirectMessage">tag</mat-icon>
             <div class="avatar-container" *ngIf="isDirectMessage">
               <img *ngIf="selectedUserAvatar" 
-                   [src]="'assets/img/avatars/' + selectedUserAvatar" 
+                   [src]="selectedUserAvatar ? getAvatarSrc(selectedUserAvatar) : ''" 
                    [alt]="selectedUserDisplayName + ' avatar'"
                    class="user-avatar">
             </div>

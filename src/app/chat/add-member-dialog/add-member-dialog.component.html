@@ -13,7 +13,7 @@
         <div class="search-container">
           <div class="selected-users-container">
             <div class="selected-user-tag" *ngFor="let user of selectedUsers">
-              <img [src]="'assets/img/avatars/' + user.avatar" [alt]="user.username" class="user-avatar">
+              <img [src]="user.avatar ? getAvatarSrc(user.avatar) : ''" [alt]="user.username" class="user-avatar">
               <span class="username">{{ user.username }}</span>
               <button class="remove-user" (click)="removeSelectedUser(user, $event)">
                 <mat-icon>close</mat-icon>
@@ -37,7 +37,7 @@
                *ngFor="let user of searchResults"
                (click)="selectUser(user)"
                [class.selected]="isUserSelected(user)">
-            <img [src]="'assets/img/avatars/' + user.avatar" [alt]="user.username + ' avatar'" class="user-avatar">
+            <img [src]="user.avatar ? getAvatarSrc(user.avatar) : ''" [alt]="user.username + ' avatar'" class="user-avatar">
             <span class="username">{{ user.username }}</span>
             <mat-icon class="check-icon" *ngIf="isUserSelected(user)">check</mat-icon>
           </div>

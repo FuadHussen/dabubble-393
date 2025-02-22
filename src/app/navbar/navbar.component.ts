@@ -15,7 +15,7 @@ import { collection, query, where, getDocs } from '@firebase/firestore';
 import { Firestore } from '@angular/fire/firestore';
 import { ChatService } from '../services/chat.service';
 import { Auth } from '@angular/fire/auth';
-
+import { AvatarService } from '../services/avatar.service';
 interface SearchResult {
   type: 'channel' | 'user' | 'message';
   title: string;
@@ -85,7 +85,8 @@ export class NavbarComponent {
     private router: Router,
     private firestore: Firestore,
     private chatService: ChatService,
-    private userService: UserService
+    private userService: UserService,
+    private avatarService: AvatarService
   ) {
     // Subscribe to user changes
     this.userService.currentUser$.subscribe(async user => {
@@ -99,7 +100,7 @@ export class NavbarComponent {
           const userData = querySnapshot.docs[0].data();
           this.userName = userData['username'] || 'Unbekannt';
           this.userEmail = userData['email'] || '';
-          this.userAvatar = userData['avatar'] || 'default-avatar.png';
+          this.userAvatar = userData['avatar'];
         }
       }
     });
@@ -370,5 +371,15 @@ export class NavbarComponent {
     this.searchControl.setValue('');
     this.searchResults = [];
     this.showResults = false;
+  }
+
+  getAvatarSrc(avatar: string | null): string {
+    if (!avatar) return '';
+    
+    if (this.avatarService.isGoogleAvatar(avatar)) {
+      return this.avatarService.transformGooglePhotoUrl(avatar);
+    }
+    
+    return 'assets/img/avatars/' + avatar;
   }
 }

@@ -10,7 +10,7 @@
     <div class="profile-content">
       <div class="avatar-container">
         <img *ngIf="avatar" 
-             [src]="'assets/img/avatars/' + avatar" 
+             [src]="'assets/img/avatars/' + avatar ? getAvatarSrc(avatar) : ''" 
              [alt]="username + ' avatar'"
              class="user-avatar">
         <mat-icon *ngIf="!avatar" class="avatar-icon">account_circle</mat-icon>

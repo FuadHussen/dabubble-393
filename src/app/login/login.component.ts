@@ -18,7 +18,11 @@ import {
   query,
   where,
   getDocs,
+  doc,
+  getDoc,
+  setDoc,
 } from '@angular/fire/firestore';
+import { Auth, GoogleAuthProvider, signInWithPopup } from '@angular/fire/auth';
 
 @Component({
   selector: 'app-login',
@@ -91,6 +95,7 @@ import {
 })
 export class LoginComponent {
   private firestore: Firestore = inject(Firestore);
+  private auth: Auth = inject(Auth);
 
   constructor(private router: Router, private userService: UserService) {
     // Initialisiere isMobile beim Komponenten-Start
@@ -468,6 +473,40 @@ export class LoginComponent {
     } catch (error) {
       console.error('Error in initializeGuestChat:', error);
       throw error;
+    }
+  }
+
+  async signInWithGoogle() {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(this.auth, provider);
+      
+      if (result.user) {
+        // Überprüfe ob User in Firestore existiert
+        const userDoc = doc(this.firestore, 'users', result.user.uid);
+        const userSnapshot = await getDoc(userDoc);
+
+        if (!userSnapshot.exists()) {
+          // User existiert nicht in Firestore, also anlegen
+          const userData = {
+            uid: result.user.uid,
+            email: result.user.email,
+            username: result.user.displayName,
+            avatar: result.user.photoURL,
+            createdAt: new Date()
+          };
+
+          await setDoc(userDoc, userData);
+          console.log('Neuer User in Firestore angelegt:', userData);
+        } else {
+          console.log('User existiert bereits:', userSnapshot.data());
+        }
+
+        // Weiterleitung nach erfolgreicher Anmeldung/Überprüfung
+        await this.router.navigate(['/workspace']);
+      }
+    } catch (error) {
+      console.error('Error during Google sign-in:', error);
     }
   }
 }

@@ -5,7 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { ProfileInfoComponent } from '../profile-info/profile-info.component';
 import { Firestore, doc, getDoc } from '@angular/fire/firestore';
-
+import { AvatarService } from '../../services/avatar.service';
 interface Member {
   uid: string;
   username: string;
@@ -34,6 +34,7 @@ export class MemberListDialogComponent implements OnInit, OnChanges {
 
   constructor(
     private firestore: Firestore,
+    private avatarService: AvatarService
   ) {}
 
   async ngOnInit() {
@@ -105,5 +106,15 @@ export class MemberListDialogComponent implements OnInit, OnChanges {
 
   handleDirectMessageStart() {
     this.onMessageStarted();
+  }
+
+  getAvatarSrc(avatar: string | null): string {
+    if (!avatar) return '';
+    
+    if (this.avatarService.isGoogleAvatar(avatar)) {
+      return this.avatarService.transformGooglePhotoUrl(avatar);
+    }
+    
+    return 'assets/img/avatars/' + avatar;
   }
 }

@@ -10,7 +10,7 @@ import { trigger, state, style, animate, transition } from '@angular/animations'
 import { Auth } from '@angular/fire/auth';
 import { Firestore, collection, query, where, getDocs, doc, updateDoc } from '@angular/fire/firestore';
 import { UserService } from '../../services/user.service';
-
+import { AvatarService } from '../../services/avatar.service';
 @Component({
   selector: 'app-user-profile-settings',
   standalone: true,
@@ -59,7 +59,8 @@ export class UserProfileSettingsComponent implements OnInit {
   constructor(
     private auth: Auth,
     private firestore: Firestore,
-    private userService: UserService
+    private userService: UserService,
+    private avatarService: AvatarService
   ) {
     this.userService.currentUser$.subscribe(async user => {
       if (user) {
@@ -73,7 +74,7 @@ export class UserProfileSettingsComponent implements OnInit {
           this.username = userData['username'] || 'Unbekannt';
           this.newUsername = this.username;
           this.email = userData['email'] || '';
-          this.userAvatar = userData['avatar'] || 'default-avatar.png';
+          this.userAvatar = userData['avatar'];
         }
       }
     });
@@ -121,5 +122,15 @@ export class UserProfileSettingsComponent implements OnInit {
 
   ngOnInit() {
 
+  }
+
+  getAvatarSrc(avatar: string | null): string {
+    if (!avatar) return '';
+    
+    if (this.avatarService.isGoogleAvatar(avatar)) {
+      return this.avatarService.transformGooglePhotoUrl(avatar);
+    }
+    
+    return 'assets/img/avatars/' + avatar;
   }
 }

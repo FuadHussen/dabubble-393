@@ -8,7 +8,7 @@ import { Message } from '../../models/message.model';
 import { ChatService } from './../../services/chat.service';
 import { Auth } from '@angular/fire/auth';
 import { trigger, transition, style, animate } from '@angular/animations';
-
+import { AvatarService } from '../../services/avatar.service';
 interface MessageGroup {
   date: string;
   messages: Message[];
@@ -74,7 +74,8 @@ export class ThreadComponent implements OnInit, OnDestroy {
     private chatService: ChatService,
     private auth: Auth,
     private firestore: Firestore,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private avatarService: AvatarService
   ) {
     this.chatService.getCurrentUser().then(user => {
       this.currentUser = user;
@@ -152,7 +153,7 @@ export class ThreadComponent implements OnInit, OnDestroy {
               id: docSnapshot.id,
               ...messageData,
               // Verwende den Avatar aus dem user-Dokument
-              avatar: userData?.['avatar'] || 'default-avatar.png',
+              avatar: userData?.['avatar'],
               username: userData?.['username'] || messageData['username']
             } as Message;
             
@@ -167,7 +168,7 @@ export class ThreadComponent implements OnInit, OnDestroy {
               }),
               messages: [originalMessageData],
               isOriginalMessage: true,
-              avatar: originalMessageData.avatar || 'default-avatar.png'
+              avatar: originalMessageData.avatar || ''
             };
 
             // Wenn es bereits Gruppen gibt, ersetze die erste (Original-Nachricht)
@@ -205,7 +206,7 @@ export class ThreadComponent implements OnInit, OnDestroy {
                 id: docSnapshot.id,
                 ...messageData,
                 // Verwende den Avatar aus dem user-Dokument
-                avatar: userData?.['avatar'] || 'default-avatar.png',
+                avatar: userData?.['avatar'],
                 username: userData?.['username'] || messageData['username']
               } as Message;
             })
@@ -272,8 +273,7 @@ export class ThreadComponent implements OnInit, OnDestroy {
           threadId: this.message.id,
           timestamp: new Date(),
           avatar: userData?.['avatar'] ||
-            this.currentUser['avatar'] ||
-            'default-avatar.png'
+            this.currentUser['avatar']
         };
 
         await this.chatService.sendMessage(replyData);
@@ -415,7 +415,8 @@ export class ThreadComponent implements OnInit, OnDestroy {
   }
 
   getAvatarPath(msg: Message): string {
-    if (!msg.avatar) return 'assets/img/avatars/default-avatar.png';
+    if (!msg.avatar) {
+    }
     return `assets/img/avatars/${msg.avatar}`;
   }
 
@@ -438,5 +439,15 @@ export class ThreadComponent implements OnInit, OnDestroy {
     console.log('Thread component destroying, cleaning up subscriptions');
     this.unsubscribes.forEach(unsubscribe => unsubscribe());
     this.unsubscribes = [];
+  }
+
+  getAvatarSrc(avatar: string | null): string {
+    if (!avatar) return '';
+    
+    if (this.avatarService.isGoogleAvatar(avatar)) {
+      return this.avatarService.transformGooglePhotoUrl(avatar);
+    }
+    
+    return 'assets/img/avatars/' + avatar;
   }
 }

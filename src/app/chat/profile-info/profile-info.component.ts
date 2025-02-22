@@ -7,6 +7,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { Router } from '@angular/router';
 import { ChatService } from '../../services/chat.service';
 import { trigger, state, style, animate, transition } from '@angular/animations';
+import { AvatarService } from '../../services/avatar.service';
 
 @Component({
   selector: 'app-profile-info',
@@ -51,7 +52,8 @@ export class ProfileInfoComponent {
 
   constructor(
     private router: Router,
-    private chatService: ChatService
+    private chatService: ChatService,
+    private avatarService: AvatarService
   ) {}
 
   async startDirectMessage(event: MouseEvent) {
@@ -72,5 +74,15 @@ export class ProfileInfoComponent {
   close(event: MouseEvent) {
     event.stopPropagation();
     this.closeInfo.emit();
+  }
+
+  getAvatarSrc(avatar: string | null): string {
+    if (!avatar) return '';
+    
+    if (this.avatarService.isGoogleAvatar(avatar)) {
+      return this.avatarService.transformGooglePhotoUrl(avatar);
+    }
+    
+    return 'assets/img/avatars/' + avatar;
   }
 }

@@ -20,6 +20,7 @@ import { HostListener } from '@angular/core';
 import { ChangeDetectorRef } from '@angular/core';
 import { NgZone } from '@angular/core';
 import { ThreadComponent } from '../../chat/thread/thread.component';
+import { AvatarService } from '../../services/avatar.service';
 
 interface Channel {
   name: string;
@@ -84,7 +85,8 @@ export class SidenavComponent implements OnInit {
     private userService: UserService,
     private router: Router,
     private cdr: ChangeDetectorRef,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private avatarService: AvatarService
   ) {
     this.checkScreenSize();
     
@@ -465,5 +467,15 @@ export class SidenavComponent implements OnInit {
       this.showChat = false;
       this.router.navigate(['/workspace']);
     }
+  }
+
+  getAvatarSrc(avatar: string | undefined): string {
+    if (!avatar) return '';
+    
+    if (this.avatarService.isGoogleAvatar(avatar)) {
+      return this.avatarService.transformGooglePhotoUrl(avatar);
+    }
+    
+    return 'assets/img/avatars/' + avatar;
   }
 }

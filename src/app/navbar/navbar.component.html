@@ -40,7 +40,7 @@
           <!-- User Result -->
           <div class="result-content" *ngIf="result.type === 'user'">
             <div class="avatar-container" *ngIf="result.avatar">
-              <img [src]="'assets/img/avatars/' + result.avatar" [alt]="result.title">
+              <img [src]="result.avatar ? getAvatarSrc(result.avatar) : ''" [alt]="result.title">
             </div>
             <mat-icon *ngIf="!result.avatar">person</mat-icon>
             <div class="result-text">
@@ -67,7 +67,7 @@
     <div class="user-profile">
       <span class="user-name">{{ userName }}</span>
       <div class="profile-image-container" [matMenuTriggerFor]="menu" *ngIf="userAvatar">
-        <img [src]="'assets/img/avatars/' + userAvatar" 
+        <img [src]="userAvatar ? getAvatarSrc(userAvatar) : ''" 
              [alt]="userName + ' avatar'"
              class="profile-image">
       </div>

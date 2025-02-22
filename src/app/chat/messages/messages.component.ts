@@ -9,7 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { trigger, state, style, animate, transition } from '@angular/animations';
 import { HostListener } from '@angular/core';
 import { AudioService } from '../../services/audio.service';
-
+import { AvatarService } from '../../services/avatar.service';
 export interface Reaction {
   userId: string;
   emoji: string;
@@ -121,7 +121,8 @@ export class MessagesComponent implements OnInit {
     private userService: UserService,
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone,
-    private audioService: AudioService
+    private audioService: AudioService,
+    private avatarService: AvatarService
   ) {
     // Users aus Firestore laden mit ID
     const usersCollection = collection(this.firestore, 'users');
@@ -636,5 +637,15 @@ export class MessagesComponent implements OnInit {
     } catch (error) {
       console.error('Error sending reply:', error);
     }
+  }
+
+  getAvatarSrc(avatar: string | null): string {
+    if (!avatar) return '';
+    
+    if (this.avatarService.isGoogleAvatar(avatar)) {
+      return this.avatarService.transformGooglePhotoUrl(avatar);
+    }
+    
+    return 'assets/img/avatars/' + avatar;
   }
 }

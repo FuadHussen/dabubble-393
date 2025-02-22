@@ -127,7 +127,7 @@ export class UserService {
         return {
           uid: userId,
           username: userData['username'] || 'Unbekannt',
-          avatar: userData['avatar'] || 'default-avatar.png',
+          avatar: userData['avatar'],
           email: userData['email'],
           isOnline: userData['isOnline'] || false
         };
@@ -153,7 +153,7 @@ export class UserService {
           uid: userId,
           username: 'Sofia Weber',  // oder userData.username
           email: 'sofia.weber@example.com',  // oder userData.email
-          avatar: 'sofia-weber-avatar.png',  // oder ein Default-Avatar
+          avatar: 'sofia-weber-avatar.png',
         });
       }
     } catch (error) {

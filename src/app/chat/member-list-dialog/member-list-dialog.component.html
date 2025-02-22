@@ -12,7 +12,7 @@
           <div class="member-item" 
                *ngFor="let member of members"
                (click)="showProfile(member)">
-            <img [src]="'assets/img/avatars/' + member.avatar" 
+            <img [src]="member.avatar ? getAvatarSrc(member.avatar) : ''" 
                  [alt]="member.username + ' avatar'"
                  class="member-avatar">
             <span class="member-name">{{ member.username }}</span>

@@ -9,7 +9,7 @@
     <div *ngFor="let message of group.messages" class="message" [class.guest]="isCurrentUser(message.userId)"
       (mouseover)="showReactionOptions($event, message)" (mouseleave)="hideReactionOptions($event, message)">
       <div class="avatar-container" *ngIf="message.avatar">
-        <img [src]="'assets/img/avatars/' + message.avatar" [alt]="message.username + ' avatar'" class="user-avatar">
+        <img [src]="message.avatar ? getAvatarSrc(message.avatar) : ''" [alt]="message.username + ' avatar'" class="user-avatar">
       </div>
       <div class="message-content">
         <div class="message-header">

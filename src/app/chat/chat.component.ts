@@ -23,6 +23,7 @@ import { trigger, state, style, animate, transition } from '@angular/animations'
 import { ThreadComponent } from './thread/thread.component';
 import { Message } from '../models/message.model';
 import { NavbarComponent } from '../navbar/navbar.component';
+import { AvatarService } from '../services/avatar.service';
 
 @Component({
   selector: 'app-chat',
@@ -132,7 +133,8 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
     private router: Router,
     private audioService: AudioService,
     private cdr: ChangeDetectorRef,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private avatarService: AvatarService
   ) {
     // Aktuellen User ID speichern
     this.userService.currentUser$.subscribe(user => {
@@ -923,5 +925,15 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
     } catch (error) {
       console.error('Error loading channel data:', error);
     }
+  }
+
+  getAvatarSrc(avatar: string | null): string {
+    if (!avatar) return '';
+    
+    if (this.avatarService.isGoogleAvatar(avatar)) {
+      return this.avatarService.transformGooglePhotoUrl(avatar);
+    }
+    
+    return 'assets/img/avatars/' + avatar;
   }
 }
