@@ -114,7 +114,6 @@ $color-error: #ed1e79;
   overflow: hidden;
   height: 70px;
   line-height: 70px;
-  animation: typing 2s steps(8), blink 0.5s step-end infinite alternate;
 
   @media (max-width: 500px) {
     font-size: 24px;
