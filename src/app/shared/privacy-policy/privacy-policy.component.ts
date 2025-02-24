@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
+import { Location } from '@angular/common';
 import { FooterComponent } from '../footer/footer.component';
 
 @Component({
@@ -10,7 +11,11 @@ import { FooterComponent } from '../footer/footer.component';
   styleUrls: ['./privacy-policy.component.scss']
 })
 export class PrivacyPolicyComponent {
-  constructor(private router: Router) {}
+  constructor(
+    private location: Location,
+    private router: Router,
+    private route: ActivatedRoute
+  ) {}
 
   arrowBackSrc: string = '../../assets/img/arrow-back.png';
 
@@ -22,7 +27,7 @@ export class PrivacyPolicyComponent {
     }
   }
 
-  backToLogin(){
-    this.router.navigate(['/login']);
+  backToLogin() {
+    this.location.back();
   }
 }

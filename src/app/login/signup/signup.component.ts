@@ -164,4 +164,8 @@ export class SignupComponent {
   navigateToLogin() {
     this.router.navigate(['/login']);
   }
+
+  navigateToPrivacyPolicy() {
+    this.router.navigate(['/privacy-policy']);
+  }
 }

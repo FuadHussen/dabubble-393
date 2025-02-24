@@ -6,6 +6,8 @@
     align-items: center;
     overflow: hidden;
     background-color: #eceefe;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
   }
   
   .logo-container {
@@ -20,9 +22,7 @@
   }
   
   .logo-name {
-    font-family: Nunito;
     font-size: 46px;
-    font-weight: 700;
   }
 
 .choose-avatar-container {
@@ -49,6 +49,7 @@
   justify-content: center;
   width: 100%;
   position: relative;
+  cursor: pointer;
 }
 
 .arrow-back img {
@@ -62,10 +63,14 @@
 
 .content{
     margin-top: 80px;
+    font-family: 'Nunito', sans-serif!important;
+}
+
+h1 {
+  font-family: 'Nunito', sans-serif!important;
 }
 
 h2 {
-  font-family: Nunito;
   font-size: 46px;
   font-weight: 700;
   line-height: 55.2px;
@@ -73,10 +78,10 @@ h2 {
   text-decoration-skip-ink: none;
   color: #444df2;
   margin: 0px 0px 16px 0px;
+  font-family: 'Nunito', sans-serif!important;
 }
 
 h3 {
-    font-family: Nunito;
     font-size: 32px;
     font-weight: 700;
     line-height: 38.4px;
@@ -85,14 +90,47 @@ h3 {
     text-decoration-skip-ink: none;    
     color: #444df2;
     margin: 0px 0px 16px 0px;
+    font-family: 'Nunito', sans-serif!important;
   }
 
 h4 {
-  font-family: Nunito;
   font-size: 20px;
   font-weight: 400;
   text-align: start;
   color: #000000;
   margin: 0;
   margin-bottom: 16px;
+  font-family: 'Nunito', sans-serif!important;
+}
+
+@media (max-width: 730px) {
+  .content {
+    max-width: 100%;
+
+    h2 {
+      font-size: 32px;
+    }
+
+    h3 {
+      font-size: 24px;
+    }
+  }
+
+  .choose-avatar-container {
+    padding: 24px;
+  }
+
+  .form {
+    width: -webkit-fill-available;
+  }
+}
+
+@media (max-width: 480px) {
+  .choose-avatar-container {
+    padding: 16px;
+  }
+
+  .form {
+    padding: 16px;
+  }
 }
