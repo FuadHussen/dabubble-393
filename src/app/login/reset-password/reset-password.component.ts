@@ -1,15 +1,15 @@
 import { Component } from '@angular/core';
 import { FooterComponent } from '../../shared/footer/footer.component';
 import { Router } from '@angular/router';
-import { NgClass } from '@angular/common';
+import { NgClass, NgIf } from '@angular/common';
 import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-reset-password',
   standalone: true,
-  imports: [FooterComponent, NgClass],
+  imports: [FooterComponent, NgClass, NgIf],
   templateUrl: './reset-password.component.html',
-  styleUrls: ['./reset-password.component.scss']
+  styleUrls: ['./reset-password.component.scss'],
 })
 export class ResetPasswordComponent {
   constructor(private router: Router, private userService: UserService) {}
@@ -21,7 +21,8 @@ export class ResetPasswordComponent {
 
   isFilled: boolean = false;
 
-  isEmailFilled:boolean = false;
+  isEmailFilled: boolean = false;
+  isEmailSent: boolean = false;
 
   arrowBack(state: string) {
     if (state === 'hover') {
@@ -50,8 +51,8 @@ export class ResetPasswordComponent {
       this.userEmailSrc = value
         ? '../../assets/img/mail-active.png'
         : '../../assets/img/mail.png';
-        const emailPattern = /\S+@\S+\.\S+/;
-        this.isEmailFilled = emailPattern.test(this.userEmail);
+      const emailPattern = /\S+@\S+\.\S+/;
+      this.isEmailFilled = emailPattern.test(this.userEmail);
     }
     this.enableButton();
   }
@@ -61,14 +62,15 @@ export class ResetPasswordComponent {
   }
 
   navigateToLogin() {
-    this.router.navigate(['/login']); // Hier kannst du den gewünschten Pfad angeben
+    this.router.navigate(['/login']);
   }
 
   async navigateToNewPassword() {
     await this.userService.sendPasswordResetEmail(this.userEmail);
-    alert('Passwort-Reset-Link wurde an die E-Mail gesendet.');
+    this.isEmailSent = true;
+    setTimeout(() => {
+      this.isEmailSent = false;
+      this.navigateToLogin();
+    }, 4000);
   }
 }
-
-
-
