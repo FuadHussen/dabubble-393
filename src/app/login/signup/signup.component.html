@@ -38,7 +38,7 @@
           />
         </div>
         <div class="error-message">
-          <p *ngIf="!isNameFilled">*Bitte einen Vor und Nachname</p>
+          <p *ngIf="isNameTyped && !isNameFilled">*Bitte einen Vor und Nachname</p>
         </div>
         <!-- mail Input -->
         <div class="email-input">
@@ -57,7 +57,7 @@
           />
         </div>
         <div class="error-message">
-          <p *ngIf="!isEmailFilled">
+          <p *ngIf="isEmailTyped && !isEmailFilled">
             *Diese E-Mail-Adresse ist leider ungültig.
           </p>
         </div>
@@ -79,7 +79,7 @@
         </div>
 
         <div class="error-message">
-          <p *ngIf="!isPasswordFilled">Bitte geben Sie ein Password ein.</p>
+          <p *ngIf="isPasswordTyped && !isPasswordFilled">Bitte geben Sie ein Password ein.</p>
         </div>
 
         <!-- Checkbox -->

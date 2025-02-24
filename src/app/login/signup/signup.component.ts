@@ -19,7 +19,7 @@ import { UserService } from '../../services/user.service';
   standalone: true,
   imports: [FooterComponent, NgClass, CommonModule],
   templateUrl: './signup.component.html',
-  styleUrls: ['./signup.component.scss']
+  styleUrls: ['./signup.component.scss'],
 })
 export class SignupComponent {
   private auth: Auth = inject(Auth);
@@ -46,6 +46,10 @@ export class SignupComponent {
   isEmailFilled: boolean = false;
   isPasswordFilled: boolean = false;
 
+  isNameTyped: boolean = false;
+  isEmailTyped: boolean = false;
+  isPasswordTyped: boolean = false;
+
   arrowBack(state: string) {
     if (state === 'hover') {
       this.arrowBackSrc = '../../../assets/img/arrow-back-active.png';
@@ -66,10 +70,13 @@ export class SignupComponent {
 
   onBlur(field: string): void {
     if (field === 'userName' && !this.userName) {
+      this.isNameTyped = true;
       this.userNameSrc = '../../assets/img/person.png';
     } else if (field === 'userEmail' && !this.userEmail) {
+      this.isEmailTyped = true;
       this.userEmailSrc = '../../assets/img/mail.png';
     } else if (field === 'userPassword' && !this.userPassword) {
+      this.isPasswordTyped = true;
       this.userPasswordSrc = '../../assets/img/lock.png';
     }
   }
@@ -118,7 +125,7 @@ export class SignupComponent {
       this.checkboxIsCkecked &&
       this.isPasswordFilled &&
       this.isNameFilled &&
-      this.isEmailFilled; 
+      this.isEmailFilled;
   }
 
   async createUser() {
