@@ -98,11 +98,9 @@ export class LoginComponent {
   private auth: Auth = inject(Auth);
 
   constructor(private router: Router, private userService: UserService) {
-    // Initialisiere isMobile beim Komponenten-Start
     this.checkScreenSize();
   }
 
-  // Überprüfe Bildschirmgröße bei Initialisierung und Resize
   @HostListener('window:resize', ['$event'])
   onResize() {
     this.checkScreenSize();
@@ -156,11 +154,6 @@ export class LoginComponent {
       this.setEndState();
       sessionStorage.setItem('introPlayed', 'true');
     }, 1400);
-  }
-
-  resetIntro() {
-    sessionStorage.removeItem('introPlayed'); // Entferne den gespeicherten Wert
-    location.reload(); // Lade die Seite neu, um die Animation erneut zu starten
   }
 
   userEmail: string = '';
@@ -263,7 +256,6 @@ export class LoginComponent {
       const channelMembersRef = collection(this.firestore, 'channelMembers');
       const messagesRef = collection(this.firestore, 'messages');
 
-      // Prüfe ob der Front-End-Team Channel existiert
       const channelQuery = query(
         channelsRef,
         where('name', '==', 'Front-End-Team')
@@ -273,7 +265,6 @@ export class LoginComponent {
       if (!existingChannels.empty) {
         const channelId = existingChannels.docs[0].id;
 
-        // Prüfe ob der User bereits Mitglied ist
         const memberQuery = query(
           channelMembersRef,
           where('channelId', '==', channelId),
@@ -281,9 +272,7 @@ export class LoginComponent {
         );
         const memberSnapshot = await getDocs(memberQuery);
 
-        // Wenn der User noch nicht Mitglied ist, füge ihn hinzu
         if (memberSnapshot.empty) {
-          // Füge den User als Mitglied hinzu
           const membership = {
             channelId: channelId,
             userId: currentUser.uid,
@@ -291,7 +280,6 @@ export class LoginComponent {
           };
           await addDoc(channelMembersRef, membership);
 
-          // Füge eine Beitrittsnachricht hinzu
           const joinMessage = {
             text: 'Hallo zusammen! Ich bin neu hier und freue mich auf die Zusammenarbeit!',
             userId: currentUser.uid,
@@ -309,7 +297,6 @@ export class LoginComponent {
   }
 
   guestSucess() {
-    // Prüfe die Bildschirmgröße direkt vor dem Gäste-Login
     this.checkScreenSize();
     console.log('Guest login attempt, isMobile:', this.isMobile);
 
@@ -355,11 +342,10 @@ export class LoginComponent {
       }
       console.log('Current user:', currentUser);
 
-      const guestUserId = 'a4QeEY8CNEd6CZ2KwQZVCBhlJ2z1'; // Gäste-Login ID
-      const sofiasId = 'a4QeEY8CNEd6CZ2KwQZVCBhlJ2z0'; // Sofia's ID
-      const saschasId = 'NbMgkSxq3fULESFz01t7Sk7jDxw2'; // Sascha's ID
+      const guestUserId = 'a4QeEY8CNEd6CZ2KwQZVCBhlJ2z1';
+      const sofiasId = 'a4QeEY8CNEd6CZ2KwQZVCBhlJ2z0';
+      const saschasId = 'NbMgkSxq3fULESFz01t7Sk7jDxw2';
 
-      // Prüfe ob der Front-End-Team Channel existiert
       const channelQuery = query(
         channelsRef,
         where('name', '==', 'Front-End-Team')
@@ -374,7 +360,7 @@ export class LoginComponent {
 
       if (existingChannels.empty) {
         console.log('Creating new Front-End-Team channel');
-        // Erstelle den Channel neu
+
         const newChannel = {
           name: 'Front-End-Team',
           description: 'Channel für Frontend-Entwicklung',
@@ -387,7 +373,6 @@ export class LoginComponent {
           channelId = channelDoc.id;
           console.log('Channel created with ID:', channelId);
 
-          // Füge Sofia als Mitglied hinzu
           const sofiaMembership = {
             channelId: channelId,
             userId: sofiasId,
@@ -396,7 +381,6 @@ export class LoginComponent {
           await addDoc(channelMembersRef, sofiaMembership);
           console.log('Sofia added as member');
 
-          // Füge Sascha als Mitglied hinzu
           const saschaMembership = {
             channelId: channelId,
             userId: saschasId,
@@ -405,7 +389,6 @@ export class LoginComponent {
           await addDoc(channelMembersRef, saschaMembership);
           console.log('Sascha added as member');
 
-          // Füge die Willkommensnachricht von Sofia hinzu
           const welcomeMessage = {
             text: 'Willkommen im Front-End-Team! Hier besprechen wir alle Themen rund um die Benutzeroberfläche.',
             userId: sofiasId,
@@ -417,7 +400,6 @@ export class LoginComponent {
           await addDoc(messagesRef, welcomeMessage);
           console.log('Welcome message added');
 
-          // Füge Saschas Begrüßung hinzu
           const saschaMessage = {
             text: 'Danke für die Einladung! Ich freue mich auf die Zusammenarbeit.',
             userId: saschasId,
@@ -437,7 +419,6 @@ export class LoginComponent {
         console.log('Using existing channel with ID:', channelId);
       }
 
-      // Prüfe ob der Gäste-Login bereits Mitglied ist
       const guestMemberQuery = query(
         channelMembersRef,
         where('channelId', '==', channelId),
@@ -448,7 +429,7 @@ export class LoginComponent {
 
       if (guestMemberSnapshot.empty) {
         console.log('Adding guest as member');
-        // Füge den Gäste-Login als Mitglied hinzu
+
         const guestMembership = {
           channelId: channelId,
           userId: guestUserId,
@@ -456,7 +437,6 @@ export class LoginComponent {
         };
         await addDoc(channelMembersRef, guestMembership);
 
-        // Füge die Begrüßungsnachricht des Gasts hinzu
         const guestMessage = {
           text: 'Danke für die Einladung! Ich freue mich darauf, mehr über das Projekt zu erfahren.',
           userId: guestUserId,
@@ -480,20 +460,18 @@ export class LoginComponent {
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(this.auth, provider);
-      
+
       if (result.user) {
-        // Überprüfe ob User in Firestore existiert
         const userDoc = doc(this.firestore, 'users', result.user.uid);
         const userSnapshot = await getDoc(userDoc);
 
         if (!userSnapshot.exists()) {
-          // User existiert nicht in Firestore, also anlegen
           const userData = {
             uid: result.user.uid,
             email: result.user.email,
             username: result.user.displayName,
             avatar: result.user.photoURL,
-            createdAt: new Date()
+            createdAt: new Date(),
           };
 
           await setDoc(userDoc, userData);
@@ -502,7 +480,6 @@ export class LoginComponent {
           console.log('User existiert bereits:', userSnapshot.data());
         }
 
-        // Weiterleitung nach erfolgreicher Anmeldung/Überprüfung
         await this.router.navigate(['/workspace']);
       }
     } catch (error) {

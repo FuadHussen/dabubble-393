@@ -4,44 +4,47 @@
     <span class="logo-name">DABubble</span>
   </div>
 
-
-<div class="main-container">
-  <div class="form">
-    <div class="arrow-back">
-      <img
-        (click)="backToRegister()"
-        [src]="arrowBackSrc"
-        alt="back"
-        (mouseover)="arrowBack('hover')"
-        (mouseout)="arrowBack('default')"
-      />
-    </div>
-
-    <h2>Wähle deinen Avatar</h2>
-
-    <!-- Input -->
-
-    <div class="current-avatar-container">
-      <img [src]="currentAvatarSrc" />
-    </div>
-    <div class="name">
-      <h3>Vorname Nachname</h3>
-      <h4>Aus der Liste wählen</h4>
-    </div>
-    <div class="avatar-bar">
-      <div *ngFor="let avatarImage of avatarImages">
+  <div class="main-container">
+    <div class="form">
+      <div class="arrow-back">
         <img
-          [src]="avatarImage"
-          alt="Avatar"
-          (click)="selectAvatar(avatarImage)"
+          (click)="backToRegister()"
+          [src]="arrowBackSrc"
+          alt="back"
+          (mouseover)="arrowBack('hover')"
+          (mouseout)="arrowBack('default')"
         />
       </div>
-    </div>
-    <!-- Buttons -->
-    <div class="buttons-container">
-      <button (click)="saveAvatar()" [disabled]="!isFilled" [ngClass]="{ 'primary-btn': isFilled, 'disabled-btn': !isFilled }">Weiter</button>
+
+      <h2>Wähle deinen Avatar</h2>
+
+      <div class="current-avatar-container">
+        <img [src]="currentAvatarSrc" />
+      </div>
+      <div class="name">
+        <h3>Vorname Nachname</h3>
+        <h4>Aus der Liste wählen</h4>
+      </div>
+      <div class="avatar-bar">
+        <div *ngFor="let avatarImage of avatarImages">
+          <img
+            [src]="avatarImage"
+            alt="Avatar"
+            (click)="selectAvatar(avatarImage)"
+          />
+        </div>
+      </div>
+
+      <div class="buttons-container">
+        <button
+          (click)="saveAvatar()"
+          [disabled]="!isFilled"
+          [ngClass]="{ 'primary-btn': isFilled, 'disabled-btn': !isFilled }"
+        >
+          Weiter
+        </button>
+      </div>
     </div>
   </div>
-</div>
   <app-footer></app-footer>
 </div>
