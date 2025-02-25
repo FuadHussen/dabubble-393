@@ -17,13 +17,16 @@
   <mat-card class="chat-card">
     <mat-card-header class="chat-header">
       <div class="channel-info">
-        <mat-card-title class="channel-title-container">
+        <mat-card-title 
+          class="channel-title-container"
+          (click)="openProfile($event)"
+          [style.cursor]="isDirectMessage ? 'pointer' : 'default'">
           <!-- Neue Nachricht Header -->
           <div class="new-message-container" *ngIf="isNewChat">
             <div class="channel-name">Neue Nachricht</div>
           </div>
           <!-- Normaler Channel/DM Header -->
-          <div class="channel-name" (click)="openSettings()" *ngIf="!isNewChat">
+          <div class="channel-name" *ngIf="!isNewChat">
             <mat-icon class="material-symbols-outlined" *ngIf="!isDirectMessage">tag</mat-icon>
             <div class="avatar-container" *ngIf="isDirectMessage">
               <img *ngIf="selectedUserAvatar" 

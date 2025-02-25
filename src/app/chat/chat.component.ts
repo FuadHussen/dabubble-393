@@ -358,4 +358,13 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
       this.chatService.setIsDirectMessage(true);
     }
   }
+
+  openProfile(event: Event) {
+    if (this.isDirectMessage) {
+      event.stopPropagation();
+      this.isProfileOpen = true;
+    } else {
+      this.openSettings();
+    }
+  }
 }
