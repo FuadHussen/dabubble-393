@@ -317,11 +317,9 @@ export class ChatService {
 
   // Methode zum Laden der Nachrichten
   async loadMessages(channelId: string | null, recipientId: string | null) {
-    console.log('LoadMessages called with:', { channelId, recipientId });
     
     // Erst alte Subscription beenden
     if (this.messageSubscription) {
-      console.log('Unsubscribing from old subscription');
       this.messageSubscription.unsubscribe();
     }
 
@@ -329,16 +327,13 @@ export class ChatService {
     let q: Query<DocumentData>;
 
     if (channelId) {
-      console.log('Creating channel query for:', channelId);
       q = query(
         messagesRef,
         where('channelId', '==', channelId),
         orderBy('timestamp', 'asc')
       );
     } else if (recipientId) {
-      console.log('Creating DM query for recipient:', recipientId);
       const currentUser = await this.getCurrentUser();
-      console.log('Current user:', currentUser.uid);
       q = query(
         messagesRef,
         where('recipientId', 'in', [recipientId, currentUser.uid]),
@@ -346,19 +341,12 @@ export class ChatService {
         orderBy('timestamp', 'asc')
       );
     } else {
-      console.log('Creating fallback query');
       q = query(messagesRef, orderBy('timestamp', 'asc'));
     }
 
     // Neue Subscription speichern
     this.messageSubscription = collectionData(q).subscribe(messages => {
-      console.log('Received messages:', messages.length);
-      console.log('Message details:', messages.map(m => ({
-        id: m['id'],
-        userId: m['userId'],
-        channelId: m['channelId'],
-        recipientId: m['recipientId']
-      })));
+      
       
       // Deduplizierung der Nachrichten basierend auf ID
       const uniqueMessages = Array.from(
@@ -366,7 +354,6 @@ export class ChatService {
       );
       
       if (messages.length !== uniqueMessages.length) {
-        console.log('Duplicates found and removed:', messages.length - uniqueMessages.length);
       }
       
       this.messagesSubject.next(uniqueMessages as Message[]);
@@ -375,9 +362,7 @@ export class ChatService {
 
   // Cleanup Methode
   cleanup() {
-    console.log('Cleanup called');
     if (this.messageSubscription) {
-      console.log('Unsubscribing in cleanup');
       this.messageSubscription.unsubscribe();
     }
     this.messagesSubject.next([]);

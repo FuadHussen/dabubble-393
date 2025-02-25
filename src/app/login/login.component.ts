@@ -109,7 +109,6 @@ export class LoginComponent {
   private checkScreenSize() {
     this.isMobile = window.innerWidth <= 1175;
     this.containerState = this.isMobile ? 'mobileStart' : 'start';
-    console.log('Screen size checked:', this.isMobile ? 'mobile' : 'desktop');
   }
 
   bgState = 'visible';
@@ -215,7 +214,6 @@ export class LoginComponent {
   loginSucess() {
     // Prüfe die Bildschirmgröße direkt vor dem Login
     this.checkScreenSize();
-    console.log('Login attempt, isMobile:', this.isMobile);
 
     this.userService
       .login(this.userEmail, this.userPassword)
@@ -223,18 +221,14 @@ export class LoginComponent {
         await this.addUserToFrontEndTeam();
 
         if (this.isMobile) {
-          console.log('Navigating to workspace (mobile)');
           await this.router.navigate(['/workspace']);
         } else {
-          console.log('Checking channels for desktop navigation');
           const channelsRef = collection(this.firestore, 'channels');
           const querySnapshot = await getDocs(channelsRef);
           if (!querySnapshot.empty) {
             const firstChannel = querySnapshot.docs[0];
-            console.log('Navigating to channel:', firstChannel.id);
             await this.router.navigate(['/workspace/channel', firstChannel.id]);
           } else {
-            console.log('No channels found, navigating to workspace');
             await this.router.navigate(['/workspace']);
           }
         }
@@ -298,7 +292,6 @@ export class LoginComponent {
 
   guestSucess() {
     this.checkScreenSize();
-    console.log('Guest login attempt, isMobile:', this.isMobile);
 
     this.userService
       .login('gäste@login.login', 'gästelogin')
@@ -306,18 +299,14 @@ export class LoginComponent {
         await this.initializeGuestChat();
 
         if (this.isMobile) {
-          console.log('Navigating to workspace (mobile guest)');
           await this.router.navigate(['/workspace']);
         } else {
-          console.log('Checking channels for desktop navigation (guest)');
           const channelsRef = collection(this.firestore, 'channels');
           const querySnapshot = await getDocs(channelsRef);
           if (!querySnapshot.empty) {
             const firstChannel = querySnapshot.docs[0];
-            console.log('Navigating to channel:', firstChannel.id);
             await this.router.navigate(['/workspace/channel', firstChannel.id]);
           } else {
-            console.log('No channels found, navigating to workspace');
             await this.router.navigate(['/workspace']);
           }
         }
@@ -330,7 +319,6 @@ export class LoginComponent {
 
   private async initializeGuestChat() {
     try {
-      console.log('Starting initializeGuestChat');
       const messagesRef = collection(this.firestore, 'messages');
       const channelsRef = collection(this.firestore, 'channels');
       const channelMembersRef = collection(this.firestore, 'channelMembers');
@@ -340,7 +328,6 @@ export class LoginComponent {
         console.error('No user found');
         return;
       }
-      console.log('Current user:', currentUser);
 
       const guestUserId = 'a4QeEY8CNEd6CZ2KwQZVCBhlJ2z1';
       const sofiasId = 'a4QeEY8CNEd6CZ2KwQZVCBhlJ2z0';
@@ -351,15 +338,11 @@ export class LoginComponent {
         where('name', '==', 'Front-End-Team')
       );
       const existingChannels = await getDocs(channelQuery);
-      console.log(
-        'Existing channels:',
-        existingChannels.empty ? 'No channels found' : 'Channel exists'
-      );
+
 
       let channelId;
 
       if (existingChannels.empty) {
-        console.log('Creating new Front-End-Team channel');
 
         const newChannel = {
           name: 'Front-End-Team',
@@ -371,7 +354,6 @@ export class LoginComponent {
         try {
           const channelDoc = await addDoc(channelsRef, newChannel);
           channelId = channelDoc.id;
-          console.log('Channel created with ID:', channelId);
 
           const sofiaMembership = {
             channelId: channelId,
@@ -379,7 +361,6 @@ export class LoginComponent {
             joinedAt: new Date(),
           };
           await addDoc(channelMembersRef, sofiaMembership);
-          console.log('Sofia added as member');
 
           const saschaMembership = {
             channelId: channelId,
@@ -387,7 +368,6 @@ export class LoginComponent {
             joinedAt: new Date(),
           };
           await addDoc(channelMembersRef, saschaMembership);
-          console.log('Sascha added as member');
 
           const welcomeMessage = {
             text: 'Willkommen im Front-End-Team! Hier besprechen wir alle Themen rund um die Benutzeroberfläche.',
@@ -398,7 +378,6 @@ export class LoginComponent {
             recipientId: null,
           };
           await addDoc(messagesRef, welcomeMessage);
-          console.log('Welcome message added');
 
           const saschaMessage = {
             text: 'Danke für die Einladung! Ich freue mich auf die Zusammenarbeit.',
@@ -409,14 +388,12 @@ export class LoginComponent {
             recipientId: null,
           };
           await addDoc(messagesRef, saschaMessage);
-          console.log('Sascha message added');
         } catch (error) {
           console.error('Error during channel creation:', error);
           throw error;
         }
       } else {
         channelId = existingChannels.docs[0].id;
-        console.log('Using existing channel with ID:', channelId);
       }
 
       const guestMemberQuery = query(
@@ -425,10 +402,8 @@ export class LoginComponent {
         where('userId', '==', guestUserId)
       );
       const guestMemberSnapshot = await getDocs(guestMemberQuery);
-      console.log('Guest is already member:', !guestMemberSnapshot.empty);
 
       if (guestMemberSnapshot.empty) {
-        console.log('Adding guest as member');
 
         const guestMembership = {
           channelId: channelId,
@@ -446,10 +421,8 @@ export class LoginComponent {
           recipientId: null,
         };
         await addDoc(messagesRef, guestMessage);
-        console.log('Guest message added');
       }
 
-      console.log('initializeGuestChat completed successfully');
     } catch (error) {
       console.error('Error in initializeGuestChat:', error);
       throw error;
@@ -475,9 +448,6 @@ export class LoginComponent {
           };
 
           await setDoc(userDoc, userData);
-          console.log('Neuer User in Firestore angelegt:', userData);
-        } else {
-          console.log('User existiert bereits:', userSnapshot.data());
         }
 
         await this.router.navigate(['/workspace']);

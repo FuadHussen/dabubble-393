@@ -284,7 +284,6 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     this.chatService.isNewChatMode$.subscribe(isNewChat => {
-      console.log('CHAT: NewChat mode changed:', isNewChat);
       this.isNewChat = isNewChat;
       if (this.isMobile) {
         this.showChat = true;
@@ -362,7 +361,6 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // Subscription für selectedUser
     this.chatService.selectedUser$.subscribe(userId => {
-      console.log('CHAT: Selected user changed:', userId);
       if (userId && this.isMobile) {
         this.showChat = true;
       }
@@ -716,7 +714,6 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async selectResult(result: any) {
-    console.log('CHAT: selectResult called with:', result);
     
     if (result.type === 'user') {
       // Erst die Navigation und User-Selektion
@@ -893,7 +890,6 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onBackClick() {
-    console.log('CHAT: Back button clicked');
     this.showChat = false;
     this.isNewChat = false;
     this.backClicked.emit();

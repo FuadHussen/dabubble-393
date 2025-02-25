@@ -98,13 +98,11 @@ export class AddChannelMembersComponent implements OnInit {
         );
         
         const memberSnapshot = await getDocs(memberQuery);
-        console.log(`Channel ${channelData['name']} raw members:`, memberSnapshot.docs.map(d => d.data())); // Debug-Log
         
         // Zähle nur einzigartige Benutzer
         const uniqueMembers = new Set();
         memberSnapshot.docs.forEach(memberDoc => {
           const memberData = memberDoc.data() as ChannelMember;
-          console.log(`Member data for ${channelData['name']}:`, memberData); // Debug-Log
           
           // Prüfe ob das Mitglied nicht gelöscht wurde und eine userId hat
           if (memberData['userId'] && memberData['deleted'] !== true) {
@@ -112,7 +110,6 @@ export class AddChannelMembersComponent implements OnInit {
           }
         });
 
-        console.log(`Channel ${channelData['name']} unique members:`, uniqueMembers); // Debug-Log
 
         return {
           id: doc.id,
@@ -124,7 +121,6 @@ export class AddChannelMembersComponent implements OnInit {
 
       this.existingChannels = await Promise.all(channelsPromises);
       
-      console.log('Final channels data:', this.existingChannels); // Debug-Log
     } catch (error) {
       console.error('Error loading channels:', error);
     }

@@ -294,7 +294,6 @@ export class ThreadComponent implements OnInit, OnDestroy {
   }
 
   close() {
-    console.log('Thread closing, cleaning up subscriptions');
     this.unsubscribes.forEach(unsubscribe => unsubscribe());
     this.unsubscribes = [];
     this.closeThread.emit();
@@ -436,7 +435,6 @@ export class ThreadComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     // Cleanup aller Unsubscribe-Funktionen
-    console.log('Thread component destroying, cleaning up subscriptions');
     this.unsubscribes.forEach(unsubscribe => unsubscribe());
     this.unsubscribes = [];
   }
