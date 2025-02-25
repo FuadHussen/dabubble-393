@@ -26,10 +26,10 @@ export class NewPasswordComponent implements OnInit {
     // Extrahiere den oobCode aus der URL
     this.route.paramMap.subscribe((params) => {
       this.oobCode = params.get('oobCode');
-      // if (!this.oobCode) {
-      //   // Falls kein oobCode in der URL ist, sollte der Benutzer zum Login weitergeleitet werden
-      //   this.router.navigate(['/login']);
-      // }
+      if (!this.oobCode) {
+        // Falls kein oobCode in der URL ist, sollte der Benutzer zum Login weitergeleitet werden
+        this.router.navigate(['/login']);
+      }
     });
   }
 
@@ -73,6 +73,6 @@ export class NewPasswordComponent implements OnInit {
   }
 
   navigateToLogin() {
-    this.router.navigate(['/login']); // Hier kannst du den gewünschten Pfad angeben
+    this.router.navigate(['/login']); 
   }
 }
