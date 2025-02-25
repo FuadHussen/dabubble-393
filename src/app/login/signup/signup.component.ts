@@ -32,7 +32,7 @@ export class SignupComponent {
   userEmail: string = '';
   userPassword: string = '';
 
-  arrowBackSrc: string = '../assets/img/arrow-back.png';
+  arrowBackSrc: string = 'assets/img/arrow-back.png';
   userNameSrc: string = 'assets/img/person.png';
   userEmailSrc: string = 'assets/img/mail.png';
   userPasswordSrc: string = 'assets/img/lock.png';
@@ -52,9 +52,9 @@ export class SignupComponent {
 
   arrowBack(state: string) {
     if (state === 'hover') {
-      this.arrowBackSrc = '../assets/img/arrow-back-active.png';
+      this.arrowBackSrc = 'assets/img/arrow-back-active.png';
     } else {
-      this.arrowBackSrc = '../assets/img/arrow-back.png';
+      this.arrowBackSrc = 'assets/img/arrow-back.png';
     }
   }
 

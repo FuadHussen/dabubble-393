@@ -17,13 +17,13 @@ export class PrivacyPolicyComponent {
     private route: ActivatedRoute
   ) {}
 
-  arrowBackSrc: string = '../../assets/img/arrow-back.png';
+  arrowBackSrc: string = 'assets/img/arrow-back.png';
 
   arrowBack(state: string) {
     if (state === 'hover') {
-      this.arrowBackSrc = '../../assets/img/arrow-back-active.png';
+      this.arrowBackSrc = 'assets/img/arrow-back-active.png';
     } else {
-      this.arrowBackSrc = '../../assets/img/arrow-back.png';
+      this.arrowBackSrc = 'assets/img/arrow-back.png';
     }
   }
 
