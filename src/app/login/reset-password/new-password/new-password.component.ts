@@ -24,6 +24,7 @@ export class NewPasswordComponent implements OnInit {
   arrowBackSrc: string = 'assets/img/arrow-back.png';
 
   isFilled: boolean = false;
+  isPasswordChange: boolean = false;
 
   ngOnInit() {
     // Extrahiere den oobCode aus der URL
@@ -71,12 +72,12 @@ export class NewPasswordComponent implements OnInit {
           this.oobCode,
           this.userPasswordControl
         );
-        alert('Passwort erfolgreich geändert.');
-        this.router.navigate(['/login']); // Weiterleitung zur Login-Seite
+        this.isPasswordChange = true;
+        setTimeout(() => {
+          this.isPasswordChange = false;
+          this.navigateToLogin();
+        }, 4000);
       } catch (error) {
-        alert(
-          'Fehler beim Zurücksetzen des Passworts. Versuchen Sie es erneut.'
-        );
         console.error(error);
       }
     }
