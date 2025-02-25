@@ -32,11 +32,11 @@ export class SignupComponent {
   userEmail: string = '';
   userPassword: string = '';
 
-  arrowBackSrc: string = '../../../assets/img/arrow-back.png';
-  userNameSrc: string = '../../assets/img/person.png';
-  userEmailSrc: string = '../../assets/img/mail.png';
-  userPasswordSrc: string = '../../assets/img/lock.png';
-  checkboxSrc: string = '../../assets/img/checkbox.png';
+  arrowBackSrc: string = '../assets/img/arrow-back.png';
+  userNameSrc: string = 'assets/img/person.png';
+  userEmailSrc: string = 'assets/img/mail.png';
+  userPasswordSrc: string = 'assets/img/lock.png';
+  checkboxSrc: string = 'assets/img/checkbox.png';
 
   checkboxIsCkecked: boolean = false;
   checkboxIsHovered: boolean = false;
@@ -52,32 +52,32 @@ export class SignupComponent {
 
   arrowBack(state: string) {
     if (state === 'hover') {
-      this.arrowBackSrc = '../../../assets/img/arrow-back-active.png';
+      this.arrowBackSrc = '../assets/img/arrow-back-active.png';
     } else {
-      this.arrowBackSrc = '../../../assets/img/arrow-back.png';
+      this.arrowBackSrc = '../assets/img/arrow-back.png';
     }
   }
 
   onFocus(field: string): void {
     if (field === 'userName' && !this.userName) {
-      this.userNameSrc = '../../assets/img/person-active.png';
+      this.userNameSrc = 'assets/img/person-active.png';
     } else if (field === 'userEmail' && !this.userEmail) {
-      this.userEmailSrc = '../../assets/img/mail-active.png';
+      this.userEmailSrc = 'assets/img/mail-active.png';
     } else if (field === 'userPassword' && !this.userPassword) {
-      this.userPasswordSrc = '../../assets/img/lock-active.png';
+      this.userPasswordSrc = 'assets/img/lock-active.png';
     }
   }
 
   onBlur(field: string): void {
     if (field === 'userName' && !this.userName) {
       this.isNameTyped = true;
-      this.userNameSrc = '../../assets/img/person.png';
+      this.userNameSrc = 'assets/img/person.png';
     } else if (field === 'userEmail' && !this.userEmail) {
       this.isEmailTyped = true;
-      this.userEmailSrc = '../../assets/img/mail.png';
+      this.userEmailSrc = 'assets/img/mail.png';
     } else if (field === 'userPassword' && !this.userPassword) {
       this.isPasswordTyped = true;
-      this.userPasswordSrc = '../../assets/img/lock.png';
+      this.userPasswordSrc = 'assets/img/lock.png';
     }
   }
 
@@ -86,21 +86,21 @@ export class SignupComponent {
     if (field === 'userName') {
       this.userName = value;
       this.userNameSrc = value
-        ? '../../assets/img/person-active.png'
-        : '../../assets/img/person.png';
+        ? 'assets/img/person-active.png'
+        : 'assets/img/person.png';
       this.isNameFilled = this.userName.trim().split(' ').length >= 2;
     } else if (field === 'userEmail') {
       this.userEmail = value;
       this.userEmailSrc = value
-        ? '../../assets/img/mail-active.png'
-        : '../../assets/img/mail.png';
+        ? 'assets/img/mail-active.png'
+        : 'assets/img/mail.png';
       const emailPattern = /\S+@\S+\.\S+/;
       this.isEmailFilled = emailPattern.test(this.userEmail);
     } else if (field === 'userPassword') {
       this.userPassword = value;
       this.userPasswordSrc = value
-        ? '../../assets/img/lock-active.png'
-        : '../../assets/img/lock.png';
+        ? 'assets/img/lock-active.png'
+        : 'assets/img/lock.png';
       this.isPasswordFilled = this.userPassword.length >= 6;
     }
     this.enableButton();
@@ -158,13 +158,13 @@ export class SignupComponent {
 
   checkboxChangeImage(): void {
     if (this.checkboxIsCkecked && this.checkboxIsHovered) {
-      this.checkboxSrc = '../../../assets/img/checkbox-checked-hovered.png';
+      this.checkboxSrc = 'assets/img/checkbox-checked-hovered.png';
     } else if (this.checkboxIsCkecked) {
-      this.checkboxSrc = '../../../assets/img/checkbox-checked.png';
+      this.checkboxSrc = 'assets/img/checkbox-checked.png';
     } else if (this.checkboxIsHovered) {
-      this.checkboxSrc = '../../../assets/img/checkbox-hovered.png';
+      this.checkboxSrc = 'assets/img/checkbox-hovered.png';
     } else {
-      this.checkboxSrc = '../../../assets/img/checkbox.png';
+      this.checkboxSrc = 'assets/img/checkbox.png';
     }
   }
 

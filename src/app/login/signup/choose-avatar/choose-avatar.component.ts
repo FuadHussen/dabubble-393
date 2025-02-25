@@ -20,25 +20,25 @@ export class ChooseAvatarComponent {
   private firestore: Firestore = inject(Firestore); // Firestore importieren
   private auth: Auth = inject(Auth); // Firebase Auth importieren
 
-  arrowBackSrc: string = '../../../assets/img/arrow-back.png';
-  currentAvatarSrc: string = '../../../assets/img/default-avatar.png';
+  arrowBackSrc: string = 'assets/img/arrow-back.png';
+  currentAvatarSrc: string = 'assets/img/default-avatar.png';
 
   isFilled: boolean = false;
 
   avatarImages: string[] = [
-    '../../../assets/img/avatars/frederik-beck-avatar.png',
-    '../../../assets/img/avatars/elias-neumann-avatar.png',
-    '../../../assets/img/avatars/elise-roth-avatar.png',
-    '../../../assets/img/avatars/noah-braun-avatar.png',
-    '../../../assets/img/avatars/sofia-mueller-avatar.png',
-    '../../../assets/img/avatars/steffen-hoffmann-avatar.png',
+    'assets/img/avatars/frederik-beck-avatar.png',
+    'assets/img/avatars/elias-neumann-avatar.png',
+    'assets/img/avatars/elise-roth-avatar.png',
+    'assets/img/avatars/noah-braun-avatar.png',
+    'assets/img/avatars/sofia-mueller-avatar.png',
+    'assets/img/avatars/steffen-hoffmann-avatar.png',
   ];
 
   arrowBack(state: string) {
     if (state === 'hover') {
-      this.arrowBackSrc = '../../../assets/img/arrow-back-active.png';
+      this.arrowBackSrc = 'assets/img/arrow-back-active.png';
     } else {
-      this.arrowBackSrc = '../../../assets/img/arrow-back.png';
+      this.arrowBackSrc = 'assets/img/arrow-back.png';
     }
   }
 
@@ -49,7 +49,7 @@ export class ChooseAvatarComponent {
 
   enableButton() {
     this.isFilled =
-      this.currentAvatarSrc !== '../../../assets/img/default-avatar.png';
+      this.currentAvatarSrc !== 'assets/img/default-avatar.png';
   }
 
   async saveAvatar() {

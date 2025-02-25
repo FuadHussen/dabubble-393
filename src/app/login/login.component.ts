@@ -161,23 +161,23 @@ export class LoginComponent {
   emailNotExist: boolean = false;
   passwordNotExist: boolean = false;
 
-  userNameSrc: string = '../../assets/img/person.png';
-  userEmailSrc: string = '../../assets/img/mail.png';
-  userPasswordSrc: string = '../../assets/img/lock.png';
+  userNameSrc: string = 'assets/img/person.png';
+  userEmailSrc: string = 'assets/img/mail.png';
+  userPasswordSrc: string = 'assets/img/lock.png';
 
   onFocus(field: string): void {
     if (field === 'userEmail' && !this.userEmail) {
-      this.userEmailSrc = '../../assets/img/mail-active.png';
+      this.userEmailSrc = 'assets/img/mail-active.png';
     } else if (field === 'userPassword' && !this.userPassword) {
-      this.userPasswordSrc = '../../assets/img/lock-active.png';
+      this.userPasswordSrc = 'assets/img/lock-active.png';
     }
   }
 
   onBlur(field: string): void {
     if (field === 'userEmail' && !this.userEmail) {
-      this.userEmailSrc = '../../assets/img/mail.png';
+      this.userEmailSrc = 'assets/img/mail.png';
     } else if (field === 'userPassword' && !this.userPassword) {
-      this.userPasswordSrc = '../../assets/img/lock.png';
+      this.userPasswordSrc = 'assets/img/lock.png';
     }
   }
 
@@ -186,13 +186,13 @@ export class LoginComponent {
     if (field === 'userEmail') {
       this.userEmail = value;
       this.userEmailSrc = value
-        ? '../../assets/img/mail-active.png'
-        : '../../assets/img/mail.png';
+        ? 'assets/img/mail-active.png'
+        : 'assets/img/mail.png';
     } else if (field === 'userPassword') {
       this.userPassword = value;
       this.userPasswordSrc = value
-        ? '../../assets/img/lock-active.png'
-        : '../../assets/img/lock.png';
+        ? 'assets/img/lock-active.png'
+        : 'assets/img/lock.png';
     }
     this.enableButton();
   }

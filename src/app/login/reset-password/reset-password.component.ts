@@ -16,8 +16,8 @@ export class ResetPasswordComponent {
 
   userEmail: string = '';
 
-  arrowBackSrc: string = '../../../assets/img/arrow-back.png';
-  userEmailSrc: string = '../../assets/img/mail.png';
+  arrowBackSrc: string = 'assets/img/arrow-back.png';
+  userEmailSrc: string = 'assets/img/mail.png';
 
   isFilled: boolean = false;
 
@@ -26,21 +26,21 @@ export class ResetPasswordComponent {
 
   arrowBack(state: string) {
     if (state === 'hover') {
-      this.arrowBackSrc = '../../../assets/img/arrow-back-active.png';
+      this.arrowBackSrc = 'assets/img/arrow-back-active.png';
     } else {
-      this.arrowBackSrc = '../../../assets/img/arrow-back.png';
+      this.arrowBackSrc = 'assets/img/arrow-back.png';
     }
   }
 
   onFocus(field: string): void {
     if (field === 'userEmail' && !this.userEmail) {
-      this.userEmailSrc = '../../assets/img/mail-active.png';
+      this.userEmailSrc = 'assets/img/mail-active.png';
     }
   }
 
   onBlur(field: string): void {
     if (field === 'userEmail' && !this.userEmail) {
-      this.userEmailSrc = '../../assets/img/mail.png';
+      this.userEmailSrc = 'assets/img/mail.png';
     }
   }
 
@@ -49,8 +49,8 @@ export class ResetPasswordComponent {
     if (field === 'userEmail') {
       this.userEmail = value;
       this.userEmailSrc = value
-        ? '../../assets/img/mail-active.png'
-        : '../../assets/img/mail.png';
+        ? 'assets/img/mail-active.png'
+        : 'assets/img/mail.png';
       const emailPattern = /\S+@\S+\.\S+/;
       this.isEmailFilled = emailPattern.test(this.userEmail);
     }
