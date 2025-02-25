@@ -58,11 +58,27 @@ export class AddMemberDialogComponent {
   async onSearch() {
     try {
       if (this.searchText.trim().length > 0) {
-        const users = await this.userService.searchUsers(
-          this.searchText.trim(),
-          this.currentMembers
-        );
-        this.searchResults = users;
+        // Hole alle Benutzer
+        const users = await this.userService.searchUsers(this.searchText.trim());
+        
+        // Normalisiere die IDs für den Vergleich
+        const normalizedCurrentMembers = this.currentMembers.map(id => id.trim());
+        
+        // Filtere die Ergebnisse
+        this.searchResults = users.filter(user => {
+          const normalizedUserId = user.uid.trim();
+          
+          const isAlreadyMember = normalizedCurrentMembers.some(memberId => 
+            memberId === normalizedUserId
+          );
+          
+          const isAlreadySelected = this.selectedUsers.some(selectedUser => 
+            selectedUser.uid === normalizedUserId
+          );
+          
+          return !isAlreadyMember && !isAlreadySelected;
+        });
+
       } else {
         this.searchResults = [];
       }
