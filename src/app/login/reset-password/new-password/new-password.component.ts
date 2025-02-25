@@ -7,13 +7,16 @@ import { confirmPasswordReset } from 'firebase/auth';
 @Component({
   selector: 'app-new-password',
   standalone: true,
-  imports: [FooterComponent, NgClass,NgIf, CommonModule],
+  imports: [FooterComponent, NgClass, NgIf, CommonModule],
   templateUrl: './new-password.component.html',
   styleUrl: './new-password.component.scss',
 })
 export class NewPasswordComponent implements OnInit {
-  constructor(private router: Router,    private route: ActivatedRoute,
-    private afAuth: Auth) {}
+  constructor(
+    private router: Router,
+    private route: ActivatedRoute,
+    private afAuth: Auth
+  ) {}
 
   userPassword: string = '';
   userPasswordControl: string = '';
@@ -24,13 +27,14 @@ export class NewPasswordComponent implements OnInit {
 
   ngOnInit() {
     // Extrahiere den oobCode aus der URL
-    this.route.queryParamMap.subscribe((params) => {
-      this.oobCode = params.get('oobCode');
-      if (!this.oobCode) {
-        // Falls kein oobCode in der URL ist, sollte der Benutzer zum Login weitergeleitet werden
-        this.router.navigate(['/login']);
-      }
-    });
+
+    this.oobCode = this.route.snapshot.queryParams['oobCode'];
+    console.log(this.oobCode);
+    if (!this.oobCode) {
+      // Falls kein oobCode in der URL ist, sollte der Benutzer zum Login weitergeleitet werden
+      console.log('kein oobCode vorhanden');
+      this.router.navigate(['/login']);
+    }
   }
 
   arrowBack(state: string) {
@@ -62,17 +66,23 @@ export class NewPasswordComponent implements OnInit {
     if (this.oobCode && this.userPassword === this.userPasswordControl) {
       try {
         // Bestätige den Reset-Code und setze das Passwort
-        await confirmPasswordReset(this.afAuth, this.oobCode, this.userPasswordControl);
+        await confirmPasswordReset(
+          this.afAuth,
+          this.oobCode,
+          this.userPasswordControl
+        );
         alert('Passwort erfolgreich geändert.');
         this.router.navigate(['/login']); // Weiterleitung zur Login-Seite
       } catch (error) {
-        alert('Fehler beim Zurücksetzen des Passworts. Versuchen Sie es erneut.');
+        alert(
+          'Fehler beim Zurücksetzen des Passworts. Versuchen Sie es erneut.'
+        );
         console.error(error);
       }
     }
   }
 
   navigateToLogin() {
-    this.router.navigate(['/login']); 
+    this.router.navigate(['/login']);
   }
 }
