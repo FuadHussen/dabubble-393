@@ -10,21 +10,21 @@ import { WorkspaceComponent } from './workspace/workspace.component';
 import { ChatComponent } from './chat/chat.component';
 
 export const routes: Routes = [
-    { path: '', redirectTo: 'login', pathMatch: 'full' },
-    { path: 'login', component: LoginComponent },
-    { path: 'reset-password', component: ResetPasswordComponent },
-    { path: 'new-password', component: NewPasswordComponent },
-    { path: 'signup', component: SignupComponent },
-    { path: 'choose-avatar', component: ChooseAvatarComponent },
-    { 
-        path: 'workspace', 
-        component: WorkspaceComponent,
-        children: [
-            { path: '', component: ChatComponent },
-            { path: 'channel/:id', component: ChatComponent },
-            { path: 'dm/:userId', component: ChatComponent }
-        ]
-    },
-    { path: 'imprint', component: ImprintComponent },
-    { path: 'privacy-policy', component: PrivacyPolicyComponent },
+  { path: '', component: LoginComponent },
+  { path: 'login', component: LoginComponent },
+  { path: 'reset-password', component: ResetPasswordComponent },
+  { path: 'new-password', component: NewPasswordComponent },
+  { path: 'signup', component: SignupComponent },
+  { path: 'choose-avatar', component: ChooseAvatarComponent },
+  {
+    path: 'workspace',
+    component: WorkspaceComponent,
+    children: [
+      { path: '', component: ChatComponent },
+      { path: 'channel/:id', component: ChatComponent },
+      { path: 'dm/:userId', component: ChatComponent },
+    ],
+  },
+  { path: 'imprint', component: ImprintComponent },
+  { path: 'privacy-policy', component: PrivacyPolicyComponent },
 ];
