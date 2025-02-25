@@ -16,8 +16,33 @@ export interface Message {
   editedAt?: any;
   parentId?: string; // Für Thread-Nachrichten
   isThread?: boolean;
+  
+  // UI-Zustände
   showReactions?: boolean;
   showEmojiPicker?: boolean;
   isEditing?: boolean;
   editText?: string;
+  showEditMenu?: boolean;
+  threadId?: string; // ID der übergeordneten Nachricht für Thread-Antworten
+}
+
+export interface Reaction {
+  userId: string;
+  emoji: string;
+  timestamp: Date;
+}
+
+export interface GroupedReaction {
+  emoji: string;
+  count: number;
+  users: string[];
+}
+
+export interface TooltipData {
+  emoji: string;
+  users: string[];
+  position: {
+    left: string;
+    bottom: string;
+  };
 } 

@@ -10,14 +10,13 @@ import { ChatService } from '../services/chat.service';
 import { ChannelSettingsComponent } from './channel-settings/channel-settings.component';
 import { FormsModule } from '@angular/forms';
 import { Firestore } from '@angular/fire/firestore';
-import { collection, query, where, getDocs, doc, getDoc, addDoc, setDoc } from '@firebase/firestore';
 import { ProfileInfoComponent } from './profile-info/profile-info.component';
 import { MessagesComponent } from './messages/messages.component';
 import { UserService } from '../services/user.service';
 import { AddMemberDialogComponent } from './add-member-dialog/add-member-dialog.component';
 import { MemberListDialogComponent } from './member-list-dialog/member-list-dialog.component';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { AudioService } from '../services/audio.service';
 import { trigger, state, style, animate, transition } from '@angular/animations';
 import { ThreadComponent } from './thread/thread.component';
@@ -132,15 +131,9 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
             '🔥', '💯', '✨', '🎉', '👻', '🤖', '💩', '🦄'];
 
   constructor(
-    private firestore: Firestore,
     public chatService: ChatService,
-    private userService: UserService,
     private route: ActivatedRoute,
-    private router: Router,
     private audioService: AudioService,
-    private cdr: ChangeDetectorRef,
-    private ngZone: NgZone,
-    private avatarService: AvatarService,
     private messageHandler: ChatMessageHandler,
     private uiHandler: ChatUIHandler,
     private subscriptionHandler: ChatSubscriptionHandler,
@@ -254,8 +247,33 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
     );
   }
 
-  getFormattedCreationDate(): string {
-    return ''; // Implementiere dies in ChatChannelHandler falls nötig
+  getFormattedCreationDate() {
+    if (!this.channelCreatedAt) {
+      return '';
+    }
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const creationDate = new Date(this.channelCreatedAt);
+    const creationDay = new Date(
+      creationDate.getFullYear(),
+      creationDate.getMonth(),
+      creationDate.getDate()
+    );
+
+    if (creationDay.getTime() === today.getTime()) {
+      return 'heute';
+    } else if (creationDay.getTime() === yesterday.getTime()) {
+      return 'gestern';
+    } else {
+      const day = creationDate.getDate().toString().padStart(2, '0');
+      const month = (creationDate.getMonth() + 1).toString().padStart(2, '0');
+      const year = creationDate.getFullYear().toString();
+      return `${day}.${month}.${year}`;
+    }
   }
 
   @HostListener('window:resize')

@@ -25,7 +25,8 @@ export class ChatChannelHandler {
           currentChannelId: channelDoc.id,
           channelName: channelData['name'],
           channelDescription: channelData['description'] || '',
-          createdBy: channelData['createdBy'] || ''
+          createdBy: channelData['createdBy'] || '',
+          createdAt: channelData['createdAt'] ? channelData['createdAt'].toDate() : null
         };
       }
       return null;
@@ -97,33 +98,4 @@ export class ChatChannelHandler {
       console.error('Error adding message authors as members:', error);
     }
   }
-
-  getFormattedCreationDate(channelCreatedAt: Date | null): string {
-    if (!channelCreatedAt) {
-      return '';
-    }
-
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    const creationDate = new Date(channelCreatedAt);
-    const creationDay = new Date(
-      creationDate.getFullYear(),
-      creationDate.getMonth(),
-      creationDate.getDate()
-    );
-
-    if (creationDay.getTime() === today.getTime()) {
-      return 'heute';
-    } else if (creationDay.getTime() === yesterday.getTime()) {
-      return 'gestern';
-    } else {
-      const day = creationDate.getDate().toString().padStart(2, '0');
-      const month = (creationDate.getMonth() + 1).toString().padStart(2, '0');
-      const year = creationDate.getFullYear().toString();
-      return `${day}.${month}.${year}`;
-    }
-  }
-} 
+}

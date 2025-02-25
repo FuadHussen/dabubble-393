@@ -109,6 +109,7 @@ export class ChatSubscriptionHandler {
         component.channelName = channelDetails.channelName;
         component.channelDescription = channelDetails.channelDescription;
         component.createdBy = channelDetails.createdBy || '';
+        component.channelCreatedAt = channelDetails.createdAt || null;
         
         // Channel-Mitglieder laden
         const members = await this.channelHandler.loadChannelMembers(channelDetails.currentChannelId);
