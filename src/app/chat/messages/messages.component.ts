@@ -209,7 +209,14 @@ export class MessagesComponent implements OnInit {
           
           if (this.hasMessages) {
             this.chatService.setHasMessages(true);
-            setTimeout(() => this.scrollToBottom(), 100);
+            
+            setTimeout(() => {
+              const messageElements = document.querySelectorAll('.message');
+              if (messageElements.length > 0) {
+                const lastMessage = messageElements[messageElements.length - 1];
+                lastMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
+              }
+            }, 100);
           } else {
             this.chatService.setHasMessages(false);
           }

@@ -150,6 +150,7 @@
           [placeholder]="getPlaceholderText()"
           [(ngModel)]="messageText"
           (input)="onMessageInput($event)"
+          (keyup)="onKeyUp($event)"
           [attr.data-has-mentions]="messageText.includes('@')"
           style="border-radius: 30px;">
         </textarea>

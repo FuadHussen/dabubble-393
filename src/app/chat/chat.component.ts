@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, HostListener, ChangeDetectorRef, Input, Output, EventEmitter, NgZone, OnDestroy } from '@angular/core';
+import { Component, OnInit, AfterViewInit, HostListener, ChangeDetectorRef, Input, Output, EventEmitter, NgZone, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
@@ -27,6 +27,7 @@ import { ChatMessageHandler } from './chat-message.handler';
 import { ChatUIHandler } from './chat-ui.handler';
 import { ChatSubscriptionHandler } from './chat-subscription.handler';
 import { ChatChannelHandler } from './chat-channel.handler';
+import { RecipientSearchHandler } from './recipient-search.handler';
 
 @Component({
   selector: 'app-chat',
@@ -73,16 +74,17 @@ import { ChatChannelHandler } from './chat-channel.handler';
         animate('300ms ease-in-out')
       ])
     ])
-  ]
+  ],
+  providers: [RecipientSearchHandler]
 })
 
-export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
+export class ChatComponent implements OnInit, AfterViewInit, OnDestroy, AfterViewChecked {
   // UI State
   isSettingsOpen = false;
   isProfileOpen = false;
   isAddMemberDialogOpen = false;
   showWelcomeMessage = true;
-  showResults = false;
+  // showResults = false;
   showUserMentions = false;
   showEmojiPicker = false;
   showMemberList = false;
@@ -113,7 +115,6 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // Search and Mentions
   recipientInput = '';
-  filteredResults: any[] = [];
   mentionResults: any[] = [];
   selectedMentions: string[] = [];
 
@@ -130,6 +131,9 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
             '👍', '👎', '👋', '🙌', '👏', '🤝', '🙏', '💪', '🫶', '❤️', 
             '🔥', '💯', '✨', '🎉', '👻', '🤖', '💩', '🦄'];
 
+  @ViewChild('messageTextarea') messageTextarea!: ElementRef;
+  private shouldFocusTextarea = false;
+
   constructor(
     public chatService: ChatService,
     private route: ActivatedRoute,
@@ -137,7 +141,9 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
     private messageHandler: ChatMessageHandler,
     private uiHandler: ChatUIHandler,
     private subscriptionHandler: ChatSubscriptionHandler,
-    private channelHandler: ChatChannelHandler
+    private channelHandler: ChatChannelHandler,
+    private ngZone: NgZone,
+    private recipientSearchHandler: RecipientSearchHandler
   ) {
     this.checkScreenSize();
     this.threadMessage$ = this.chatService.threadMessage$;
@@ -146,6 +152,16 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit() {
     this.subscriptionHandler.initUserSubscriptions(this);
     this.subscriptionHandler.initRouteSubscriptions(this, this.route);
+    
+    // Bei Kanalwechsel Fokus setzen
+    this.chatService.selectedChannel$.subscribe(() => {
+      this.shouldFocusTextarea = true;
+    });
+    
+    // Bei Benutzerwechsel (DM) Fokus setzen
+    this.chatService.selectedUser$.subscribe(() => {
+      this.shouldFocusTextarea = true;
+    });
   }
 
   ngOnDestroy() {
@@ -154,6 +170,19 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngAfterViewInit() {
     // Könnte leer bleiben oder für AfterViewInit-spezifische Aufgaben verwendet werden
+  }
+
+  // Diese Methode wird nach jedem Change Detection Zyklus aufgerufen
+  ngAfterViewChecked() {
+    if (this.shouldFocusTextarea && this.messageTextarea?.nativeElement) {
+      // Führe Focus-Operation außerhalb des Angular-Zyklus aus
+      this.ngZone.runOutsideAngular(() => {
+        setTimeout(() => {
+          this.messageTextarea.nativeElement.focus();
+        });
+      });
+      this.shouldFocusTextarea = false;
+    }
   }
 
   // Event Handlers
@@ -204,6 +233,13 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     } else {
       this.showUserMentions = false;
+    }
+  }
+
+  onKeyUp(event: KeyboardEvent) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      this.sendMessage();
     }
   }
 
@@ -335,28 +371,20 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  // New chat recipient methods
-  onRecipientInput() {
-    // Implementierung für die Empfängersuche
-    // Diese Funktion muss später noch implementiert werden
-    this.showResults = this.recipientInput.length > 0;
-    // Hier müsste die Logik für die Filterung der Ergebnisse implementiert werden
+  // Getter für den einfachen Zugriff auf die Ergebnisse des Handlers
+  get filteredResults() {
+    return this.recipientSearchHandler.filteredResults;
   }
 
-  selectResult(result: any) {
-    // Ergebnis-Auswahl für neue Chats
-    // Diese Funktion muss später noch implementiert werden
-    this.recipientInput = result.name;
-    this.showResults = false;
-    
-    // Je nach Typ (Kanal oder Benutzer) entsprechend handeln
-    if (result.type === 'channel') {
-      this.chatService.selectChannel(result.name);
-      this.chatService.setIsDirectMessage(false);
-    } else if (result.type === 'user') {
-      this.chatService.selectUser(result.id);
-      this.chatService.setIsDirectMessage(true);
-    }
+  get showResults() {
+    return this.recipientSearchHandler.showResults;
+  }
+
+  // Vereinfachte Methode, die den Handler aufruft
+  async onRecipientInput() {
+    // Füge eine Überprüfung hinzu, um sicherzustellen, dass currentUserId nicht null ist
+    const userId = this.currentUserId || '';
+    await this.recipientSearchHandler.handleRecipientInput(this.recipientInput, userId);
   }
 
   openProfile(event: Event) {
@@ -366,5 +394,25 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
     } else {
       this.openSettings();
     }
+  }
+
+  selectResult(result: any) {
+    if (result.type === 'channel') {
+      this.chatService.setCurrentChannelId(result.id);
+      this.chatService.selectChannel(result.name);
+      this.chatService.setIsDirectMessage(false);
+      this.isNewChat = false;
+    } else if (result.type === 'user') {
+      this.chatService.setIsDirectMessage(true);
+      this.chatService.selectUser(result.id);
+      this.selectedUserDisplayName = result.name;
+      this.selectedUserAvatar = result.avatar;
+      this.selectedUserEmail = result.email;
+      this.isNewChat = false;
+    }
+    
+    this.recipientInput = '';
+    this.recipientSearchHandler.showResults = false;
+    this.recipientSearchHandler.filteredResults = [];
   }
 }
