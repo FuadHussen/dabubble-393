@@ -24,7 +24,7 @@ export class NewPasswordComponent implements OnInit {
 
   ngOnInit() {
     // Extrahiere den oobCode aus der URL
-    this.route.paramMap.subscribe((params) => {
+    this.route.queryParamMap.subscribe((params) => {
       this.oobCode = params.get('oobCode');
       if (!this.oobCode) {
         // Falls kein oobCode in der URL ist, sollte der Benutzer zum Login weitergeleitet werden
