@@ -103,7 +103,9 @@ export class MessagesComponent implements OnInit {
       this.isDirectMessage = false;
       
       if (channel) {
-        setTimeout(() => this.loadMessages());
+        this.loadUsers().then(() => {
+          this.loadMessages();
+        });
       }
     });
 
@@ -113,7 +115,9 @@ export class MessagesComponent implements OnInit {
       this.isDirectMessage = true;
       
       if (userId) {
-        setTimeout(() => this.loadMessages());
+        this.loadUsers().then(() => {
+          this.loadMessages();
+        });
       }
     });
 
@@ -124,6 +128,16 @@ export class MessagesComponent implements OnInit {
     this.chatService.selectedUserData$.subscribe(userData => {
       this.selectedUserData = userData;
     });
+  }
+
+  private async loadUsers() {
+    const usersCollection = collection(this.firestore, 'users');
+    const usersSnapshot = await getDocs(usersCollection);
+    this.users = usersSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        avatar: doc.data()['avatar'] || null
+    })) as User[];
   }
 
   async loadMessages() {
@@ -179,18 +193,15 @@ export class MessagesComponent implements OnInit {
       });
 
       this.messagesSubscription = onSnapshot(q, (snapshot) => {
-        this.ngZone.run(() => {
+        this.ngZone.run(async () => {
           const newMessages = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
           } as Message));
 
-          
-          // Filtern Sie Thread-Nachrichten auf Client-Seite
           const filteredMessages = newMessages.filter(message => !message.threadId);
 
-          // Avatare für Nachrichten setzen
-          this.setAvatarsForMessages(filteredMessages);
+          await this.setAvatarsForMessages(filteredMessages);
 
           this.messages = filteredMessages;
           this.messageGroups = this.groupHandler.groupMessagesByDate(this.messages);
