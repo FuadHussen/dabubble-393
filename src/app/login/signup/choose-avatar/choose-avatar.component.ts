@@ -24,6 +24,7 @@ export class ChooseAvatarComponent {
   currentAvatarSrc: string = 'assets/img/default-avatar.png';
 
   isFilled: boolean = false;
+  username: string = '';
 
   avatarImages: string[] = [
     'assets/img/avatars/frederik-beck-avatar.png',
@@ -33,6 +34,12 @@ export class ChooseAvatarComponent {
     'assets/img/avatars/sofia-mueller-avatar.png',
     'assets/img/avatars/steffen-hoffmann-avatar.png',
   ];
+
+  ngOnInit() {
+    this.userService.username$.subscribe((username) => {
+      this.username = username;
+    });
+  }
 
   arrowBack(state: string) {
     if (state === 'hover') {

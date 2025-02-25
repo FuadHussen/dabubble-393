@@ -148,7 +148,7 @@ export class SignupComponent {
           email: this.userEmail,
         });
 
-        this.userService.loadUser();
+        this.userService.updateUsername(this.userName);
         this.router.navigate(['/choose-avatar']);
       } catch (error) {
         console.error('Fehler beim Erstellen des Benutzers:', error);
