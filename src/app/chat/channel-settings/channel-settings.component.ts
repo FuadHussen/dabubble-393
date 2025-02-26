@@ -253,11 +253,17 @@ export class ChannelSettingsComponent implements OnInit, OnChanges {
       }
       
       
-      // Referenz zum Channel-Dokument erstellen
-      const channelRef = doc(this.firestore, 'channels', this.channelId);
+      // Channel Verlassen
+      const memberToRemove = this.members.find(member => member.uid === this.auth.currentUser?.uid);
+      const userId = memberToRemove; 
+
+      const membersRef = collection(this.firestore, 'channelMembers');
+      const q = query(membersRef, where('channelId', '==', this.channelId), where('userId', '==', userId));
       
-      // Channel aus der Datenbank löschen
-      await deleteDoc(channelRef);
+      const querySnapshot = await getDocs(q);
+      const deletePromises = querySnapshot.docs.map((docSnap) => deleteDoc(docSnap.ref));
+      await Promise.all(deletePromises);
+         
       
       // Dialog schließen
       this.closeSettings.emit();
