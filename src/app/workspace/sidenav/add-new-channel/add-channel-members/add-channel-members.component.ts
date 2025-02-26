@@ -105,11 +105,13 @@ export class AddChannelMembersComponent implements OnInit {
           const memberData = memberDoc.data() as ChannelMember;
           
           // Prüfe ob das Mitglied nicht gelöscht wurde und eine userId hat
-          if (memberData['userId'] && memberData['deleted'] !== true) {
+          // UND ob es nicht der aktuelle Benutzer ist
+          if (memberData['userId'] && 
+              memberData['deleted'] !== true &&
+              memberData['userId'] !== this.currentUserId) {
             uniqueMembers.add(memberData['userId']);
           }
         });
-
 
         return {
           id: doc.id,
