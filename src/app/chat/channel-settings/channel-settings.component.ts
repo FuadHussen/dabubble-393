@@ -6,12 +6,15 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { FormsModule } from '@angular/forms';
-import { Firestore, deleteDoc, doc, updateDoc, getDoc } from '@angular/fire/firestore';
+import { Firestore, deleteDoc, doc, updateDoc, getDoc, collection, query, where, getDocs } from '@angular/fire/firestore';
 import { Router } from '@angular/router';
 import { ChatService } from '../../services/chat.service';
 import { trigger, state, style, animate, transition } from '@angular/animations';
 import { Auth } from '@angular/fire/auth';
 import { AvatarService } from '../../services/avatar.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+
 interface Member {
   uid: string;
   username: string;
@@ -31,7 +34,8 @@ interface Member {
     MatIconModule,
     MatButtonModule,
     MatDividerModule,
-    FormsModule
+    FormsModule,
+    MatSnackBarModule
   ],
   templateUrl: './channel-settings.component.html',
   styleUrls: ['./channel-settings.component.scss'],
@@ -67,13 +71,15 @@ export class ChannelSettingsComponent implements OnInit, OnChanges {
   editedName = '';
   editedDescription = '';
   members: Member[] = [];
+  errorMessage: string | null = null;
 
   constructor(
     private firestore: Firestore,
     private router: Router,
     private chatService: ChatService,
     private auth: Auth,
-    private avatarService: AvatarService
+    private avatarService: AvatarService,
+    private snackBar: MatSnackBar
   ) {}
 
   ngOnInit() {
@@ -132,39 +138,103 @@ export class ChannelSettingsComponent implements OnInit, OnChanges {
   }
 
   startEditingName() {
+    this.errorMessage = null;
     this.editedName = this.channelName;
     this.isEditingName = true;
   }
 
   startEditingDescription() {
+    this.errorMessage = null;
     this.editedDescription = this.channelDescription;
     this.isEditingDescription = true;
   }
 
-  async saveChannelName() {
-    if (this.editedName.trim() && this.editedName !== this.channelName) {
-      const channelRef = doc(this.firestore, 'channels', this.channelId);
-      await updateDoc(channelRef, {
-        name: this.editedName
-      });
-      this.channelName = this.editedName;
-      this.chatService.selectChannel(this.editedName);
+  async checkChannelNameExists(name: string): Promise<boolean> {
+    try {
+      const channelsRef = collection(this.firestore, 'channels');
+      const q = query(channelsRef, where('name', '==', name));
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        return false; // Kein Duplikat gefunden
+      }
+      
+      // Wenn genau ein Dokument gefunden wird und es das aktuelle ist, ist es kein Duplikat
+      if (querySnapshot.size === 1 && querySnapshot.docs[0].id === this.channelId) {
+        return false;
+      }
+      
+      return true; // Duplikat gefunden
+    } catch (error) {
+      console.error('Fehler bei der Überprüfung des Kanalnamens:', error);
+      throw error;
     }
-    this.isEditingName = false;
+  }
+
+  async saveChannelName() {
+    this.errorMessage = null; // Zurücksetzen der Fehlermeldung
+    
+    if (!this.editedName.trim()) {
+      this.errorMessage = "Der Kanalname darf nicht leer sein.";
+      this.showErrorMessage(this.errorMessage);
+      return;
+    }
+    
+    try {
+      // Überprüfen, ob der Name bereits existiert
+      const nameExists = await this.checkChannelNameExists(this.editedName);
+      
+      if (nameExists) {
+        this.errorMessage = `Ein Kanal mit dem Namen '${this.editedName}' existiert bereits.`;
+        this.showErrorMessage(this.errorMessage);
+        return;
+      }
+      
+      // Wenn der Name nicht existiert und sich vom aktuellen unterscheidet
+      if (this.editedName !== this.channelName) {
+        const channelRef = doc(this.firestore, 'channels', this.channelId);
+        await updateDoc(channelRef, {
+          name: this.editedName
+        });
+        this.channelName = this.editedName;
+        this.chatService.selectChannel(this.editedName);
+        
+        // Erfolgsbenachrichtigung anzeigen
+        this.showSuccessMessage('Kanalname erfolgreich aktualisiert');
+      }
+      this.isEditingName = false;
+    } catch (error) {
+      console.error('Fehler beim Speichern des Kanalnamens:', error);
+      this.errorMessage = "Bei der Aktualisierung ist ein Fehler aufgetreten. Bitte versuche es erneut.";
+      this.showErrorMessage(this.errorMessage);
+    }
   }
 
   async saveChannelDescription() {
-    if (this.editedDescription !== this.channelDescription) {
-      const channelRef = doc(this.firestore, 'channels', this.channelId);
-      await updateDoc(channelRef, {
-        description: this.editedDescription
-      });
-      this.channelDescription = this.editedDescription;
+    this.errorMessage = null;
+    
+    try {
+      if (this.editedDescription !== this.channelDescription) {
+        const channelRef = doc(this.firestore, 'channels', this.channelId);
+        await updateDoc(channelRef, {
+          description: this.editedDescription
+        });
+        this.channelDescription = this.editedDescription;
+        
+        // Erfolgsbenachrichtigung anzeigen
+        this.showSuccessMessage('Kanalbeschreibung erfolgreich aktualisiert');
+      }
+      this.isEditingDescription = false;
+    } catch (error) {
+      console.error('Fehler beim Speichern der Kanalbeschreibung:', error);
+      this.errorMessage = "Bei der Aktualisierung ist ein Fehler aufgetreten. Bitte versuche es erneut.";
+      this.showErrorMessage(this.errorMessage);
     }
-    this.isEditingDescription = false;
   }
 
   cancelEdit(field: 'name' | 'description') {
+    this.errorMessage = null;
+    
     if (field === 'name') {
       this.isEditingName = false;
       this.editedName = this.channelName;
@@ -176,33 +246,70 @@ export class ChannelSettingsComponent implements OnInit, OnChanges {
 
   close(event: Event) {
     event.preventDefault();
+    this.errorMessage = null;
+    this.isEditingName = false;
+    this.isEditingDescription = false;
     this.closeSettings.emit();
   }
 
   async leaveChannel() {
     try {
+      
       if (!this.channelId) {
-        console.error('Keine gültige Channel-ID vorhanden');
+        console.error('❌ DEBUG: No valid channel ID available');
+        return;
+      }
+
+      const currentUserId = this.auth.currentUser?.uid;
+      if (!currentUserId) {
+        console.error('❌ DEBUG: No logged in user');
+        return;
+      }
+
+
+      // Speichere die aktuelle Channel-ID, damit wir später prüfen können, ob wir sie verlassen haben
+      const currentChannelId = this.channelId;
+
+      // Suche nach dem channelMembers-Eintrag für diesen Benutzer und Channel
+      const channelMembersRef = collection(this.firestore, 'channelMembers');
+      const q = query(channelMembersRef, 
+        where('channelId', '==', this.channelId),
+        where('userId', '==', currentUserId)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        console.error('❌ DEBUG: User is not a member of this channel');
         return;
       }
       
+      // Den Eintrag des Benutzers aus channelMembers löschen
+      const memberDoc = querySnapshot.docs[0];
+      await deleteDoc(doc(this.firestore, 'channelMembers', memberDoc.id));
       
-      // Referenz zum Channel-Dokument erstellen
-      const channelRef = doc(this.firestore, 'channels', this.channelId);
+      // Erfolgsbenachrichtigung anzeigen
+      this.showSuccessMessage('Du hast den Channel verlassen');
+      // Erfolgsbenachrichtigung anzeigen
+      this.showSuccessMessage('Du hast den Channel verlassen');
       
-      // Channel aus der Datenbank löschen
-      await deleteDoc(channelRef);
+      // Erst triggern, dann Dialog schließen
+      this.chatService.triggerChannelsRefresh();
       
       // Dialog schließen
       this.closeSettings.emit();
+
+      // Kurze Verzögerung für asynchrone Operationen
+      await new Promise(resolve => setTimeout(resolve, 300));
       
-      // Event emittieren, damit die übergeordnete Komponente weiß, 
-      // dass sie den nächsten Channel auswählen soll
-      this.chatService.selectNextAvailableChannel();
-      
+      // Zum nächsten verfügbaren Channel oder DM wechseln
+      await this.chatService.selectNextAvailableChannel();
+            
     } catch (error) {
-      console.error('Fehler beim Verlassen des Channels:', error);
-    }
+      console.error('❌ DEBUG: Error in leaveChannel:', error);
+      this.errorMessage = "Beim Verlassen des Channels ist ein Fehler aufgetreten.";
+      this.showErrorMessage(this.errorMessage);
+    } 
   }
 
   getAvatarSrc(avatar: string | null): string {
@@ -213,5 +320,23 @@ export class ChannelSettingsComponent implements OnInit, OnChanges {
     }
     
     return 'assets/img/avatars/' + avatar;
+  }
+
+  showErrorMessage(message: string) {
+    this.snackBar.open(message, 'Schließen', {
+      duration: 5000,
+      panelClass: ['error-snackbar'],
+      horizontalPosition: 'center',
+      verticalPosition: 'bottom'
+    });
+  }
+
+  showSuccessMessage(message: string) {
+    this.snackBar.open(message, 'Schließen', {
+      duration: 3000,
+      panelClass: ['success-snackbar'],
+      horizontalPosition: 'center',
+      verticalPosition: 'bottom'
+    });
   }
 }

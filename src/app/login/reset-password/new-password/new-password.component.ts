@@ -32,9 +32,7 @@ export class NewPasswordComponent implements OnInit {
 
   ngOnInit() {
     this.oobCode = this.route.snapshot.queryParams['oobCode'];
-    console.log(this.oobCode);
     if (!this.oobCode) {
-      console.log('kein oobCode vorhanden');
       this.router.navigate(['/login']);
     }
   }

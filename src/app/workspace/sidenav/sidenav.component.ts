@@ -23,6 +23,7 @@ import { ThreadComponent } from '../../chat/thread/thread.component';
 import { AvatarService } from '../../services/avatar.service';
 
 interface Channel {
+  id: string;
   name: string;
   description?: string;
 }
@@ -211,6 +212,15 @@ export class SidenavComponent implements OnInit {
     this.loadChannels();
     this.loadUsers();
 
+    // Reagiere auf Änderungen der Channel-Liste
+    this.subscriptions.push(
+      this.chatService.refreshChannels$.subscribe(refresh => {
+        if (refresh) {
+          this.loadChannels();
+        }
+      })
+    );
+
     // Nur in Desktop-Ansicht automatisch ersten Channel laden
     if (!this.isMobile) {
       this.subscriptions.push(
@@ -269,11 +279,61 @@ export class SidenavComponent implements OnInit {
     });
   }
 
-  loadChannels() {
-    const channelsCollection = collection(this.firestore, 'channels');
-    collectionData(channelsCollection).subscribe(channels => {
-      this.channels = channels as Channel[];
-    });
+  async loadChannels() {
+    try {
+      const currentUserId = this.auth.currentUser?.uid;
+      if (!currentUserId) {
+        return;
+      }
+
+      // Cache umgehen: Ein Timestamp als Parameter hinzufügen
+      const timestamp = new Date().getTime();
+
+      // Suche zuerst nach allen channelMembers-Einträgen für den aktuellen Benutzer
+      const channelMembersRef = collection(this.firestore, 'channelMembers');
+      const q = query(channelMembersRef, where('userId', '==', currentUserId));
+      const membersSnapshot = await getDocs(q);
+      
+      // Extrahiere alle Channel-IDs, in denen der Benutzer Mitglied ist
+      const userChannelIds = membersSnapshot.docs.map(doc => doc.data()['channelId']);
+
+      if (userChannelIds.length === 0) {
+        this.channels = [];
+        this.selectedChannel = '';
+        return;
+      }
+      
+      // Hole alle Channels aus diesen IDs, aber mit frischen Daten
+      const channelsCollection = collection(this.firestore, 'channels');
+      
+      const channelPromises = userChannelIds.map(async channelId => {
+        const channelDocRef = doc(this.firestore, 'channels', channelId);
+        const channelSnap = await getDoc(channelDocRef);
+        
+        if (channelSnap.exists()) {
+          return {
+            id: channelSnap.id,
+            name: channelSnap.data()['name'],
+            description: channelSnap.data()['description'] || ''
+          };
+        }
+        return null;
+      });
+      
+      const channelResults = await Promise.all(channelPromises);
+      this.channels = channelResults.filter(channel => channel !== null) as Channel[];
+      
+      // Wenn noch kein Channel ausgewählt ist und es Channels gibt, wähle den ersten
+      if (this.channels.length > 0 && !this.selectedChannel && !this.isMobile) {
+        this.selectChannel(this.channels[0].name);
+      } else if (this.channels.length === 0) {
+        this.selectedChannel = '';
+        // Falls keine Channels mehr vorhanden sind, zur Workspace-Übersicht navigieren
+        this.router.navigate(['/workspace']);
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden der Channels:', error);
+    }
   }
 
   loadUsers() {
