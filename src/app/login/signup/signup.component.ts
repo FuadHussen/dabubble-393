@@ -49,6 +49,7 @@ export class SignupComponent {
   isNameTyped: boolean = false;
   isEmailTyped: boolean = false;
   isPasswordTyped: boolean = false;
+  isPasswordVisible: boolean = false;
 
   arrowBack(state: string) {
     if (state === 'hover') {
@@ -104,6 +105,10 @@ export class SignupComponent {
       this.isPasswordFilled = this.userPassword.length >= 6;
     }
     this.enableButton();
+  }
+
+  togglePasswordVisibility(): void {
+    this.isPasswordVisible = !this.isPasswordVisible;
   }
 
   checkboxHover(hoverState: boolean): void {

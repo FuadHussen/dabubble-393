@@ -38,7 +38,9 @@
           />
         </div>
         <div class="error-message">
-          <p *ngIf="isNameTyped && !isNameFilled">*Bitte einen Vor und Nachname</p>
+          <p *ngIf="isNameTyped && !isNameFilled">
+            *Bitte einen Vor und Nachname
+          </p>
         </div>
         <!-- mail Input -->
         <div class="email-input">
@@ -65,7 +67,7 @@
         <div class="password-input">
           <img [src]="userPasswordSrc" alt="lock" />
           <input
-            type="password"
+            [type]="isPasswordVisible ? 'text' : 'password'"
             id="password"
             name="password"
             required
@@ -76,10 +78,23 @@
             (blur)="onBlur('userPassword')"
             (input)="onInput('userPassword', $event)"
           />
+
+          <img
+            *ngIf="userPassword.length > 0"
+            (click)="togglePasswordVisibility()"
+            [src]="
+              isPasswordVisible
+                ? 'assets/img/eye-open.png'
+                : 'assets/img/eye-closed.png'
+            "
+            alt="Passwort anzeigen/verstecken"
+          />
         </div>
 
         <div class="error-message">
-          <p *ngIf="isPasswordTyped && !isPasswordFilled">Bitte geben Sie ein Password ein.</p>
+          <p *ngIf="isPasswordTyped && !isPasswordFilled">
+            Bitte geben Sie ein Password ein.
+          </p>
         </div>
 
         <!-- Checkbox -->
@@ -94,7 +109,9 @@
           />
           <p>
             Ich stimme der
-            <span (click)="navigateToPrivacyPolicy()"> Datenschutzerklärung</span>
+            <span (click)="navigateToPrivacyPolicy()">
+              Datenschutzerklärung</span
+            >
             zu.
           </p>
         </div>
