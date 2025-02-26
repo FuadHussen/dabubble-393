@@ -218,8 +218,6 @@ export class LoginComponent {
 
   loginSucess() {
     this.containerState = 'end';
-    // Prüfe die Bildschirmgröße direkt vor 
-    // dem Login
     this.checkScreenSize();
 
     this.userService
