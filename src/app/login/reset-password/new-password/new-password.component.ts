@@ -27,18 +27,15 @@ export class NewPasswordComponent implements OnInit {
   isPasswordChange: boolean = false;
   isPasswordVisible: boolean = false;
   isPasswordErrorText: string = '';
-  passwordStrengthClass: string = ''; // 'weak', 'medium', 'strong'
+  passwordStrengthClass: string = '';
   passwordStrengthClassText: string = '';
 
   ngOnInit() {
-    // Extrahiere den oobCode aus der URL
-
     this.oobCode = this.route.snapshot.queryParams['oobCode'];
     console.log(this.oobCode);
     if (!this.oobCode) {
-      // Falls kein oobCode in der URL ist, sollte der Benutzer zum Login weitergeleitet werden
-      //   console.log('kein oobCode vorhanden');
-      //   this.router.navigate(['/login']);
+      console.log('kein oobCode vorhanden');
+      this.router.navigate(['/login']);
     }
   }
 
@@ -61,14 +58,10 @@ export class NewPasswordComponent implements OnInit {
   }
 
   onBlur(field: string): void {
-  if (field === 'passwordControl'){
-    this.enableButton();
+    if (field === 'passwordControl') {
+      this.enableButton();
     }
   }
-
-
- 
-
 
   checkPasswordStrength(): void {
     const hasLetters = /[A-Za-z]/.test(this.userPassword);
@@ -109,17 +102,16 @@ export class NewPasswordComponent implements OnInit {
       this.isPasswordErrorText = '';
       this.passwordStrengthClassText = '';
       this.passwordStrengthClass = '';
-    }else{
+    } else {
       this.passwordStrengthClassText = '';
       this.passwordStrengthClass = '';
-      this.isPasswordErrorText = 'Passwörter stimmen nicht Überein'
+      this.isPasswordErrorText = 'Passwörter stimmen nicht Überein';
     }
   }
 
   async resetPassword() {
     if (this.oobCode && this.userPassword === this.userPasswordControl) {
       try {
-        // Bestätige den Reset-Code und setze das Passwort
         await confirmPasswordReset(
           this.afAuth,
           this.oobCode,

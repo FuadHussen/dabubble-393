@@ -22,9 +22,8 @@
           DABubble-Konto.
         </h4>
       </div>
-      <!-- Input -->
+
       <div class="inputs-container">
-        <!-- name Input -->
         <div class="name-input">
           <img [src]="userNameSrc" alt="name" />
           <input
@@ -42,7 +41,7 @@
             *Bitte einen Vor und Nachname
           </p>
         </div>
-        <!-- mail Input -->
+
         <div class="email-input">
           <img [src]="userEmailSrc" alt="mail" />
           <input
@@ -63,7 +62,7 @@
             *Diese E-Mail-Adresse ist leider ungültig.
           </p>
         </div>
-        <!-- Password Input -->
+
         <div class="password-input">
           <img [src]="userPasswordSrc" alt="lock" />
           <input
@@ -94,10 +93,10 @@
           <p>
             {{ isPasswordErrorText }}
           </p>
-          <div class="error-bar" [ngClass]="passwordStrengthClass">{{passwordStrengthClassText}}</div>
+          <div class="error-bar" [ngClass]="passwordStrengthClass">
+            {{ passwordStrengthClassText }}
+          </div>
         </div>
-
-        <!-- Checkbox -->
 
         <div class="legal-notice">
           <img
@@ -116,7 +115,6 @@
           </p>
         </div>
 
-        <!-- Buttons -->
         <div class="buttons-container">
           <button
             (click)="createUser()"

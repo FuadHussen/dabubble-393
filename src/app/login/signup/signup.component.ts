@@ -24,7 +24,7 @@ import { UserService } from '../../services/user.service';
 export class SignupComponent {
   private auth: Auth = inject(Auth);
   private userService: UserService = inject(UserService);
-  private firestore: Firestore = inject(Firestore); // Firestore injizieren
+  private firestore: Firestore = inject(Firestore);
 
   constructor(private router: Router) {}
 
@@ -51,8 +51,8 @@ export class SignupComponent {
   isPasswordTyped: boolean = false;
   isPasswordVisible: boolean = false;
   isPasswordErrorText: string = '';
-  passwordStrengthClass: string = ''; // 'weak', 'medium', 'strong'
-  passwordStrengthClassText: string = ''; 
+  passwordStrengthClass: string = '';
+  passwordStrengthClassText: string = '';
 
   arrowBack(state: string) {
     if (state === 'hover') {
@@ -124,7 +124,7 @@ export class SignupComponent {
     const hasNumbers = /\d/.test(this.userPassword);
     const hasSpecialChars = /[@$!%*?&]/.test(this.userPassword);
     const isMinLength = this.userPassword.length >= 6;
-  
+
     if (!isMinLength) {
       this.isPasswordErrorText = 'Passwort zu kurz (min. 6 Zeichen)';
       this.passwordStrengthClass = '';
@@ -177,7 +177,6 @@ export class SignupComponent {
   async createUser() {
     if (this.isFilled) {
       try {
-        // Benutzer erstellen
         const auth = getAuth();
         const userCredential = await createUserWithEmailAndPassword(
           auth,
@@ -185,7 +184,6 @@ export class SignupComponent {
           this.userPassword
         );
 
-        // Benutzer zu Firestore hinzufügen mit UID als Dokumenten-ID
         const userId = userCredential.user.uid;
         const userDocRef = doc(this.firestore, 'users', userId);
         await setDoc(userDocRef, {
