@@ -36,6 +36,9 @@
         </div>
         <div class="form-field">
           <input [(ngModel)]="editedName" placeholder="Channel Name">
+          <div *ngIf="errorMessage && isEditingName" class="error-message">
+            <mat-icon class="warning-icon">warning</mat-icon> {{ errorMessage }}
+          </div>
         </div>
       </div>
 
@@ -83,6 +86,9 @@
         </div>
         <div class="form-field">
           <input [(ngModel)]="editedDescription" placeholder="Worum geht es in diesem Channel?">
+          <div *ngIf="errorMessage && isEditingDescription" class="error-message">
+            <mat-icon class="warning-icon">warning</mat-icon> {{ errorMessage }}
+          </div>
         </div>
       </div>
 

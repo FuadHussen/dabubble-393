@@ -68,3 +68,27 @@
   }
 }
 
+// Stile für Fehlermeldungen
+.error-message {
+  color: #f44336;
+  font-size: 16px;
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.warning-icon {
+  color: #f44336;
+  font-size: 24px;
+  margin-left: 4px;
+  height: 24px;
+  width: 24px;
+  line-height: 24px;
+}
+
+// Stile für die Snackbar-Benachrichtigungen
+::ng-deep .error-snackbar {
+  background-color: #f44336;
+  color: white;
+}

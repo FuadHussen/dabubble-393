@@ -13,6 +13,10 @@
   <div class="form-field">
     <label>Channel-Name</label>
     <input matInput [(ngModel)]="channelName" placeholder="z.B. marketing">
+    <!-- Fehlermeldung für Kanalnamen -->
+    <div *ngIf="errorMessage" class="error-message">
+      <mat-icon class="warning-icon">warning</mat-icon> {{ errorMessage }}
+    </div>
   </div>
 
   <div class="form-field">

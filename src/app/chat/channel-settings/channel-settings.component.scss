@@ -164,7 +164,7 @@ mat-form-field {
   padding: 16px;
   margin-bottom: 16px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  
+
   .card-header {
     margin-bottom: 16px;
 
@@ -181,7 +181,7 @@ mat-form-field {
     align-items: center;
     gap: 8px;
     font-size: 24px;
-  color: #535AF1 !important;
+    color: #535AF1 !important;
   }
 }
 
@@ -189,4 +189,17 @@ mat-form-field {
   width: 36px;
   height: 36px;
   border-radius: 50%;
+}
+
+.error-message {
+  margin-top: 16px;
+  color: red;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  mat-icon {
+    font-size: 24px;
+    overflow: visible;
+  }
 }
