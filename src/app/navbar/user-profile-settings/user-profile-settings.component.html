@@ -11,12 +11,40 @@
         <div class="avatar-container">
           <img *ngIf="userAvatar" [src]="userAvatar ? getAvatarSrc(userAvatar) : ''" [alt]="username + ' avatar'"
             class="profile-image">
+          
+          <!-- Avatar-Edit-Button -->
+          <button mat-mini-fab color="primary" class="avatar-edit-button" (click)="toggleAvatarEdit()">
+            <mat-icon>edit</mat-icon>
+          </button>
+        </div>
+
+        <!-- Avatar-Bearbeitungsbereich -->
+        <div *ngIf="isEditingAvatar" class="avatar-editor">
+          <h1>Avatar ändern</h1>
+          
+          <!-- Vordefinierte Avatare -->
+          <div class="predefined-avatars">
+            <div class="avatar-grid">
+              <div *ngFor="let avatar of availableAvatars" 
+                   class="avatar-option" 
+                   [class.selected]="selectedAvatar === avatar"
+                   (click)="selectAvatar(avatar)">
+                <img [src]="'assets/img/avatars/' + avatar" [alt]="avatar">
+              </div>
+            </div>
+          </div>
+          
+          <!-- Avatar-Bearbeitungsbuttons -->
+          <div class="avatar-edit-buttons">
+            <button mat-stroked-button (click)="cancelAvatarEdit()">Abbrechen</button>
+            <button mat-flat-button color="primary" (click)="saveAvatar()">Speichern</button>
+          </div>
         </div>
 
         <div class="user-info">
           <div class="username-container">
             <div *ngIf="!isEditing" class="username-display">
-              <h2 class="username">{{ username }}</h2>
+              <h2 class="username  user-h2">{{ username }}</h2>
               <button mat-button color="primary" class="edit-button" (click)="toggleEdit()">
                 Bearbeiten
               </button>

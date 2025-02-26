@@ -11,6 +11,8 @@ import { Auth } from '@angular/fire/auth';
 import { Firestore, collection, query, where, getDocs, doc, updateDoc } from '@angular/fire/firestore';
 import { UserService } from '../../services/user.service';
 import { AvatarService } from '../../services/avatar.service';
+import { Storage, ref, uploadBytes, getDownloadURL } from '@angular/fire/storage';
+
 @Component({
   selector: 'app-user-profile-settings',
   standalone: true,
@@ -55,10 +57,25 @@ export class UserProfileSettingsComponent implements OnInit {
   isEditing = false;
   newUsername: string = '';
   userId: string = '';
+  userDocId: string = '';
+  
+  // Avatar-Bearbeitung
+  isEditingAvatar = false;
+  availableAvatars: string[] = [
+    'noah-braun-avatar.png',
+    'sofia-mueller-avatar.png',
+    'steffen-hoffmann-avatar.png',
+    'elias-neumann-avatar.png',
+    'elise-roth-avatar.png',
+    'frederik-beck-avatar.png'
+  ];
+  selectedAvatar: string | null = null;
+  uploadedFile: File | null = null;
 
   constructor(
     private auth: Auth,
     private firestore: Firestore,
+    private storage: Storage,
     private userService: UserService,
     private avatarService: AvatarService
   ) {
@@ -70,7 +87,9 @@ export class UserProfileSettingsComponent implements OnInit {
         const querySnapshot = await getDocs(q);
         
         if (!querySnapshot.empty) {
-          const userData = querySnapshot.docs[0].data();
+          const userDoc = querySnapshot.docs[0];
+          this.userDocId = userDoc.id;
+          const userData = userDoc.data();
           this.username = userData['username'] || 'Unbekannt';
           this.newUsername = this.username;
           this.email = userData['email'] || '';
@@ -90,13 +109,8 @@ export class UserProfileSettingsComponent implements OnInit {
   async saveUsername() {
     if (this.newUsername.trim() && this.newUsername !== this.username) {
       try {
-        const usersRef = collection(this.firestore, 'users');
-        const q = query(usersRef, where('uid', '==', this.userId));
-        const querySnapshot = await getDocs(q);
-        
-        if (!querySnapshot.empty) {
-          const userDoc = querySnapshot.docs[0];
-          await updateDoc(doc(this.firestore, 'users', userDoc.id), {
+        if (this.userDocId) {
+          await updateDoc(doc(this.firestore, 'users', this.userDocId), {
             username: this.newUsername
           });
           
@@ -115,13 +129,73 @@ export class UserProfileSettingsComponent implements OnInit {
     this.newUsername = this.username;
   }
 
+  // Avatar-Bearbeitungsmethoden
+  toggleAvatarEdit() {
+    this.isEditingAvatar = !this.isEditingAvatar;
+    if (this.isEditingAvatar) {
+      this.selectedAvatar = this.userAvatar;
+      this.uploadedFile = null;
+    }
+  }
+
+  selectAvatar(avatar: string) {
+    this.selectedAvatar = avatar;
+    this.uploadedFile = null;
+  }
+
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.uploadedFile = input.files[0];
+      this.selectedAvatar = null;
+    }
+  }
+
+  async saveAvatar() {
+    try {
+      let newAvatarPath = this.userAvatar;
+
+      if (this.uploadedFile) {
+        const fileName = `${this.userId}_${Date.now()}_${this.uploadedFile.name}`;
+        const storageRef = ref(this.storage, `avatars/${fileName}`);
+        
+        await uploadBytes(storageRef, this.uploadedFile);
+        newAvatarPath = fileName;
+      } 
+      else if (this.selectedAvatar) {
+        newAvatarPath = this.selectedAvatar;
+      }
+
+      if (newAvatarPath !== this.userAvatar && this.userDocId) {
+        await updateDoc(doc(this.firestore, 'users', this.userDocId), {
+          avatar: newAvatarPath
+        });
+        
+        this.userAvatar = newAvatarPath;
+        if (newAvatarPath !== null) {
+          await this.userService.saveAvatar(newAvatarPath);
+        }
+      }
+
+      this.isEditingAvatar = false;
+    } catch (error) {
+      console.error('Error updating avatar:', error);
+    }
+  }
+
+  cancelAvatarEdit() {
+    this.isEditingAvatar = false;
+    this.selectedAvatar = this.userAvatar;
+    this.uploadedFile = null;
+  }
+
   close(event: MouseEvent) {
     event.stopPropagation();
     this.closeInfo.emit();
   }
 
   ngOnInit() {
-
+    // Initialization code if needed
   }
 
   getAvatarSrc(avatar: string | null): string {

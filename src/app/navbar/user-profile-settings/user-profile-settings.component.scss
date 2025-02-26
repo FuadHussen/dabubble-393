@@ -18,7 +18,7 @@
   gap: 10px;
 
   .edit-button {
-    color: #1381FF!important;  
+    color: #1381FF !important;
     font-size: 14px;
     text-transform: none;
     min-width: auto;
@@ -30,7 +30,7 @@
   mat-form-field {
     width: 100%;
   }
-  
+
   .edit-buttons {
     display: flex;
     gap: 10px;
@@ -38,13 +38,149 @@
     margin-top: 16px;
 
     button[mat-stroked-button] {
-      color: #1381FF;  // Standard Textfarbe
-      border-color: currentColor;   // Verwendet die gleiche Farbe wie der Text
+      color: #1381FF; // Standard Textfarbe
+      border-color: currentColor; // Verwendet die gleiche Farbe wie der Text
     }
 
     button[mat-flat-button] {
-      background-color: #1381FF;  // Material Design Primary Blue
+      background-color: #1381FF; // Material Design Primary Blue
       color: white;
     }
+  }
+}
+
+.avatar-container {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.profile-image {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatar-edit-button {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 36px;
+  height: 36px;
+  background-color: #1381FF !important;
+
+  &:hover {
+    background-color: darken(#1381FF, 10%) !important;
+  }
+
+  .mat-icon {
+    font-size: 18px;
+    line-height: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.avatar-editor {
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+
+  h1 {
+    font-weight: 600;
+    text-align: center;
+    color: #1381FF;
+    font-size: 32px;
+  }
+
+  h3 {
+    margin-top: 0;
+    margin-bottom: 16px;
+  }
+
+  h4 {
+    margin-bottom: 8px;
+  }
+}
+
+.predefined-avatars {
+  margin-bottom: 20px;
+}
+
+.avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.avatar-option {
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  transition: border-color 0.2s;
+  display: flex!important;
+  justify-content: center!important;
+  align-items: center!important;
+
+  &.selected {
+    border-color: #1976d2;
+  }
+
+  img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+}
+
+.upload-avatar {
+  margin-bottom: 16px;
+
+  button {
+    margin-bottom: 8px;
+  }
+
+  .file-name {
+    display: block;
+    font-size: 14px;
+    color: #666;
+    margin-top: 4px;
+  }
+}
+
+.avatar-edit-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+// Blauer Speichern-Button
+.avatar-edit-buttons button[mat-flat-button] {
+  background-color: #1381FF !important;
+  color: white !important;
+  
+  &:hover {
+    background-color: darken(#1381FF, 10%) !important;
+  }
+}
+
+// Weißer Abbrechen-Button mit blauem Rand und Text
+.avatar-edit-buttons button[mat-stroked-button] {
+  background-color: white !important;
+  color: #1381FF !important;
+  border-color: #1381FF !important;
+  
+  &:hover {
+    background-color: rgba(19, 129, 255, 0.04) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .user-h2 {
+    width: 100%;
+    margin: 0 !important;
   }
 }

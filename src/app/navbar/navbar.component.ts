@@ -112,6 +112,13 @@ export class NavbarComponent {
       }
     });
 
+    // Neue Subscription für Avatar-Änderungen
+    this.userService.avatar$.subscribe(avatar => {
+      if (avatar) {
+        this.userAvatar = avatar;
+      }
+    });
+
     // Suchfunktion
     this.searchControl.valueChanges.pipe(
       debounceTime(300),

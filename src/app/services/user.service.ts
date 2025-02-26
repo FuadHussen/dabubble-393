@@ -43,6 +43,10 @@ export class UserService {
   private usernameSubject = new BehaviorSubject<string>('');
   username$ = this.usernameSubject.asObservable();
 
+  // Neuer BehaviorSubject für den Avatar
+  private avatarSubject = new BehaviorSubject<string | null>(null);
+  avatar$ = this.avatarSubject.asObservable();
+
   constructor() {
     this.loadUser();
   }
@@ -64,6 +68,13 @@ export class UserService {
       const userDoc = await getDoc(userRef);
       if (userDoc.exists()) {
         const userData = userDoc.data();
+        // Update both username and avatar subjects
+        if (userData['username']) {
+          this.usernameSubject.next(userData['username']);
+        }
+        if (userData['avatar']) {
+          this.avatarSubject.next(userData['avatar']);
+        }
       } 
     } catch (error) {
       console.error('Fehler beim Laden der Benutzerdaten:', error);
@@ -100,6 +111,9 @@ export class UserService {
         },
         { merge: true }
       );
+      
+      // Update avatar subject to notify subscribers
+      this.avatarSubject.next(avatarUrl);
     }
   }
 
@@ -142,6 +156,16 @@ export class UserService {
   // Neue Methode zum Aktualisieren des Usernames
   updateUsername(newUsername: string) {
     this.usernameSubject.next(newUsername);
+  }
+
+  // Neue Methode zum Aktualisieren des Avatars
+  updateAvatar(newAvatar: string | null) {
+    this.avatarSubject.next(newAvatar);
+    
+    // Optional: Speichere den Avatar auch direkt in Firebase
+    if (newAvatar && this.getCurrentUser()) {
+      this.saveAvatar(newAvatar);
+    }
   }
 
   async createUserIfNotExists(userId: string, userData: any): Promise<void> {
