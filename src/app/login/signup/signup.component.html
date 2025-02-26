@@ -78,7 +78,6 @@
             (blur)="onBlur('userPassword')"
             (input)="onInput('userPassword', $event)"
           />
-
           <img
             *ngIf="userPassword.length > 0"
             (click)="togglePasswordVisibility()"
@@ -92,9 +91,10 @@
         </div>
 
         <div class="error-message">
-          <p *ngIf="isPasswordTyped && !isPasswordFilled">
-            Bitte geben Sie ein Password ein.
+          <p>
+            {{ isPasswordErrorText }}
           </p>
+          <div class="error-bar" [ngClass]="passwordStrengthClass">{{passwordStrengthClassText}}</div>
         </div>
 
         <!-- Checkbox -->

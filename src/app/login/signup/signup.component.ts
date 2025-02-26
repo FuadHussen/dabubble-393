@@ -50,6 +50,9 @@ export class SignupComponent {
   isEmailTyped: boolean = false;
   isPasswordTyped: boolean = false;
   isPasswordVisible: boolean = false;
+  isPasswordErrorText: string = '';
+  passwordStrengthClass: string = ''; // 'weak', 'medium', 'strong'
+  passwordStrengthClassText: string = ''; 
 
   arrowBack(state: string) {
     if (state === 'hover') {
@@ -76,9 +79,18 @@ export class SignupComponent {
     } else if (field === 'userEmail' && !this.userEmail) {
       this.isEmailTyped = true;
       this.userEmailSrc = 'assets/img/mail.png';
-    } else if (field === 'userPassword' && !this.userPassword) {
-      this.isPasswordTyped = true;
-      this.userPasswordSrc = 'assets/img/lock.png';
+    } else if (field === 'userPassword') {
+      this.userPasswordSrc = this.userPassword
+        ? 'assets/img/lock-active.png'
+        : 'assets/img/lock.png';
+
+      if (this.userPassword.length < 6) {
+        this.isPasswordErrorText = 'Passwort zu kurz (min. 6 Zeichen)';
+      } else {
+        this.passwordStrengthClass = '';
+        this.isPasswordErrorText = '';
+        this.passwordStrengthClassText = '';
+      }
     }
   }
 
@@ -102,9 +114,38 @@ export class SignupComponent {
       this.userPasswordSrc = value
         ? 'assets/img/lock-active.png'
         : 'assets/img/lock.png';
-      this.isPasswordFilled = this.userPassword.length >= 6;
+      this.checkPasswordStrength();
     }
     this.enableButton();
+  }
+
+  checkPasswordStrength(): void {
+    const hasLetters = /[A-Za-z]/.test(this.userPassword);
+    const hasNumbers = /\d/.test(this.userPassword);
+    const hasSpecialChars = /[@$!%*?&]/.test(this.userPassword);
+    const isMinLength = this.userPassword.length >= 6;
+  
+    if (!isMinLength) {
+      this.isPasswordErrorText = 'Passwort zu kurz (min. 6 Zeichen)';
+      this.passwordStrengthClass = '';
+      this.passwordStrengthClassText = '';
+    } else if (hasLetters && !hasNumbers && !hasSpecialChars) {
+      this.passwordStrengthClass = 'weak';
+      this.passwordStrengthClassText = 'schwach';
+      this.isPasswordErrorText = 'Passwort Sicherheit:';
+    } else if (hasLetters && hasNumbers && !hasSpecialChars) {
+      this.passwordStrengthClass = 'medium';
+      this.passwordStrengthClassText = 'mittel';
+      this.isPasswordErrorText = 'Passwort Sicherheit:';
+    } else if (hasLetters && hasNumbers && hasSpecialChars) {
+      this.passwordStrengthClass = 'strong';
+      this.passwordStrengthClassText = 'stark';
+      this.isPasswordErrorText = 'Passwort Sicherheit:';
+    } else {
+      this.passwordStrengthClass = '';
+      this.isPasswordErrorText = '';
+      this.passwordStrengthClassText = '';
+    }
   }
 
   togglePasswordVisibility(): void {

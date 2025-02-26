@@ -134,6 +134,8 @@
 
     .error-message {
       height: 20px;
+      color: white;
+display: flex;
       p {
         font-family: Nunito;
         font-size: 14px;
@@ -143,6 +145,27 @@
         margin-top: -5px;
       }
     }
+  }
+  .error-bar{
+    padding: 0px 5px 0px 5px;
+    height: 20px;
+    border-radius: 50px;
+    margin-top: -5px;
+  }
+  .weak {
+    background-color: red;
+    color:black !important;
+  }
+
+  .medium {
+    background-color: orange;
+    color:black !important;
+
+  }
+
+  .strong {
+    background-color: green;
+    color:black !important;
   }
 
   .link-text {
@@ -383,4 +406,9 @@
   .inputs-container {
     padding: 12px 0px 0px 0px !important;
   }
+}
+
+.password-strength-text {
+  font-size: 12px;
+  color: red;
 }

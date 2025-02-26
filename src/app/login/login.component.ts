@@ -159,10 +159,12 @@ export class LoginComponent {
   isFilled: boolean = false;
   emailNotExist: boolean = false;
   passwordNotExist: boolean = false;
+  isPasswordVisible: boolean = false;
 
   userNameSrc: string = 'assets/img/person.png';
   userEmailSrc: string = 'assets/img/mail.png';
   userPasswordSrc: string = 'assets/img/lock.png';
+
 
   onFocus(field: string): void {
     if (field === 'userEmail' && !this.userEmail) {
@@ -194,6 +196,10 @@ export class LoginComponent {
         : 'assets/img/lock.png';
     }
     this.enableButton();
+  }
+
+  togglePasswordVisibility(): void {
+    this.isPasswordVisible = !this.isPasswordVisible;
   }
 
   enableButton(): void {

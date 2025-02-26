@@ -56,7 +56,7 @@
         <div class="password-input">
           <img [src]="userPasswordSrc" alt="lock" />
           <input
-            type="password"
+            [type]="isPasswordVisible ? 'text' : 'password'"
             id="password"
             name="password"
             required
@@ -66,6 +66,17 @@
             (focus)="onFocus('userPassword')"
             (blur)="onBlur('userPassword')"
             (input)="onInput('userPassword', $event)"
+          />
+
+          <img
+            *ngIf="userPassword.length > 0"
+            (click)="togglePasswordVisibility()"
+            [src]="
+              isPasswordVisible
+                ? 'assets/img/eye-open.png'
+                : 'assets/img/eye-closed.png'
+            "
+            alt="Passwort anzeigen/verstecken"
           />
         </div>
 

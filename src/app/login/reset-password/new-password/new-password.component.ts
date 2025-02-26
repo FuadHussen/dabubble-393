@@ -25,6 +25,10 @@ export class NewPasswordComponent implements OnInit {
 
   isFilled: boolean = false;
   isPasswordChange: boolean = false;
+  isPasswordVisible: boolean = false;
+  isPasswordErrorText: string = '';
+  passwordStrengthClass: string = ''; // 'weak', 'medium', 'strong'
+  passwordStrengthClassText: string = '';
 
   ngOnInit() {
     // Extrahiere den oobCode aus der URL
@@ -33,8 +37,8 @@ export class NewPasswordComponent implements OnInit {
     console.log(this.oobCode);
     if (!this.oobCode) {
       // Falls kein oobCode in der URL ist, sollte der Benutzer zum Login weitergeleitet werden
-      console.log('kein oobCode vorhanden');
-      this.router.navigate(['/login']);
+      //   console.log('kein oobCode vorhanden');
+      //   this.router.navigate(['/login']);
     }
   }
 
@@ -50,17 +54,66 @@ export class NewPasswordComponent implements OnInit {
     let value = (event.target as HTMLInputElement).value;
     if (field === 'password') {
       this.userPassword = value;
+      this.checkPasswordStrength();
     } else if (field === 'passwordControl') {
       this.userPasswordControl = value;
     }
+  }
+
+  onBlur(field: string): void {
+  if (field === 'passwordControl'){
     this.enableButton();
+    }
+  }
+
+
+ 
+
+
+  checkPasswordStrength(): void {
+    const hasLetters = /[A-Za-z]/.test(this.userPassword);
+    const hasNumbers = /\d/.test(this.userPassword);
+    const hasSpecialChars = /[@$!%*?&]/.test(this.userPassword);
+    const isMinLength = this.userPassword.length >= 6;
+
+    if (!isMinLength) {
+      this.isPasswordErrorText = 'Passwort zu kurz (min. 6 Zeichen)';
+      this.passwordStrengthClass = '';
+      this.passwordStrengthClassText = '';
+    } else if (hasLetters && !hasNumbers && !hasSpecialChars) {
+      this.passwordStrengthClass = 'weak';
+      this.passwordStrengthClassText = 'schwach';
+      this.isPasswordErrorText = 'Passwort Sicherheit:';
+    } else if (hasLetters && hasNumbers && !hasSpecialChars) {
+      this.passwordStrengthClass = 'medium';
+      this.passwordStrengthClassText = 'mittel';
+      this.isPasswordErrorText = 'Passwort Sicherheit:';
+    } else if (hasLetters && hasNumbers && hasSpecialChars) {
+      this.passwordStrengthClass = 'strong';
+      this.passwordStrengthClassText = 'stark';
+      this.isPasswordErrorText = 'Passwort Sicherheit:';
+    } else {
+      this.passwordStrengthClass = '';
+      this.isPasswordErrorText = '';
+      this.passwordStrengthClassText = '';
+    }
   }
 
   enableButton() {
-    this.isFilled =
+    if (
       this.userPassword !== '' &&
       this.userPasswordControl !== '' &&
-      this.userPassword === this.userPasswordControl;
+      this.userPassword === this.userPasswordControl
+    ) {
+      this.isFilled = true;
+      this.isPasswordErrorText = '';
+      this.passwordStrengthClassText = '';
+      this.passwordStrengthClass = '';
+    }else{
+      this.passwordStrengthClassText = '';
+      this.passwordStrengthClass = '';
+      this.isPasswordErrorText = 'Passwörter stimmen nicht Überein'
+    }
   }
 
   async resetPassword() {
@@ -81,6 +134,10 @@ export class NewPasswordComponent implements OnInit {
         console.error(error);
       }
     }
+  }
+
+  togglePasswordVisibility(): void {
+    this.isPasswordVisible = !this.isPasswordVisible;
   }
 
   navigateToLogin() {
