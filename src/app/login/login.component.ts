@@ -108,7 +108,6 @@ export class LoginComponent {
 
   private checkScreenSize() {
     this.isMobile = window.innerWidth <= 1175;
-    this.containerState = this.isMobile ? 'mobileStart' : 'start';
   }
 
   bgState = 'visible';
@@ -131,9 +130,9 @@ export class LoginComponent {
   }
 
   private setEndState() {
+    this.containerState = this.isMobile ? 'mobileEnd' : 'end';
     this.logoState = 'end';
     this.bgState = 'hidden';
-    this.containerState = this.isMobile ? 'mobileEnd' : 'end';
   }
 
   private playIntroAnimation() {
@@ -212,7 +211,9 @@ export class LoginComponent {
   }
 
   loginSucess() {
-    // Prüfe die Bildschirmgröße direkt vor dem Login
+    this.containerState = 'end';
+    // Prüfe die Bildschirmgröße direkt vor 
+    // dem Login
     this.checkScreenSize();
 
     this.userService
