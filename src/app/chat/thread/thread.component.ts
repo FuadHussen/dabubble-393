@@ -9,6 +9,8 @@ import { ChatService } from './../../services/chat.service';
 import { Auth } from '@angular/fire/auth';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { AvatarService } from '../../services/avatar.service';
+import { UserService } from '../../services/user.service';
+
 interface MessageGroup {
   date: string;
   messages: Message[];
@@ -70,12 +72,16 @@ export class ThreadComponent implements OnInit, OnDestroy {
   private reactionCache: { [key: string]: GroupedReaction[] } = {};
   private unsubscribes: (() => void)[] = [];
 
+  // Add a map to cache user data
+  private userCache: { [userId: string]: any } = {};
+
   constructor(
     private chatService: ChatService,
     private auth: Auth,
     private firestore: Firestore,
     private cdr: ChangeDetectorRef,
-    private avatarService: AvatarService
+    private avatarService: AvatarService,
+    private userService: UserService
   ) {
     this.chatService.getCurrentUser().then(user => {
       this.currentUser = user;
@@ -84,6 +90,61 @@ export class ThreadComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.loadReplies();
+    
+    // Replace the existing user data subscription with this improved version
+    const userDataSub = this.userService.userData$.subscribe(userData => {
+      if (userData && userData.uid) {
+        // Update cached user data - PROPERLY MERGE old and new data
+        this.userCache[userData.uid] = {
+          ...this.userCache[userData.uid] || {},
+          ...userData
+        };
+        
+        // Update message if it matches this user
+        if (this.message && this.message.userId === userData.uid) {
+          this.message = {
+            ...this.message,
+            username: userData.username || this.message.username,  // Only update if provided
+            avatar: userData.avatar !== undefined ? userData.avatar : this.message.avatar  // Only update if provided
+          };
+        }
+        
+        // Update replies if they match this user
+        this.replies = this.replies.map(reply => {
+          if (reply.userId === userData.uid) {
+            return {
+              ...reply,
+              username: userData.username || reply.username,  // Only update if provided
+              avatar: userData.avatar !== undefined ? userData.avatar : reply.avatar  // Only update if provided
+            };
+          }
+          return reply;
+        });
+        
+        // Update message groups to reflect changes
+        this.messageGroups = this.messageGroups.map(group => {
+          return {
+            ...group,
+            messages: group.messages.map(msg => {
+              if (msg.userId === userData.uid) {
+                return {
+                  ...msg,
+                  username: userData.username || msg.username,  // Only update if provided
+                  avatar: userData.avatar !== undefined ? userData.avatar : msg.avatar  // Only update if provided
+                };
+              }
+              return msg;
+            })
+          };
+        });
+        
+        // Trigger change detection
+        this.cdr.detectChanges();
+      }
+    });
+    
+    // Add to unsubscribes for cleanup
+    this.unsubscribes.push(() => userDataSub.unsubscribe());
   }
 
   addReaction(message: Message, emoji: string) {
@@ -144,17 +205,15 @@ export class ThreadComponent implements OnInit, OnDestroy {
           if (docSnapshot.exists()) {
             const messageData = docSnapshot.data();
             
-            // Hole den User mit der userId aus der users-Sammlung
-            const userRef = doc(this.firestore, 'users', messageData['userId']);
-            const userSnap = await getDoc(userRef);
-            const userData = userSnap.data();
+            // Use getUserData helper method instead of direct query
+            const userData = await this.getUserData(messageData['userId']);
             
             const originalMessageData = {
               id: docSnapshot.id,
               ...messageData,
-              // Verwende den Avatar aus dem user-Dokument
-              avatar: userData?.['avatar'],
-              username: userData?.['username'] || messageData['username']
+              // Use data from userData
+              avatar: userData?.avatar,
+              username: userData?.username || messageData['username']
             } as Message;
             
             this.message = originalMessageData;
@@ -192,22 +251,19 @@ export class ThreadComponent implements OnInit, OnDestroy {
         );
 
         const unsubscribeReplies = onSnapshot(q, async (snapshot) => {
-          // Lade für jede Antwort die User-Daten
+          // Use getUserData for each reply
           this.replies = await Promise.all(
             snapshot.docs.map(async (docSnapshot) => {
               const messageData = docSnapshot.data();
               
-              // Hole den User für jede Antwort
-              const userRef = doc(this.firestore, 'users', messageData['userId']);
-              const userSnap = await getDoc(userRef);
-              const userData = userSnap.data();
+              // Use getUserData helper
+              const userData = await this.getUserData(messageData['userId']);
               
               return {
                 id: docSnapshot.id,
                 ...messageData,
-                // Verwende den Avatar aus dem user-Dokument
-                avatar: userData?.['avatar'],
-                username: userData?.['username'] || messageData['username']
+                avatar: userData?.avatar,
+                username: userData?.username || messageData['username']
               } as Message;
             })
           );
@@ -434,18 +490,43 @@ export class ThreadComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    // Cleanup aller Unsubscribe-Funktionen
+    // Clean up all subscriptions
     this.unsubscribes.forEach(unsubscribe => unsubscribe());
     this.unsubscribes = [];
   }
 
-  getAvatarSrc(avatar: string | null): string {
-    if (!avatar) return '';
+  getAvatarSrc(avatar: string | null | undefined): string {
+    if (!avatar) return 'assets/img/avatars/default-avatar.png';
     
-    if (this.avatarService.isGoogleAvatar(avatar)) {
+    if (this.avatarService.isGoogleAvatar(avatar) || avatar.startsWith('http')) {
       return this.avatarService.transformGooglePhotoUrl(avatar);
     }
     
     return 'assets/img/avatars/' + avatar;
+  }
+
+  // Add this helper method to get and cache user data
+  private async getUserData(userId: string) {
+    // Check cache first
+    if (this.userCache[userId]) {
+      return this.userCache[userId];
+    }
+    
+    // If not in cache, get from Firestore
+    try {
+      const userRef = doc(this.firestore, 'users', userId);
+      const userSnap = await getDoc(userRef);
+      
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+        // Store in cache
+        this.userCache[userId] = userData;
+        return userData;
+      }
+      return null;
+    } catch (error) {
+      console.error(`Error fetching user data for ${userId}:`, error);
+      return null;
+    }
   }
 }

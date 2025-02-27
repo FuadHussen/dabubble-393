@@ -25,8 +25,8 @@
       <!-- Messages in dieser Gruppe -->
       <div *ngFor="let msg of group.messages" class="message" [class.guest]="isCurrentUser(msg.userId)"
         (mouseover)="showReactionOptions($event, msg)" (mouseleave)="hideReactionOptions($event, msg)">
-        <div class="avatar-container" *ngIf="msg.avatar">
-          <img [src]="msg.avatar ? getAvatarSrc(msg.avatar) : ''" [alt]="msg.username + ' avatar'" class="user-avatar">
+        <div class="avatar-container">
+          <img [src]="getAvatarSrc(msg.avatar)" [alt]="msg.username + ' avatar'" class="user-avatar">
         </div>
         <div class="message-content">
           <div class="message-header">

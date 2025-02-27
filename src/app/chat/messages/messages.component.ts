@@ -11,6 +11,7 @@ import { MessageReactionHandler } from './message-reaction.handler';
 import { MessageUIHandler } from './message-ui.handler';
 import { MessageGroupHandler } from './message-group.handler';
 import { Message, Reaction, GroupedReaction, TooltipData } from '../../models/message.model';
+import { Subscription } from 'rxjs';
 
 interface User {
   id: string;
@@ -65,6 +66,8 @@ export class MessagesComponent implements OnInit {
   
   @ViewChild('chatContent') private chatContent!: ElementRef;
 
+  private userSubscription: Subscription;
+
   constructor(
     private firestore: Firestore,
     private chatService: ChatService,
@@ -87,6 +90,18 @@ export class MessagesComponent implements OnInit {
 
     // Channel und User Subscriptions
     this.setupSubscriptions();
+
+    // Add subscription to user data changes
+    this.userSubscription = this.userService.userData$.subscribe(updatedUserData => {
+      if (updatedUserData && updatedUserData.uid) {
+        
+        // Update user in the users array
+        this.updateUserInCache(updatedUserData);
+        
+        // Update avatars and usernames in messages
+        this.updateUserInMessages(updatedUserData);
+      }
+    });
   }
 
   ngOnInit() {
@@ -417,6 +432,58 @@ export class MessagesComponent implements OnInit {
       if (userId) {
         message.avatar = avatarMap[userId];
       }
+    }
+  }
+
+  private updateUserInCache(userData: any) {
+    if (!userData || !userData.uid) return;
+    
+    // Find the user in the users array and update their data
+    const index = this.users.findIndex(user => user.uid === userData.uid);
+    if (index !== -1) {
+      // Update existing user
+      this.users[index] = {
+        ...this.users[index],
+        ...userData
+      };
+    } else {
+      // Add new user to cache
+      this.users.push(userData);
+    }
+  }
+
+  private updateUserInMessages(userData: any) {
+    if (!userData || !userData['uid']) {
+      return;
+    }
+    
+    const userId = userData['uid'];
+    const username = userData['username'];
+    const avatar = userData['avatar'];
+    
+    // Update username and avatar in all messages by this user
+    let messagesUpdated = false;
+    this.messages.forEach(message => {
+      if (message.userId === userId) {
+        if (username) message.username = username;
+        if (avatar) message.avatar = avatar;
+        messagesUpdated = true;
+      }
+    });
+    
+    if (messagesUpdated) {
+      // Force Angular to detect changes
+      this.cdr.detectChanges();
+    }
+  }
+
+  ngOnDestroy() {
+    if (this.messagesSubscription) {
+      this.messagesSubscription();
+    }
+    
+    if (this.userSubscription) {
+      this.userSubscription.unsubscribe();
     }
   }
 }

@@ -251,6 +251,19 @@ export class LoginComponent {
       const currentUser = await this.userService.getCurrentUser();
       if (!currentUser) return;
 
+      const userDocRef = doc(this.firestore, 'users', currentUser.uid);
+      const userSnapshot = await getDoc(userDocRef);
+      
+      if (!userSnapshot.exists()) {
+        await setDoc(userDocRef, {
+          uid: currentUser.uid,
+          email: currentUser.email,
+          username: currentUser.displayName || currentUser.email?.split('@')[0] || 'User',
+          avatar: currentUser.photoURL || null,
+          createdAt: new Date()
+        });
+      }
+
       const channelsRef = collection(this.firestore, 'channels');
       const channelMembersRef = collection(this.firestore, 'channelMembers');
       const messagesRef = collection(this.firestore, 'messages');

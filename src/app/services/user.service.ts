@@ -5,9 +5,20 @@ import {
   signInWithEmailAndPassword,
   getAuth,
   onAuthStateChanged,
-  sendPasswordResetEmail,
+  sendPasswordResetEmail
 } from '@angular/fire/auth';
-import {  Firestore, doc, getDoc, setDoc, collection, getDocs } from '@angular/fire/firestore';
+import {  
+  Firestore, 
+  doc, 
+  getDoc, 
+  setDoc, 
+  collection, 
+  getDocs, 
+  query, 
+  where, 
+  updateDoc,
+  writeBatch
+} from '@angular/fire/firestore';
 import { User as FirebaseUser } from 'firebase/auth';
 import { Router } from '@angular/router';
 
@@ -47,6 +58,10 @@ export class UserService {
   private avatarSubject = new BehaviorSubject<string | null>(null);
   avatar$ = this.avatarSubject.asObservable();
 
+  // Add or update these methods
+  private userDataSubject = new BehaviorSubject<any>(null);
+  userData$ = this.userDataSubject.asObservable();
+
   constructor() {
     this.loadUser();
   }
@@ -81,8 +96,16 @@ export class UserService {
     }
   }
 
-  login(email: string, password: string) {
-    return signInWithEmailAndPassword(this.auth, email, password);
+  async login(email: string, password: string): Promise<any> {
+    try {
+      const userCredential = await signInWithEmailAndPassword(this.auth, email, password);
+      // After login, fetch the most recent user data
+      await this.refreshUserData(userCredential.user.uid);
+      return userCredential;
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
   }
 
   async sendPasswordResetEmail(email: string): Promise<void> {
@@ -100,20 +123,26 @@ export class UserService {
 
   //change Avatar
 
-  async saveAvatar(avatarUrl: string): Promise<void> {
-    const user = this.getCurrentUser();
-    if (user) {
-      const userRef = doc(this.firestore, 'users', user.uid);
-      await setDoc(
-        userRef,
-        {
-          avatar: avatarUrl,
-        },
-        { merge: true }
-      );
-      
-      // Update avatar subject to notify subscribers
-      this.avatarSubject.next(avatarUrl);
+  async saveAvatar(avatarPath: string, userId?: string): Promise<string> {
+    try {
+      const uid = userId || this.auth.currentUser?.uid;
+      if (uid) {
+        // Update in Firestore users collection
+        const userDocRef = doc(this.firestore, 'users', uid);
+        await updateDoc(userDocRef, { avatar: avatarPath });
+        
+        // Broadcast to update UI
+        const currentData = this.userDataSubject.value || {};
+        this.userDataSubject.next({
+          ...currentData,
+          uid,
+          avatar: avatarPath
+        });
+      }
+      return avatarPath;
+    } catch (error) {
+      console.error('Error saving avatar:', error);
+      return '';
     }
   }
 
@@ -154,8 +183,25 @@ export class UserService {
   }
 
   // Neue Methode zum Aktualisieren des Usernames
-  updateUsername(newUsername: string) {
-    this.usernameSubject.next(newUsername);
+  async updateUsername(username: string, userId?: string): Promise<void> {
+    try {
+      const uid = userId || this.auth.currentUser?.uid;
+      if (uid) {
+        // Update in Firestore users collection
+        const userDocRef = doc(this.firestore, 'users', uid);
+        await updateDoc(userDocRef, { username });
+        
+        // Broadcast to update UI
+        const currentData = this.userDataSubject.value || {};
+        this.userDataSubject.next({
+          ...currentData,
+          uid,
+          username
+        });
+      }
+    } catch (error) {
+      console.error('Error updating username:', error);
+    }
   }
 
   // Neue Methode zum Aktualisieren des Avatars
@@ -238,6 +284,87 @@ export class UserService {
     } catch (error) {
       console.error('Error getting users:', error);
       return [];
+    }
+  }
+
+  // Add this new method to get fresh user data
+  async refreshUserData(userId: string): Promise<any> {
+    try {
+      const usersRef = collection(this.firestore, 'users');
+      const q = query(usersRef, where('uid', '==', userId));
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        const userDoc = querySnapshot.docs[0];
+        const userData = userDoc.data();
+        
+        // Make sure userData has uid for reference
+        userData['uid'] = userId;
+        
+        // Broadcast complete user data to all subscribers
+        this.userDataSubject.next(userData);
+        return userData;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      return null;
+    }
+  }
+
+  async saveUserProfile(userId: string, profileData: {username?: string, avatar?: string}): Promise<boolean> {
+    try {
+      if (!userId) {
+        console.error('Cannot save profile: No user ID provided');
+        return false;
+      }
+      
+      // Update in Firestore users collection
+      const userDocRef = doc(this.firestore, 'users', userId);
+      await updateDoc(userDocRef, profileData);
+      
+      // Also update all messages by this user - this is crucial!
+      const messagesRef = collection(this.firestore, 'messages');
+      const q = query(messagesRef, where('userId', '==', userId));
+      const querySnapshot = await getDocs(q);
+      
+      const batch = writeBatch(this.firestore);
+      querySnapshot.docs.forEach(docSnapshot => {
+        const messageRef = doc(this.firestore, 'messages', docSnapshot.id);
+        const updateData: any = {};
+        
+        if (profileData.username) {
+          updateData.username = profileData.username;
+        }
+        if (profileData.avatar) {
+          updateData.avatar = profileData.avatar;
+        }
+        
+        if (Object.keys(updateData).length > 0) {
+          batch.update(messageRef, updateData);
+        }
+      });
+      
+      await batch.commit();
+      
+      // Update local state
+      const userData = {
+        uid: userId,
+        ...profileData
+      };
+      this.userDataSubject.next(userData);
+      
+      if (profileData.username) {
+        this.usernameSubject.next(profileData.username);
+      }
+      if (profileData.avatar) {
+        this.avatarSubject.next(profileData.avatar);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error saving user profile:', error);
+      return false;
     }
   }
 }

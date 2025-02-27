@@ -9,7 +9,7 @@
   
       <div class="profile-content">
         <div class="avatar-container">
-          <img *ngIf="userAvatar" [src]="userAvatar ? getAvatarSrc(userAvatar) : ''" [alt]="username + ' avatar'"
+          <img *ngIf="userAvatar" [src]="userAvatar ? getAvatarUrl(userAvatar) : ''" [alt]="username + ' avatar'"
             class="profile-image">
           
           <!-- Avatar-Edit-Button -->

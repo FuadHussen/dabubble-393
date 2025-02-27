@@ -1,12 +1,24 @@
 import { Injectable } from '@angular/core';
 import { Firestore, collection, getDocs } from '@angular/fire/firestore';
+import { UserService } from '../services/user.service';
 
 @Injectable()
 export class RecipientSearchHandler {
   filteredResults: any[] = [];
   showResults = false;
 
-  constructor(private firestore: Firestore) {}
+  constructor(
+    private firestore: Firestore,
+    private userService: UserService
+  ) {
+    // Subscribe to user data changes to update search results
+    this.userService.userData$.subscribe(userData => {
+      if (userData && userData.uid && this.filteredResults.length > 0) {
+        // Update matching search results
+        this.updateUserInResults(userData);
+      }
+    });
+  }
 
   async handleRecipientInput(input: string, currentUserId: string): Promise<void> {
     const trimmedInput = input.trim();
@@ -62,6 +74,21 @@ export class RecipientSearchHandler {
     } catch (error) {
       console.error('Error searching for recipients:', error);
       this.filteredResults = [];
+    }
+  }
+
+  // Add this new method
+  private updateUserInResults(userData: any) {
+    const index = this.filteredResults.findIndex(result => 
+      result.type === 'user' && result.id === userData.uid
+    );
+    
+    if (index !== -1) {
+      this.filteredResults[index] = {
+        ...this.filteredResults[index],
+        name: userData.username,
+        avatar: userData.avatar
+      };
     }
   }
 } 

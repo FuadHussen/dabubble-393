@@ -52,7 +52,7 @@ export class UserProfileSettingsComponent implements OnInit {
   
   username: string = '';
   email: string = '';
-  userAvatar: string | null = null;
+  userAvatar: string | null = '';
   isOnline = true;
   isEditing = false;
   newUsername: string = '';
@@ -109,13 +109,19 @@ export class UserProfileSettingsComponent implements OnInit {
   async saveUsername() {
     if (this.newUsername.trim() && this.newUsername !== this.username) {
       try {
+        // Update in Firestore
         if (this.userDocId) {
           await updateDoc(doc(this.firestore, 'users', this.userDocId), {
             username: this.newUsername
           });
           
+          // Update all messages by this user
+          await this.userService.saveUserProfile(
+            this.userId,
+            { username: this.newUsername }
+          );
+          
           this.username = this.newUsername;
-          this.userService.updateUsername(this.newUsername);
         }
       } catch (error) {
         console.error('Error updating username:', error);
@@ -151,30 +157,41 @@ export class UserProfileSettingsComponent implements OnInit {
     }
   }
 
-  async saveAvatar() {
+  async saveAvatar(): Promise<void> {
     try {
       let newAvatarPath = this.userAvatar;
 
       if (this.uploadedFile) {
-        const fileName = `${this.userId}_${Date.now()}_${this.uploadedFile.name}`;
-        const storageRef = ref(this.storage, `avatars/${fileName}`);
+        const fileName = `avatars/${this.userId}_${Date.now()}_${this.uploadedFile.name}`;
+        const storageRef = ref(this.storage, fileName);
         
+        // Upload file
         await uploadBytes(storageRef, this.uploadedFile);
-        newAvatarPath = fileName;
+        
+        // Get download URL
+        const downloadURL = await getDownloadURL(storageRef);
+        newAvatarPath = downloadURL;
       } 
       else if (this.selectedAvatar) {
         newAvatarPath = this.selectedAvatar;
       }
 
-      if (newAvatarPath !== this.userAvatar && this.userDocId) {
-        await updateDoc(doc(this.firestore, 'users', this.userDocId), {
-          avatar: newAvatarPath
-        });
+      if (newAvatarPath !== null && newAvatarPath !== this.userAvatar && this.userDocId) {
+        // Create a safe object to update Firestore - ensures type safety
+        const updateData: {avatar: string} = {
+          avatar: newAvatarPath as string // Type assertion since we've checked it's not null
+        };
+        
+        // Update in Firestore
+        await updateDoc(doc(this.firestore, 'users', this.userDocId), updateData);
+        
+        // Update all messages by this user
+        await this.userService.saveUserProfile(
+          this.userId,
+          { avatar: newAvatarPath }
+        );
         
         this.userAvatar = newAvatarPath;
-        if (newAvatarPath !== null) {
-          await this.userService.saveAvatar(newAvatarPath);
-        }
       }
 
       this.isEditingAvatar = false;
@@ -198,11 +215,11 @@ export class UserProfileSettingsComponent implements OnInit {
     // Initialization code if needed
   }
 
-  getAvatarSrc(avatar: string | null): string {
-    if (!avatar) return '';
+  getAvatarUrl(avatar: string | null): string {
+    if (!avatar) return 'assets/img/avatars/default-avatar.png';
     
-    if (this.avatarService.isGoogleAvatar(avatar)) {
-      return this.avatarService.transformGooglePhotoUrl(avatar);
+    if (avatar.startsWith('http')) {
+      return avatar;
     }
     
     return 'assets/img/avatars/' + avatar;

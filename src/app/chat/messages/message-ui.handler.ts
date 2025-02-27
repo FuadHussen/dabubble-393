@@ -11,11 +11,19 @@ export class MessageUIHandler {
   getAvatarSrc(avatar: string | null): string {
     if (!avatar) return 'assets/img/avatars/default-avatar.png';
     
-    
-    if (this.avatarService.isGoogleAvatar(avatar)) {
+    // If it's a Google avatar or a full URL already
+    if (this.avatarService.isGoogleAvatar(avatar) || avatar.startsWith('http')) {
       return this.avatarService.transformGooglePhotoUrl(avatar);
     }
     
+    // If it's a Firebase Storage path
+    if (avatar.startsWith('avatars/')) {
+      // Get the download URL from Firebase Storage
+      return 'assets/img/avatars/default-avatar.png'; // Temporary fallback while URL loads
+      // You should implement logic to get actual Firebase storage URL
+    }
+    
+    // For local assets
     return 'assets/img/avatars/' + avatar;
   }
 

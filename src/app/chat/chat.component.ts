@@ -143,7 +143,8 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy, AfterVie
     private subscriptionHandler: ChatSubscriptionHandler,
     private channelHandler: ChatChannelHandler,
     private ngZone: NgZone,
-    private recipientSearchHandler: RecipientSearchHandler
+    private recipientSearchHandler: RecipientSearchHandler,
+    private userService: UserService
   ) {
     this.checkScreenSize();
     this.threadMessage$ = this.chatService.threadMessage$;
@@ -152,6 +153,20 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy, AfterVie
   ngOnInit() {
     this.subscriptionHandler.initUserSubscriptions(this);
     this.subscriptionHandler.initRouteSubscriptions(this, this.route);
+    
+    // Add subscription to user data changes
+    const userDataSub = this.userService.userData$.subscribe(userData => {
+      if (userData && userData.uid) {
+        // Update selectedUserData if it matches this user
+        if (this.isDirectMessage && this.chatService.selectedUser === userData.uid) {
+          this.selectedUserDisplayName = userData.username;
+          this.selectedUserAvatar = userData.avatar;
+        }
+      }
+    });
+    
+    // Add to subscriptions for cleanup
+    this.subscriptionHandler.addSubscription(userDataSub);
     
     // Bei Kanalwechsel Fokus setzen
     this.chatService.selectedChannel$.subscribe(() => {

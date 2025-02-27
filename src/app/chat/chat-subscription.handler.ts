@@ -128,6 +128,10 @@ export class ChatSubscriptionHandler {
     }
   }
 
+  addSubscription(subscription: Subscription) {
+    this.subscriptions.push(subscription);
+  }
+
   dispose() {
     this.subscriptions.forEach(sub => sub.unsubscribe());
     this.subscriptions = [];
