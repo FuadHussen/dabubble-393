@@ -78,6 +78,9 @@ export class ThreadComponent implements OnInit, OnDestroy {
 
   private shouldFocusTextarea = false;
 
+  // Füge diese neue Property und Methode hinzu
+  tooltipPositions: { [key: string]: { top: number, left: number } } = {};
+
   constructor(
     private chatService: ChatService,
     private auth: Auth,
@@ -477,7 +480,23 @@ export class ThreadComponent implements OnInit, OnDestroy {
   handleReactionHover(event: Event, message: Message, reaction: GroupedReaction) {
     event.stopPropagation();
     const tooltipKey = `${message.id}-${reaction.emoji}`;
+    
+    // Position berechnen
+    const targetElement = event.currentTarget as HTMLElement;
+    const rect = targetElement.getBoundingClientRect();
+    
+    this.tooltipPositions[tooltipKey] = {
+      top: rect.top - 10 - 80, // Höhe von tooltip + Abstand
+      left: rect.left + (rect.width / 2)
+    };
+    
     this.tooltipVisibility[tooltipKey] = true;
+    
+    // Tooltip-Daten setzen
+    this.tooltipData[tooltipKey] = {
+      emoji: reaction.emoji,
+      users: reaction.users
+    };
   }
 
   hideTooltip(tooltipKey: string) {
@@ -563,5 +582,15 @@ export class ThreadComponent implements OnInit, OnDestroy {
       this.focusTextarea();
       this.shouldFocusTextarea = false;
     }
+  }
+
+  // Helper method to get username from user ID
+  getUserName(userId: string): string {
+    const userData = this.userCache[userId];
+    return userData?.username || 'Unknown User';
+  }
+
+  getTooltipPosition(tooltipKey: string) {
+    return this.tooltipPositions[tooltipKey] || { top: 0, left: 0 };
   }
 }

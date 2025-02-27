@@ -61,6 +61,19 @@
               (mouseleave)="hideTooltip(msg.id + '-' + reaction.emoji)">
               <span class="reaction-emoji">{{ reaction.emoji }}</span>
               <span class="reaction-count">{{ reaction.count }}</span>
+              
+              <!-- Add tooltip -->
+              <div *ngIf="tooltipVisibility[msg.id + '-' + reaction.emoji]" 
+                   class="reaction-tooltip thread-tooltip">
+                <div class="tooltip-content">
+                  <div class="emoji-preview">{{ reaction.emoji }}</div>
+                  <div class="users-list">
+                    <div class="user-item" *ngFor="let userId of reaction.users">
+                      {{ getUserName(userId) }}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </button>
           </div>
         </div>

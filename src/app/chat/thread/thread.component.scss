@@ -187,10 +187,7 @@
             flex-wrap: wrap;
             gap: 4px;
             margin-top: 4px;
-
-            .reaction-wrapper {
-                position: relative;
-            }
+            position: relative;
         }
     }
 
@@ -274,7 +271,7 @@
     min-width: 200px;
     border: 1px solid #ADB0D9;
     max-width: 100%;
-    
+
     .emoji-container {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
@@ -320,7 +317,7 @@
     mat-icon {
         cursor: pointer;
         transition: color 0.1s ease;
-        
+
         &:hover {
             color: #444DF2;
         }
@@ -375,6 +372,9 @@
     font-size: 12px;
     cursor: pointer;
     border: 1px solid transparent;
+    position: relative;
+    border-color: #444DF2;
+    background: #fff;
 
     &:hover {
         background: #fff;
@@ -383,5 +383,58 @@
     &.user-reacted {
         border-color: #444DF2;
         background: #fff;
+    }
+}
+
+.reaction-tooltip {
+    position: absolute;
+    z-index: 9999;
+    background: #444DF2;
+    border-radius: 16px;
+    padding: 8px;
+    min-width: 90px;
+    max-width: 140px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+    color: white;
+    font-size: 12px;
+    pointer-events: none;
+    top: -80px;
+    left: -36px;
+
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 8px solid transparent;
+        border-right: 8px solid transparent;
+        border-top: 8px solid #444DF2;
+    }
+
+    .tooltip-content {
+        .emoji-preview {
+            font-size: 18px;
+            text-align: center;
+            margin-bottom: 6px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .users-list {
+            max-height: 70px;
+            overflow-y: auto;
+
+            .user-item {
+                padding: 3px 0;
+                font-size: 12px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                text-align: center;
+            }
+        }
     }
 }
