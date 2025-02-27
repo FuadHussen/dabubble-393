@@ -73,9 +73,10 @@ export class SignupComponent {
   }
 
   onBlur(field: string): void {
-    if (field === 'userName' && !this.userName) {
+    if (field === 'userName' && this.userName.trim().split(/\s+/).length > 1) {
       this.isNameTyped = true;
       this.userNameSrc = 'assets/img/person.png';
+      this.isNameFilled = true;
     } else if (field === 'userEmail' && !this.userEmail) {
       this.isEmailTyped = true;
       this.userEmailSrc = 'assets/img/mail.png';
@@ -101,7 +102,13 @@ export class SignupComponent {
       this.userNameSrc = value
         ? 'assets/img/person-active.png'
         : 'assets/img/person.png';
-      this.isNameFilled = this.userName.trim().split(' ').length >= 2;
+      if (this.userName.trim().split(' ').length >= 2) {
+        this.isNameTyped = true;
+        this.isNameFilled = true;
+      } else {
+        this.isNameTyped = false;
+        this.isNameFilled = false;
+      }
     } else if (field === 'userEmail') {
       this.userEmail = value;
       this.userEmailSrc = value
@@ -129,22 +136,27 @@ export class SignupComponent {
       this.isPasswordErrorText = 'Passwort zu kurz (min. 6 Zeichen)';
       this.passwordStrengthClass = '';
       this.passwordStrengthClassText = '';
-    } else if (hasLetters && !hasNumbers && !hasSpecialChars) {
+      this.isPasswordFilled = false;
+    }if (isMinLength && hasLetters && !hasNumbers && !hasSpecialChars) {
       this.passwordStrengthClass = 'weak';
       this.passwordStrengthClassText = 'schwach';
-      this.isPasswordErrorText = 'Passwort Sicherheit:';
-    } else if (hasLetters && hasNumbers && !hasSpecialChars) {
+      this.isPasswordErrorText = 'Passwort Ziel erfüllt, Sicherheit:';
+      this.isPasswordFilled = true;
+    } else if (isMinLength && hasLetters && hasNumbers && !hasSpecialChars) {
       this.passwordStrengthClass = 'medium';
       this.passwordStrengthClassText = 'mittel';
-      this.isPasswordErrorText = 'Passwort Sicherheit:';
-    } else if (hasLetters && hasNumbers && hasSpecialChars) {
+      this.isPasswordErrorText = 'Passwort Ziel erfüllt, Sicherheit:';
+      this.isPasswordFilled = true;
+    } else if (isMinLength && hasLetters && hasNumbers && hasSpecialChars) {
       this.passwordStrengthClass = 'strong';
       this.passwordStrengthClassText = 'stark';
-      this.isPasswordErrorText = 'Passwort Sicherheit:';
+      this.isPasswordErrorText = 'Passwort Ziel erfüllt, Sicherheit:';
+      this.isPasswordFilled = true;
     } else {
       this.passwordStrengthClass = '';
       this.isPasswordErrorText = '';
       this.passwordStrengthClassText = '';
+      this.isPasswordFilled = true;
     }
   }
 
@@ -164,10 +176,12 @@ export class SignupComponent {
   }
 
   enableButton() {
+    console.log('Checkbox Checked:', this.checkboxIsCkecked);
+    console.log('Name Filled:', this.isNameFilled);
+    console.log('Email Filled:', this.isEmailFilled);
+    console.log('Password Filled:', this.isPasswordFilled);
+
     this.isFilled =
-      this.userName !== '' &&
-      this.userEmail !== '' &&
-      this.userPassword !== '' &&
       this.checkboxIsCkecked &&
       this.isPasswordFilled &&
       this.isNameFilled &&

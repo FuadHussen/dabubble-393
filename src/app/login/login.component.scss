@@ -7,6 +7,11 @@ $color-white: white;
 $color-error: #ed1e79;
 
 .startseite-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  width: 100%;
+  position: relative; 
+  overflow: hidden;
   font-family: "Nunito", sans-serif !important;
   display: flex;
   flex-direction: column;

@@ -1,4 +1,9 @@
 .startseite {
+  max-width: 1440px;
+  margin: 0 auto;
+  width: 100%;
+  position: relative; 
+  overflow: hidden;
   font-family: "Nunito", sans-serif !important;
   display: flex;
   flex-direction: column;
@@ -81,6 +86,11 @@
     margin: 0;
   }
 
+  .marker{
+    margin-right:-10px;
+    margin-top:-10px;
+  }
+
   .inputs-container {
     display: flex;
     flex-direction: column;
@@ -102,7 +112,6 @@
       background-color: #eceefe;
       border: 1px solid transparent;
       cursor: pointer;
-
       &:hover {
         border: 1px solid #686868;
       }
@@ -139,7 +148,6 @@
         font-weight: 400;
         text-decoration-skip-ink: none;
         color: #ed1e79;
-        margin-top: -5px;
       }
     }
   }
@@ -147,7 +155,8 @@
     padding: 0px 5px 0px 5px;
     height: 20px;
     border-radius: 50px;
-    margin-top: -5px;
+    margin-left:4px;
+
   }
   .weak {
     background-color: red;
@@ -281,7 +290,8 @@
     margin-top: 15px;
     gap: 10px;
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: flex-end;
 
     .primary-btn,
     .disabled-btn {
@@ -355,6 +365,7 @@
     }
   }
   .inputs-container {
+    .name-input,
     .email-input,
     .password-input {
       padding: 8px 8px 8px 8px !important;
@@ -391,7 +402,13 @@
   .main-container {
     .form {
       max-width: 280px !important;
+      padding: 8px !important;
     }
+    .inputs-container {
+      .password-input input {
+        width: 180px;
+      }}
+
     .error-message {
       p {
         font-family: Nunito;

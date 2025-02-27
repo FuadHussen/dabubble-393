@@ -25,6 +25,7 @@
 
       <div class="inputs-container">
         <div class="name-input">
+          <div class="marker">*</div>
           <img [src]="userNameSrc" alt="name" />
           <input
             placeholder="Name und Nachname"
@@ -43,6 +44,7 @@
         </div>
 
         <div class="email-input">
+          <div class="marker">*</div>
           <img [src]="userEmailSrc" alt="mail" />
           <input
             type="email"
@@ -64,6 +66,7 @@
         </div>
 
         <div class="password-input">
+          <div class="marker">*</div>
           <img [src]="userPasswordSrc" alt="lock" />
           <input
             [type]="isPasswordVisible ? 'text' : 'password'"
@@ -116,6 +119,7 @@
         </div>
 
         <div class="buttons-container">
+          * = pflichtfelder
           <button
             (click)="createUser()"
             [disabled]="!isFilled"
