@@ -74,6 +74,10 @@
       width: -webkit-fill-available;
       box-sizing: border-box;
 
+      @media (max-width: 400px) {
+        width: auto;
+      }
+
       &::placeholder {
         color: #686868 !important;
       }
@@ -182,6 +186,11 @@
   align-items: center;
   gap: 8px;
   cursor: pointer;
+}
+
+.mention-username {
+  font-weight: 700;
+  color: #444DF2;
 }
 
 .chat-header {
@@ -482,6 +491,12 @@
   overflow-y: auto;
   z-index: 1000;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 450px) {
+    width: max-content;
+    left: auto;
+  }
+
 
   .mention-item {
     display: flex;

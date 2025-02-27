@@ -151,7 +151,7 @@
           [(ngModel)]="messageText"
           (input)="onMessageInput($event)"
           (keyup)="onKeyUp($event)"
-          [attr.data-has-mentions]="messageText.includes('@')"
+          [attr.data-has-mentions]="messageText.includes('@') || messageText.includes('#')"
           style="border-radius: 30px;">
         </textarea>
         <button class="send-button" mat-icon-button matSuffix (click)="sendMessage()">
@@ -167,15 +167,20 @@
           </div>
         </div>
 
-        <!-- Benutzervorschläge -->
+        <!-- Benutzer- und Channel-Vorschläge -->
         <div class="mention-suggestions" *ngIf="showUserMentions && mentionResults.length > 0">
           <div class="mention-item" 
-               *ngFor="let user of mentionResults" 
-               (click)="insertMention(user)">
-            <img [src]="'assets/img/avatars/' + user.avatar" 
-                 [alt]="user.username" 
+               *ngFor="let item of mentionResults" 
+               (click)="insertMention(item)">
+            <!-- Channel Icon oder User Avatar -->
+            <img *ngIf="item.type !== 'channel'" 
+                 [src]="'assets/img/avatars/' + item.avatar" 
+                 [alt]="item.username" 
                  class="mention-avatar">
-            <span class="mention-username">{{ user.username }}</span>
+            <!-- Name mit Prefix -->
+            <span class="mention-username">
+              {{ item.type === 'channel' ? '#' : '@' }}{{ item.username }}
+            </span>
           </div>
         </div>
       </mat-form-field>

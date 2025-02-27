@@ -27,6 +27,7 @@ import { ChatUIHandler } from './chat-ui.handler';
 import { ChatSubscriptionHandler } from './chat-subscription.handler';
 import { ChatChannelHandler } from './chat-channel.handler';
 import { RecipientSearchHandler } from './recipient-search.handler';
+import { collection, getDocs } from '@angular/fire/firestore';
 
 @Component({
   selector: 'app-chat',
@@ -142,7 +143,8 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy, AfterVie
     private channelHandler: ChatChannelHandler,
     private ngZone: NgZone,
     private recipientSearchHandler: RecipientSearchHandler,
-    private userService: UserService
+    private userService: UserService,
+    private firestore: Firestore
   ) {
     this.checkScreenSize();
     this.threadMessage$ = this.chatService.threadMessage$;
@@ -222,9 +224,17 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy, AfterVie
     const cursorPos = textarea.selectionStart;
     this.messageText = this.messageText.slice(0, cursorPos) + '@' + this.messageText.slice(cursorPos);
     
+    // Direkt alle User anzeigen
     const searchResults = await this.messageHandler.searchUsers('', this.currentUserId!, this.messageText);
     this.mentionResults = searchResults;
     this.showUserMentions = true;
+    
+    // Cursor nach dem @ Symbol positionieren
+    setTimeout(() => {
+      textarea.focus();
+      const newCursorPos = cursorPos + 1;
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    });
   }
 
   async onMessageInput(event: any) {
@@ -232,21 +242,81 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy, AfterVie
     const cursorPos = textarea.selectionStart;
     const textUpToCursor = this.messageText.substring(0, cursorPos);
     const lastAtSymbol = textUpToCursor.lastIndexOf('@');
-    
-    if (lastAtSymbol !== -1) {
-      const searchTerm = textUpToCursor.substring(lastAtSymbol + 1);
-      if (searchTerm !== '') {
-        const results = await this.messageHandler.searchUsers(
-          searchTerm, 
-          this.currentUserId!, 
-          this.messageText
-        );
-        this.mentionResults = results;
-        this.showUserMentions = true;
+    const lastHashSymbol = textUpToCursor.lastIndexOf('#');
+
+    // Prüfe welches Symbol zuletzt eingegeben wurde
+    if (lastAtSymbol > lastHashSymbol && lastAtSymbol !== -1) {
+      const searchTerm = textUpToCursor.substring(lastAtSymbol + 1).toLowerCase();
+      // Auch leere Suche erlauben für direkte Vorschläge
+      const results = await this.messageHandler.searchUsers(
+        searchTerm, 
+        this.currentUserId!, 
+        this.messageText
+      );
+      this.mentionResults = results;
+      this.showUserMentions = true;
+    } else if (lastHashSymbol > lastAtSymbol && lastHashSymbol !== -1) {
+      const searchTerm = textUpToCursor.substring(lastHashSymbol + 1).toLowerCase();
+      // Channels durchsuchen, auch bei leerem Suchbegriff
+      const channelsRef = collection(this.firestore, 'channels');
+      const channelsSnapshot = await getDocs(channelsRef);
+      const results = [];
+
+      for (const doc of channelsSnapshot.docs) {
+        const channel = doc.data() as any;
+        const channelName = channel.name.toLowerCase();
+        // Zeige alle verfügbaren Channels wenn searchTerm leer ist
+        // oder filtere nach dem Suchbegriff
+        if (searchTerm === '' || channelName.includes(searchTerm)) {
+          const hasAccess = await this.chatService.hasChannelAccess(doc.id);
+          if (hasAccess) {
+            results.push({
+              id: doc.id,
+              username: channel.name,
+              type: 'channel'
+            });
+          }
+        }
       }
+      this.mentionResults = results;
+      this.showUserMentions = true;
     } else {
       this.showUserMentions = false;
     }
+  }
+
+  // Füge eine neue Methode für das # Symbol hinzu
+  async onHashButtonClick() {
+    const textarea = document.querySelector('textarea') as HTMLTextAreaElement;
+    const cursorPos = textarea.selectionStart;
+    this.messageText = this.messageText.slice(0, cursorPos) + '#' + this.messageText.slice(cursorPos);
+    
+    // Direkt alle verfügbaren Channels anzeigen
+    const channelsRef = collection(this.firestore, 'channels');
+    const channelsSnapshot = await getDocs(channelsRef);
+    const results = [];
+
+    for (const doc of channelsSnapshot.docs) {
+      const channel = doc.data() as any;
+      const hasAccess = await this.chatService.hasChannelAccess(doc.id);
+      if (hasAccess) {
+        results.push({
+          id: doc.id,
+          username: channel.name,
+          type: 'channel'
+        });
+      }
+    }
+    
+    this.mentionResults = results;
+    this.showUserMentions = true;
+    
+    // Cursor nach dem # Symbol positionieren
+    setTimeout(() => {
+      textarea.focus();
+      const newCursorPos = cursorPos + 1;
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    });
   }
 
   onKeyUp(event: KeyboardEvent) {
@@ -271,12 +341,42 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy, AfterVie
     this.showEmojiPicker = false;
   }
 
-  insertMention(user: any) {
-    const result = this.uiHandler.insertMention(this.messageText, user, this.selectedMentions);
-    this.messageText = result.messageText;
-    this.selectedMentions = result.selectedMentions;
-    this.showUserMentions = false;
-    this.mentionResults = [];
+  insertMention(item: any) {
+    const textarea = this.messageTextarea.nativeElement;
+    const cursorPos = textarea.selectionStart;
+    const textUpToCursor = this.messageText.substring(0, cursorPos);
+    
+    // Finde das letzte @ oder # Symbol
+    const lastAtSymbol = textUpToCursor.lastIndexOf('@');
+    const lastHashSymbol = textUpToCursor.lastIndexOf('#');
+    const lastSymbolPos = Math.max(lastAtSymbol, lastHashSymbol);
+    
+    if (lastSymbolPos !== -1) {
+      // Definiere mention VOR der Verwendung
+      const prefix = item.type === 'channel' ? '#' : '@';
+      const mention = `${prefix}${item.username} `;
+      
+      // Ersetze den Text nach dem Symbol mit der Mention
+      this.messageText = 
+        this.messageText.substring(0, lastSymbolPos) + 
+        mention +
+        this.messageText.substring(cursorPos);
+      
+      // Füge die Mention zur Liste hinzu, wenn es ein User ist
+      if (item.type !== 'channel') {
+        this.selectedMentions.push(item.id);
+      }
+      
+      this.showUserMentions = false;
+      this.mentionResults = [];
+      
+      // Fokus zurück auf Textarea und Cursor ans Ende der Mention setzen
+      setTimeout(() => {
+        textarea.focus();
+        const newCursorPos = lastSymbolPos + mention.length;
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
+      });
+    }
   }
 
   // Text Formatting Methods
