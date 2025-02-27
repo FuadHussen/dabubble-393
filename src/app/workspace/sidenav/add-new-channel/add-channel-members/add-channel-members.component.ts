@@ -83,48 +83,71 @@ export class AddChannelMembersComponent implements OnInit {
   }
 
   async loadExistingChannels() {
-    try {
+    try {    
+      // 1. First check all available channels
       const channelsRef = collection(this.firestore, 'channels');
-      const querySnapshot = await getDocs(channelsRef);
+      const allChannelsSnapshot = await getDocs(channelsRef);
       
-      const channelsPromises = querySnapshot.docs.map(async (doc) => {
+      
+      // 2. Check user memberships
+      const membersRef = collection(this.firestore, 'channelMembers');
+      const userMembershipQuery = query(
+        membersRef,
+        where('userId', '==', this.currentUserId)
+      );
+      
+      const userMemberships = await getDocs(userMembershipQuery);
+      const userChannelIds = userMemberships.docs.map(doc => doc.data()['channelId']);
+      
+      // 3. Process each channel
+      const channelsPromises = allChannelsSnapshot.docs.map(async (doc) => {
+        const channelId = doc.id;
         const channelData = doc.data();
         
-        // Lade die Channel-Mitglieder
-        const membersRef = collection(this.firestore, 'channelMembers');
+        // Check if user is a member - this is the key check
+        const isMember = userChannelIds.includes(channelId);
+        
+        // Skip channels where user is not a member
+        if (!isMember) {
+          return null;
+        }
+        
+        // Get all members for this channel
         const memberQuery = query(
           membersRef, 
-          where('channelId', '==', doc.id)
+          where('channelId', '==', channelId)
         );
         
         const memberSnapshot = await getDocs(memberQuery);
         
-        // Zähle nur einzigartige Benutzer
+        // Count unique members
         const uniqueMembers = new Set();
         memberSnapshot.docs.forEach(memberDoc => {
           const memberData = memberDoc.data() as ChannelMember;
+          const memberId = memberData['userId'];
+          const isDeleted = memberData['deleted'] === true;
+          const isCurrentUser = memberId === this.currentUserId;
           
-          // Prüfe ob das Mitglied nicht gelöscht wurde und eine userId hat
-          // UND ob es nicht der aktuelle Benutzer ist
-          if (memberData['userId'] && 
-              memberData['deleted'] !== true &&
-              memberData['userId'] !== this.currentUserId) {
-            uniqueMembers.add(memberData['userId']);
+          if (memberId && !isDeleted && !isCurrentUser) {
+            uniqueMembers.add(memberId);
           }
         });
+        
 
         return {
-          id: doc.id,
+          id: channelId,
           name: channelData['name'],
           memberCount: uniqueMembers.size,
           selected: false
         };
       });
 
-      this.existingChannels = await Promise.all(channelsPromises);
+      // Filter out channels where user is not a member
+      const results = await Promise.all(channelsPromises);
+      this.existingChannels = results.filter(channel => channel !== null) as Channel[];
       
     } catch (error) {
-      console.error('Error loading channels:', error);
+      console.error('❌ Error loading channels:', error);
     }
   }
 

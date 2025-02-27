@@ -254,7 +254,6 @@ export class ChannelSettingsComponent implements OnInit, OnChanges {
 
   async leaveChannel() {
     try {
-      
       if (!this.channelId) {
         console.error('❌ DEBUG: No valid channel ID available');
         return;
@@ -265,12 +264,8 @@ export class ChannelSettingsComponent implements OnInit, OnChanges {
         console.error('❌ DEBUG: No logged in user');
         return;
       }
-
-
-      // Speichere die aktuelle Channel-ID, damit wir später prüfen können, ob wir sie verlassen haben
-      const currentChannelId = this.channelId;
-
-      // Suche nach dem channelMembers-Eintrag für diesen Benutzer und Channel
+      
+      // Search for the channelMembers entry for this user and channel
       const channelMembersRef = collection(this.firestore, 'channelMembers');
       const q = query(channelMembersRef, 
         where('channelId', '==', this.channelId),
@@ -284,32 +279,25 @@ export class ChannelSettingsComponent implements OnInit, OnChanges {
         return;
       }
       
-      // Den Eintrag des Benutzers aus channelMembers löschen
+      // Delete the user's entry from channelMembers
       const memberDoc = querySnapshot.docs[0];
       await deleteDoc(doc(this.firestore, 'channelMembers', memberDoc.id));
-      
-      // Erfolgsbenachrichtigung anzeigen
-      this.showSuccessMessage('Du hast den Channel verlassen');
-      // Erfolgsbenachrichtigung anzeigen
+      // Show success notification
       this.showSuccessMessage('Du hast den Channel verlassen');
       
-      // Erst triggern, dann Dialog schließen
+      // Trigger channel refresh
       this.chatService.triggerChannelsRefresh();
       
-      // Dialog schließen
+      // Close dialog
       this.closeSettings.emit();
-
-      // Kurze Verzögerung für asynchrone Operationen
-      await new Promise(resolve => setTimeout(resolve, 300));
       
-      // Zum nächsten verfügbaren Channel oder DM wechseln
+      // Navigate to the next available channel or DM
       await this.chatService.selectNextAvailableChannel();
-            
     } catch (error) {
       console.error('❌ DEBUG: Error in leaveChannel:', error);
       this.errorMessage = "Beim Verlassen des Channels ist ein Fehler aufgetreten.";
       this.showErrorMessage(this.errorMessage);
-    } 
+    }
   }
 
   getAvatarSrc(avatar: string | null): string {

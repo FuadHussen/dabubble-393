@@ -23,7 +23,7 @@ export class ChatService {
   private messageSubscription: any;  // Subscription speichern
   private messagesSubject = new BehaviorSubject<Message[]>([]);
   private refreshChannelsSubject = new BehaviorSubject<boolean>(false);
-  
+
   currentChannelId$ = this.currentChannelIdSubject.asObservable();
   isDirectMessage$ = this.isDirectMessageSubject.asObservable();
   selectedUser$ = this.selectedUserSubject.asObservable();
@@ -34,12 +34,12 @@ export class ChatService {
   threadMessage$ = this.threadMessageSubject.asObservable();
   messages$ = this.messagesSubject.asObservable();
   refreshChannels$ = this.refreshChannelsSubject.asObservable();
-  
+
   constructor(
     private firestore: Firestore,
     private auth: Auth,
     private audioService: AudioService
-  ) {}
+  ) { }
 
   async getCurrentUser(): Promise<User> {
     return new Promise((resolve, reject) => {
@@ -82,7 +82,7 @@ export class ChatService {
 
   async selectUser(userId: string) {
     this.selectedUserSubject.next(userId);
-    
+
     if (userId) {
       // Lade die User-Daten sofort
       const userDoc = await this.getUserData(userId);
@@ -96,7 +96,7 @@ export class ChatService {
     try {
       const userRef = doc(this.firestore, 'users', userId);
       const userSnap = await getDoc(userRef);
-      
+
       if (userSnap.exists()) {
         return {
           id: userSnap.id,
@@ -113,66 +113,61 @@ export class ChatService {
   async selectNextAvailableChannel(): Promise<string> {
     try {
       const currentUserId = this.auth.currentUser?.uid;
-      
+
       if (!currentUserId) {
         return '/workspace';
       }
-  
+
       // 1. Zuerst nach verfügbaren Channels suchen
       const channelMembersRef = collection(this.firestore, 'channelMembers');
-      
-      // Alle Mitgliedschaften abrufen, ohne Limit
+
+      // Alle Mitgliedschaften abrufen
       const channelQuery = query(
         channelMembersRef,
         where('userId', '==', currentUserId)
       );
-      
       const channelMembersSnapshot = await getDocs(channelQuery);
-      
-      // Überprüfe alle Channel-Mitgliedschaften
-      if (!channelMembersSnapshot.empty) {
-        // Für jede Mitgliedschaft prüfen
-        for (const channelMember of channelMembersSnapshot.docs) {
-          const channelId = channelMember.data()['channelId'];
-          
-          // Channel-Daten abrufen
-          const channelDoc = await getDoc(doc(this.firestore, 'channels', channelId));
-          
-          if (channelDoc.exists()) {
-            const channelData = channelDoc.data();
-            
+
+      // Extrahiere alle Channel-IDs, in denen der Benutzer Mitglied ist
+      const userChannelIds = channelMembersSnapshot.docs.map(doc => doc.data()['channelId']);
+
+      if (userChannelIds.length > 0) {
+        // Ähnlich wie in sidenav.component.ts, prüfe jeden Channel einzeln
+        for (const channelId of userChannelIds) {
+          const channelDocRef = doc(this.firestore, 'channels', channelId);
+          const channelSnap = await getDoc(channelDocRef);
+
+          if (channelSnap.exists()) {
+            const channelData = channelSnap.data();
+
             // Setzen der Channel-Daten im Service
             this.setCurrentChannelId(channelId);
             this.selectedChannelSubject.next(channelData['name'] || '');
             this.setIsDirectMessage(false);
-            
+
             const channelRoute = `/workspace/channel/${channelId}`;
-            
             return channelRoute;
-          } 
+          }
         }
       } 
-      
-      // Wir kommen nur hierher, wenn kein gültiger Channel gefunden wurde
-      
+
       // Nach DMs suchen
       try {
         const messagesRef = collection(this.firestore, 'messages');
-        
+
         // Empfangene Nachrichten prüfen
         const receivedMessagesQuery = query(
           messagesRef,
           where('recipientId', '==', currentUserId),
           limit(5)
         );
-        
+
         const receivedMessagesSnapshot = await getDocs(receivedMessagesQuery);
-        
         if (!receivedMessagesSnapshot.empty) {
           for (const msgDoc of receivedMessagesSnapshot.docs) {
             const msgData = msgDoc.data();
             const otherUserId = msgData['senderId'];
-            
+
             if (otherUserId && otherUserId !== currentUserId) {
               this.setSelectedUser(otherUserId);
               this.setIsDirectMessage(true);
@@ -181,21 +176,20 @@ export class ChatService {
             }
           }
         }
-        
+
         // Gesendete Nachrichten prüfen
         const sentMessagesQuery = query(
           messagesRef,
           where('senderId', '==', currentUserId),
           limit(5)
         );
-        
+
         const sentMessagesSnapshot = await getDocs(sentMessagesQuery);
-        
         if (!sentMessagesSnapshot.empty) {
           for (const msgDoc of sentMessagesSnapshot.docs) {
             const msgData = msgDoc.data();
             const otherUserId = msgData['recipientId'];
-            
+
             if (otherUserId && otherUserId !== currentUserId) {
               this.setSelectedUser(otherUserId);
               this.setIsDirectMessage(true);
@@ -204,23 +198,23 @@ export class ChatService {
             }
           }
         }
-        
       } catch (dmError) {
         console.error('❌ DEBUG: Error finding DMs:', dmError);
       }
-      
+
       // Wenn weder Channels noch DMs gefunden wurden
       this.setIsDirectMessage(false);
       this.selectedChannelSubject.next('');
       this.setSelectedUser('');
       return '/workspace';
-      
+
     } catch (error) {
       console.error('❌ DEBUG: Error in selectNextAvailableChannel:', error);
       return '/workspace';
+    } finally {
     }
   }
-      
+
   getSelectedChannel() {
     return this.selectedChannel$;
   }
@@ -242,7 +236,7 @@ export class ChatService {
       const usersRef = collection(this.firestore, 'users');
       const q = query(usersRef, where('displayName', '==', displayName));
       const querySnapshot = await getDocs(q);
-      
+
       if (!querySnapshot.empty) {
         return querySnapshot.docs[0];
       }
@@ -258,7 +252,7 @@ export class ChatService {
     if (displayNameOrId.length > 20) {
       return displayNameOrId;
     }
-    
+
     const userDoc = await this.getUserByDisplayName(displayNameOrId);
     return userDoc?.id || null;
   }
@@ -310,10 +304,10 @@ export class ChatService {
         ...messageData,
         timestamp: new Date()
       });
-      
+
       // Sound abspielen nach erfolgreichem Senden
       this.audioService.playMessageSound();
-      
+
       return true;
     } catch (error) {
       console.error('Error sending message:', error);
@@ -341,7 +335,7 @@ export class ChatService {
       const messagesRef = collection(this.firestore, 'messages');
       const q = query(messagesRef, where('parentId', '==', messageId), orderBy('timestamp', 'asc'));
       const querySnapshot = await getDocs(q);
-      
+
       return querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -356,7 +350,7 @@ export class ChatService {
     try {
       const messagesRef = collection(this.firestore, 'messages');
       const currentUser = await this.getCurrentUser();
-      
+
       if (!currentUser) throw new Error('No user logged in');
 
       const replyData = {
@@ -380,7 +374,7 @@ export class ChatService {
 
   // Methode zum Laden der Nachrichten
   async loadMessages(channelId: string | null, recipientId: string | null) {
-    
+
     // Erst alte Subscription beenden
     if (this.messageSubscription) {
       this.messageSubscription.unsubscribe();
@@ -409,16 +403,16 @@ export class ChatService {
 
     // Neue Subscription speichern
     this.messageSubscription = collectionData(q).subscribe(messages => {
-      
-      
+
+
       // Deduplizierung der Nachrichten basierend auf ID
       const uniqueMessages = Array.from(
         new Map(messages.map(m => [m['id'], m])).values()
       );
-      
+
       if (messages.length !== uniqueMessages.length) {
       }
-      
+
       this.messagesSubject.next(uniqueMessages as Message[]);
     });
   }

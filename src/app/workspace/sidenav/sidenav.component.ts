@@ -10,7 +10,7 @@ import { NavbarComponent } from '../../navbar/navbar.component';
 import { MatDialog } from '@angular/material/dialog';
 import { AddNewChannelComponent } from './add-new-channel/add-new-channel.component';
 import { MatExpansionPanel } from '@angular/material/expansion';
-import { Firestore, collection, addDoc, collectionData, query, where, getDocs, doc, getDoc } from '@angular/fire/firestore';
+import { Firestore, collection, addDoc, collectionData, query, where, getDocs, doc, getDoc, deleteDoc } from '@angular/fire/firestore';
 import { Observable, Subscription } from 'rxjs';
 import { ChatService } from '../../services/chat.service';
 import { Auth } from '@angular/fire/auth';
@@ -21,6 +21,7 @@ import { ChangeDetectorRef } from '@angular/core';
 import { NgZone } from '@angular/core';
 import { ThreadComponent } from '../../chat/thread/thread.component';
 import { AvatarService } from '../../services/avatar.service';
+import { onAuthStateChanged } from '@angular/fire/auth';
 
 interface Channel {
   id: string;
@@ -77,6 +78,9 @@ export class SidenavComponent implements OnInit {
   showThread = false;
 
   private subscriptions: Subscription[] = [];
+
+  // Add a property to track initialization
+  private initialPageLoad = true;
 
   constructor(
     private dialog: MatDialog,
@@ -208,11 +212,20 @@ export class SidenavComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.handleInitialRouting();
     this.checkScreenSize();
-    this.loadChannels();
-    this.loadUsers();
-
-    // Reagiere auf Änderungen der Channel-Liste
+    
+    // Set up auth state listener
+    this.auth.onAuthStateChanged((user) => {
+      this.currentUserId = user?.uid || null;
+      
+      if (user) {
+        this.loadChannels();
+        this.loadUsers();
+      } 
+    });
+    
+    // Keep the rest of your existing ngOnInit code
     this.subscriptions.push(
       this.chatService.refreshChannels$.subscribe(refresh => {
         if (refresh) {
@@ -286,53 +299,70 @@ export class SidenavComponent implements OnInit {
         return;
       }
 
-      // Cache umgehen: Ein Timestamp als Parameter hinzufügen
+      // Add timestamp to bypass cache
       const timestamp = new Date().getTime();
-
-      // Suche zuerst nach allen channelMembers-Einträgen für den aktuellen Benutzer
+      // Query channel memberships
       const channelMembersRef = collection(this.firestore, 'channelMembers');
-      const q = query(channelMembersRef, where('userId', '==', currentUserId));
-      const membersSnapshot = await getDocs(q);
+      const q = query(
+        channelMembersRef, 
+        where('userId', '==', currentUserId)
+      );
       
-      // Extrahiere alle Channel-IDs, in denen der Benutzer Mitglied ist
+      const membersSnapshot = await getDocs(q);
       const userChannelIds = membersSnapshot.docs.map(doc => doc.data()['channelId']);
-
+      
       if (userChannelIds.length === 0) {
         this.channels = [];
         this.selectedChannel = '';
         return;
       }
       
-      // Hole alle Channels aus diesen IDs, aber mit frischen Daten
-      const channelsCollection = collection(this.firestore, 'channels');
+      // Deduplicate channel IDs
+      const uniqueChannelIds = [...new Set(userChannelIds)];
       
-      const channelPromises = userChannelIds.map(async channelId => {
-        const channelDocRef = doc(this.firestore, 'channels', channelId);
-        const channelSnap = await getDoc(channelDocRef);
-        
-        if (channelSnap.exists()) {
-          return {
-            id: channelSnap.id,
-            name: channelSnap.data()['name'],
-            description: channelSnap.data()['description'] || ''
-          };
+      // Get fresh data for each channel
+      const channelPromises = uniqueChannelIds.map(async channelId => {
+        try {
+          const channelDocRef = doc(this.firestore, 'channels', channelId);
+          const channelSnap = await getDoc(channelDocRef);
+          
+          if (channelSnap.exists()) {
+            return {
+              id: channelSnap.id,
+              name: channelSnap.data()['name'] || 'Unnamed Channel',
+              description: channelSnap.data()['description'] || ''
+            };
+          } else {
+            
+            // CLEANUP OPTION: Remove this non-existent channel from user's memberships
+            const orphanQuery = query(
+              channelMembersRef,
+              where('userId', '==', currentUserId),
+              where('channelId', '==', channelId)
+            );
+            const orphanSnapshot = await getDocs(orphanQuery);
+            if (!orphanSnapshot.empty) {
+              await deleteDoc(doc(this.firestore, 'channelMembers', orphanSnapshot.docs[0].id));
+            }
+            
+            return null;
+          }
+        } catch (error) {
+          console.error(`❌ Error getting channel ${channelId}:`, error);
+          return null;
         }
-        return null;
       });
       
+      // Wait for all promises to resolve and filter out nulls
       const channelResults = await Promise.all(channelPromises);
-      this.channels = channelResults.filter(channel => channel !== null) as Channel[];
+      const validChannels = channelResults.filter(channel => channel !== null) as Channel[];      
+      this.channels = validChannels;
       
-      // Wenn noch kein Channel ausgewählt ist und es Channels gibt, wähle den ersten
-      if (this.channels.length > 0 && !this.selectedChannel && !this.isMobile) {
-        this.selectChannel(this.channels[0].name);
-      } else if (this.channels.length === 0) {
-        this.selectedChannel = '';
-        // Falls keine Channels mehr vorhanden sind, zur Workspace-Übersicht navigieren
-        this.router.navigate(['/workspace']);
-      }
+      // Validate the current route after channels are loaded
+      this.validateCurrentRoute();
+      
     } catch (error) {
-      console.error('Fehler beim Laden der Channels:', error);
+      console.error('❌ Error loading channels:', error);
     }
   }
 
@@ -537,5 +567,68 @@ export class SidenavComponent implements OnInit {
     }
     
     return 'assets/img/avatars/' + avatar;
+  }
+
+  // Add this method to validate the current route
+  private validateCurrentRoute() {
+    const currentUrl = this.router.url;
+    
+    // If on a channel route, check if user has access
+    if (currentUrl.includes('/channel/')) {
+      const channelId = currentUrl.split('/channel/')[1];
+      
+      // Check if this channel is in the user's list
+      const channelExists = this.channels.some(c => c.id === channelId);
+      
+      if (!channelExists) {
+        // Valid channel, update UI
+        const channel = this.channels.find(c => c.id === channelId);
+        if (channel) {
+          this.selectedChannel = channel.name;
+        }
+      }
+    }
+  }
+
+  private handleInitialRouting() {
+    // Get current route before doing anything else
+    const initialUrl = this.router.url;
+    
+    // Create a proper RxJS Subscription object
+    const authSub = new Subscription();
+    
+    // Listen for auth state
+    const unsubscribeAuth = onAuthStateChanged(this.auth, async (user) => {
+      if (user) {        
+        // Important: Navigate to workspace root FIRST on page reload
+        // This prevents the router from trying to load invalid channels
+        if (initialUrl.includes('/channel/') && document.referrer === '') {
+          await this.router.navigate(['/workspace']);
+        }
+        
+        // Continue with regular channel loading
+        await this.loadChannels();
+        
+        // After channels are loaded, redirect to a valid channel if needed
+        if (this.channels.length > 0) {
+          const validChannel = this.channels[0];
+          
+          this.selectedChannel = validChannel.name;
+          await this.chatService.setIsDirectMessage(false);
+          await this.chatService.selectChannel(validChannel.name);
+          this.chatService.setCurrentChannelId(validChannel.id);
+          
+          await this.router.navigate(['/workspace/channel', validChannel.id]);
+        }
+      } else {
+        this.router.navigate(['/login']);
+      }
+    });
+    
+    // Add the Firebase unsubscribe function to our RxJS Subscription
+    authSub.add(() => unsubscribeAuth());
+    
+    // Add to existing subscriptions array
+    this.subscriptions.push(authSub);
   }
 }
