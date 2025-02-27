@@ -374,9 +374,15 @@ export class ThreadComponent implements OnInit, OnDestroy {
   }
 
   closeEmojiPicker() {
+    // Schließt den globalen Emoji-Picker für das Textfeld
+    this.showEmojiPicker = false;
+    
+    // Schließt auch die Emoji-Picker für alle Nachrichten
     this.messageGroups.forEach(group => {
       group.messages.forEach(msg => {
-        msg.showEmojiPicker = false;
+        if (msg.showEmojiPicker) {
+          msg.showEmojiPicker = false;
+        }
       });
     });
   }
