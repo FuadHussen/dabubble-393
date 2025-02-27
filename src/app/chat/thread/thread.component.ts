@@ -82,7 +82,7 @@ export class ThreadComponent implements OnInit, OnDestroy {
   tooltipPositions: { [key: string]: { top: number, left: number } } = {};
 
   constructor(
-    private chatService: ChatService,
+    public chatService: ChatService,
     private auth: Auth,
     private firestore: Firestore,
     private cdr: ChangeDetectorRef,

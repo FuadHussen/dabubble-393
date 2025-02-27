@@ -23,7 +23,7 @@
       </div>
 
       <!-- Messages in dieser Gruppe -->
-      <div *ngFor="let msg of group.messages" class="message" [class.guest]="isCurrentUser(msg.userId)"
+      <div *ngFor="let msg of group.messages" class="message" [class.highlight-message]="(chatService.highlightMessage$ | async) === msg.id" [class.guest]="isCurrentUser(msg.userId)"
         (mouseover)="showReactionOptions($event, msg)" (mouseleave)="hideReactionOptions($event, msg)">
         <div class="avatar-container">
           <img [src]="getAvatarSrc(msg.avatar)" [alt]="msg.username + ' avatar'" class="user-avatar">

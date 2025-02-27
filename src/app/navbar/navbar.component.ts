@@ -24,6 +24,7 @@ interface SearchResult {
   id: string;
   source?: string;
   channelId?: string;
+  threadId?: string;  // Für Thread-Nachrichten
 }
 
 interface Channel {
@@ -35,6 +36,7 @@ interface User {
   username: string;
   email?: string;
   avatar?: string;
+  uid: string;
 }
 
 interface Message {
@@ -45,6 +47,7 @@ interface Message {
   username: string;
   channelId: string | null;
   recipientId?: string;
+  threadId?: string;  // Für Thread-Nachrichten
 }
 
 @Component({
@@ -67,7 +70,7 @@ interface Message {
 
 export class NavbarComponent {
   @ViewChild('searchContainer') searchContainer!: ElementRef;
-  
+
   searchControl = new FormControl('');
   searchResults: any[] = [];
   showResults: boolean = false;
@@ -95,7 +98,7 @@ export class NavbarComponent {
         const usersRef = collection(this.firestore, 'users');
         const q = query(usersRef, where('uid', '==', user.uid));
         const querySnapshot = await getDocs(q);
-        
+
         if (!querySnapshot.empty) {
           const userData = querySnapshot.docs[0].data();
           this.userName = userData['username'] || 'Unbekannt';
@@ -124,9 +127,18 @@ export class NavbarComponent {
       debounceTime(300),
       distinctUntilChanged()
     ).subscribe(async (searchTerm) => {
-      if (searchTerm && searchTerm.length >= 2) {
-        await this.search(searchTerm);
-        this.showResults = true;
+      if (searchTerm) {
+        // Mindestlänge nur für normale Suche, nicht für @ und #
+        if (searchTerm.startsWith('@') || searchTerm.startsWith('#')) {
+          await this.search(searchTerm);
+          this.showResults = true;
+        } else if (searchTerm.length >= 2) {
+          await this.search(searchTerm);
+          this.showResults = true;
+        } else {
+          this.searchResults = [];
+          this.showResults = false;
+        }
       } else {
         this.searchResults = [];
         this.showResults = false;
@@ -170,196 +182,238 @@ export class NavbarComponent {
     this.searchResults = [];
     const lowercaseTerm = term.toLowerCase();
 
-    // Channels durchsuchen
-    const channelsRef = collection(this.firestore, 'channels');
-    const channelsQuery = query(channelsRef, where('name', '>=', lowercaseTerm));
-    const channelsSnapshot = await getDocs(channelsQuery);
-    
-    // Hartcodierte Channel für Gäste-Login hinzufügen
-    const guestChannel = {
-      name: 'Front-End-Team',
-      description: 'Frontend Entwicklung und UI/UX Design'
-    };
-    
-    if (guestChannel.name.toLowerCase().includes(lowercaseTerm)) {
-      this.searchResults.push({
-        type: 'channel',
-        title: guestChannel.name,
-        subtitle: guestChannel.description,
-        id: 'Front-End-Team'  // Exakt wie im Login Component
-      });
+    // Prüfe auf spezielle Suchoperatoren
+    if (term.startsWith('@')) {
+      // Nur nach Benutzern suchen
+      await this.searchUsers(term.slice(1));
+      return;
+    } else if (term.startsWith('#')) {
+      // Nur nach Channels suchen
+      await this.searchChannels(term.slice(1));
+      return;
     }
 
-    channelsSnapshot.forEach(doc => {
+    // Normale Suche für alle Typen
+    await Promise.all([
+      this.searchChannels(lowercaseTerm),
+      this.searchUsers(lowercaseTerm),
+      this.searchMessages(lowercaseTerm)
+    ]);
+  }
+
+  // Neue Methode für Channel-Suche
+  private async searchChannels(term: string) {
+    const lowercaseTerm = term.toLowerCase();
+    const processedChannels = new Set();
+    const currentUser = this.auth.currentUser;
+
+    if (!currentUser) return;
+
+    // Firestore Channels durchsuchen
+    const channelsRef = collection(this.firestore, 'channels');
+    const channelsSnapshot = await getDocs(channelsRef);
+
+    for (const doc of channelsSnapshot.docs) {
       const channel = doc.data() as Channel;
-      if (channel.name.toLowerCase().includes(lowercaseTerm)) {
-        this.searchResults.push({
-          type: 'channel',
-          title: channel.name,
-          subtitle: channel.description || 'Keine Beschreibung',
-          id: doc.id
-        });
-      }
-    });
+      const channelName = channel.name.toLowerCase();
 
-    // Users durchsuchen
+      if (channelName.includes(lowercaseTerm)) {
+        // Prüfe ob der User Zugriff auf diesen Channel hat
+        const hasAccess = await this.chatService.hasChannelAccess(doc.id);
+
+        if (hasAccess && !processedChannels.has(channelName)) {
+          processedChannels.add(channelName);
+          const searchResult = {
+            type: 'channel',
+            title: channel.name,
+            subtitle: channel.description || 'Keine Beschreibung',
+            id: doc.id  // Wichtig: Verwende die Firestore Document ID
+          };
+          this.searchResults.push(searchResult);
+        }
+      }
+    }
+  }
+
+  // Neue Methode für User-Suche
+  private async searchUsers(term: string) {
+    const lowercaseTerm = term.toLowerCase();
+    const processedUsers = new Set(); // Verhindert Duplikate
+
+    // Firestore Users durchsuchen
     const usersRef = collection(this.firestore, 'users');
-    const usersQuery = query(usersRef, where('username', '>=', lowercaseTerm));
+    const usersQuery = query(usersRef);
     const usersSnapshot = await getDocs(usersQuery);
-    
-    // Hartcodierte User für Gäste-Login hinzufügen
-    const guestUsers = [
-      {
-        username: 'Sofia Weber',
-        email: 'sofia@example.com',
-        avatar: 'sofia-mueller-avatar.png',
-        uid: 'a4QeEY8CNEd6CZ2KwQZVCBhlJ2z0'  // Korrekte UID aus Firebase
-      },
-      {
-        username: 'Sascha Lenz',
-        email: 'sascha@example.com',
-        avatar: 'frederik-beck-avatar.png',
-        uid: 'NbMgkSxq3fULESFz01t7Sk7jDxw2'  // Korrekte UID aus Firebase
-      },
-      {
-        username: 'Gäste Login',
-        email: 'gäste@login.login',
-        id: 'guest-user'
-      }
-    ];
-
-    guestUsers.forEach(user => {
-      if (user.username.toLowerCase().includes(lowercaseTerm) || 
-          user.email.toLowerCase().includes(lowercaseTerm)) {
-        this.searchResults.push({
-          type: 'user',
-          title: user.username,
-          subtitle: user.email,
-          avatar: user.avatar,
-          id: user.uid  // Hier die korrekte UID verwenden
-        });
-      }
-    });
 
     usersSnapshot.forEach(doc => {
-      const user = doc.data() as User;
-      if (user.username?.toLowerCase().includes(lowercaseTerm)) {
+      const userData = doc.data();
+      const username = userData['username']?.toLowerCase() || '';
+
+      if (username.includes(lowercaseTerm) && !processedUsers.has(username)) {
+        processedUsers.add(username);
         this.searchResults.push({
           type: 'user',
-          title: user.username,
-          subtitle: user.email || '',
-          avatar: user.avatar,
+          title: userData['username'],
+          subtitle: userData['email'] || '',
+          avatar: userData['avatar'],
           id: doc.id
-        });
-      }
-    });
-
-    // Messages durchsuchen
-    const messagesRef = collection(this.firestore, 'messages');
-    const messagesQuery = query(messagesRef, where('text', '>=', lowercaseTerm));
-    const messagesSnapshot = await getDocs(messagesQuery);
-    
-    // Hartcodierte Nachrichten für Gäste-Login hinzufügen
-    const guestMessages = [
-      {
-        text: 'Willkommen im Front-End-Team! Hier besprechen wir alle Themen rund um die Benutzeroberfläche.',
-        username: 'Sofia Weber',
-        channelId: 'Front-End-Team',
-        id: 'guest-message-1',
-        source: '# Front-End-Team'
-      },
-      {
-        text: 'Hi! Ich bin Sascha aus dem Design-Team. Hast du schon unsere neuen UI-Komponenten gesehen?',
-        username: 'Sascha Lenz',
-        id: 'guest-message-2',
-        source: '@ Sascha Lenz'
-      },
-      {
-        text: 'Danke für die Einladung! Ich freue mich darauf, mehr über das Projekt zu erfahren.',
-        username: 'Gäste Login',
-        channelId: 'Front-End-Team',
-        id: 'guest-message-3'
-      },
-      {
-        text: 'Ja, die sehen super aus! Besonders die neue Navigation gefällt mir sehr gut.',
-        username: 'Gäste Login',
-        id: 'guest-message-4'
-      }
-    ];
-
-    guestMessages.forEach(message => {
-      if (message.text.toLowerCase().includes(lowercaseTerm) || 
-          message.username.toLowerCase().includes(lowercaseTerm)) {
-        this.searchResults.push({
-          type: 'message',
-          title: message.username,
-          subtitle: message.text,
-          id: message.id,
-          source: message.source,
-          channelId: message.channelId
-        });
-      }
-    });
-
-    messagesSnapshot.forEach(async (doc) => {
-      const message = doc.data() as Message;
-      let source = '';
-      if (message.channelId) {
-        source = `# ${message.channelId}`;
-      } else if (message.recipientId) {
-        const recipient = await this.userService.getUserById(message.recipientId);
-        source = `@ ${recipient?.username || 'Unbekannt'}`;
-      }
-
-      if (message.text.toLowerCase().includes(lowercaseTerm)) {
-        this.searchResults.push({
-          type: 'message',
-          title: message.username,
-          subtitle: message.text,
-          id: doc.id,
-          source: source,
-          channelId: message.channelId
         });
       }
     });
   }
 
-  async selectResult(result: SearchResult) {
+  // Bestehende searchMessages Methode aktualisieren
+  private async searchMessages(term: string) {
+    const currentUser = this.auth.currentUser;
+    if (!currentUser) return;
 
-    switch (result.type) {
-      case 'channel':
-        this.chatService.selectChannel(result.title);
-        break;
-      case 'user':
-        const userQuery = query(
-          collection(this.firestore, 'users'),
-          where('username', '==', result.title)
-        );
-        const userSnapshot = await getDocs(userQuery);
-        
-        if (!userSnapshot.empty) {
-          const userData = userSnapshot.docs[0].data();
-          this.chatService.selectUser(userData['uid']);
-        } else {
-          console.error('User not found:', result.title);
+    // Zuerst alle Channel-IDs und Namen abrufen
+    const channelsRef = collection(this.firestore, 'channels');
+    const channelsSnapshot = await getDocs(channelsRef);
+    const channelMap = new Map();
+
+    // Channel-Map erstellen
+    channelsSnapshot.docs.forEach(doc => {
+      const channelData = doc.data();
+      // Speichere sowohl die ID als auch den Namen als Schlüssel
+      channelMap.set(channelData['name'], { id: doc.id, name: channelData['name'] });
+    });
+
+    const messagesRef = collection(this.firestore, 'messages');
+    const messagesQuery = query(messagesRef);
+    const messagesSnapshot = await getDocs(messagesQuery);
+    const processedMessages = new Set();
+
+    // Nachrichten sortieren
+    const messages = messagesSnapshot.docs
+      .map(doc => ({
+        ...doc.data() as Message,
+        id: doc.id
+      }))
+      .sort((a, b) => b.timestamp?.seconds - a.timestamp?.seconds);
+
+    for (const message of messages) {
+      // Ändern des Schlüssels, um Text und Username zu berücksichtigen
+      const messageKey = `${message.text}-${message.username}`;
+      if (processedMessages.has(messageKey)) continue;
+
+      if (message.text?.toLowerCase().includes(term.toLowerCase()) ||
+          message.username?.toLowerCase().includes(term.toLowerCase())) {
+
+        let source = '';
+        let shouldAdd = false;
+        let actualChannelId = '';
+
+        if (message.channelId) {
+          // Finde die korrekte Channel-ID
+          const channelInfo = channelMap.get(message.channelId);
+          if (channelInfo) {
+            actualChannelId = channelInfo.id;
+            source = `# ${channelInfo.name}`;
+            shouldAdd = true;
+
+            // Thread-Nachrichten verarbeiten
+            if (message.threadId) {
+              const threadDoc = await getDocs(
+                query(collection(this.firestore, 'messages'),
+                      where('__name__', '==', message.threadId))
+              );
+
+              if (!threadDoc.empty) {
+                source = `${source} (Thread)`;
+              }
+            }
+          }
+        } else if (message.recipientId) {
+          // Für Direktnachrichten
+          if (message.userId === currentUser.uid || message.recipientId === currentUser.uid) {
+            const recipient = await this.userService.getUserById(
+              message.userId === currentUser.uid ? message.recipientId : message.userId
+            );
+            if (recipient) {
+              source = `@ ${recipient.username}`;
+              shouldAdd = true;
+            }
+          }
         }
 
+        if (shouldAdd) {
+          processedMessages.add(messageKey);
+          const searchResult = {
+            type: 'message',
+            title: message.username || 'Unbekannt',
+            subtitle: message.text,
+            id: message.id,
+            source: source,
+            channelId: actualChannelId,
+            threadId: message.threadId
+          };
+          this.searchResults.push(searchResult);
+        }
+      }
+    }
+  }
+
+  selectResult(result: SearchResult) {
+    switch (result.type) {
+      case 'channel':
+
+        this.chatService.selectChannel(result.id).then(() => {
+          this.router.navigate(['/workspace/channel', result.id]);
+        });
         break;
+
+      case 'user':
+        this.chatService.startDirectMessage(result.id).then(() => {
+          this.router.navigate(['/workspace/dm', result.id]);
+        });
+        break;
+
       case 'message':
-        if (result.channelId) {
-          // Für Nachrichten in Channels
-          this.chatService.selectChannel(result.channelId);
+        if (result.threadId && result.channelId) {
+          // Zuerst den Channel auswählen
+          this.chatService.selectChannel(result.channelId).then(() => {
+            // Dann zum Channel navigieren
+            this.router.navigate(['/workspace/channel', result.channelId]).then(() => {
+              // Warten bis die Navigation abgeschlossen ist
+              setTimeout(() => {
+                // Thread öffnen
+                this.chatService.openThread(result.threadId!).then(() => {
+                  // Zur Nachricht scrollen
+                  setTimeout(() => {
+                    this.chatService.triggerScrollToMessage(result.id);
+                  }, 500);
+                });
+              }, 100);
+            });
+          });
+        } else if (result.channelId) {
+          this.chatService.selectChannel(result.channelId).then(() => {
+            this.router.navigate(['/workspace/channel', result.channelId]).then(() => {
+              setTimeout(() => {
+                this.chatService.triggerScrollToMessage(result.id);
+              }, 500);
+            });
+          });
         } else {
-          // Für Direktnachrichten
           const userQuery = query(
             collection(this.firestore, 'users'),
             where('username', '==', result.title)
           );
-          const userSnapshot = await getDocs(userQuery);
-          if (!userSnapshot.empty) {
-            const userData = userSnapshot.docs[0].data();
-            this.chatService.selectUser(userData['uid']);
-          }
+          getDocs(userQuery).then(userSnapshot => {
+            if (!userSnapshot.empty) {
+              const userData = userSnapshot.docs[0].data();
+              const userId = userData['uid'];
+              if (userId) {
+                this.chatService.startDirectMessage(userId).then(() => {
+                  this.router.navigate(['/workspace/dm', userId]);
+                  setTimeout(() => {
+                    this.chatService.triggerScrollToMessage(result.id);
+                  }, 500);
+                });
+              }
+            }
+          });
         }
         break;
     }
@@ -381,12 +435,14 @@ export class NavbarComponent {
   }
 
   getAvatarSrc(avatar: string | null): string {
-    if (!avatar) return '';
-    
+    if (!avatar) {
+      return '';
+    }
+
     if (this.avatarService.isGoogleAvatar(avatar)) {
       return this.avatarService.transformGooglePhotoUrl(avatar);
     }
-    
+
     return 'assets/img/avatars/' + avatar;
   }
 }

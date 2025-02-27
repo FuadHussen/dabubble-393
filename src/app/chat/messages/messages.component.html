@@ -6,73 +6,77 @@
       <div class="line"></div>
     </div>
 
-    <div *ngFor="let message of group.messages" class="message" [class.guest]="isCurrentUser(message.userId)"
-      (mouseover)="showReactionOptions($event, message)" (mouseleave)="hideReactionOptions($event, message)">
-      <div class="avatar-container" *ngIf="message.avatar">
-        <img [src]="message.avatar ? getAvatarSrc(message.avatar) : ''" [alt]="message.username + ' avatar'" class="user-avatar">
+    <div *ngFor="let msg of group.messages" 
+         class="message" 
+         [class.guest]="isCurrentUser(msg.userId)"
+         [id]="'message-' + msg.id"
+         [class.highlight-message]="(chatService.highlightMessage$ | async) === msg.id"
+         (mouseover)="showReactionOptions($event, msg)" (mouseleave)="hideReactionOptions($event, msg)">
+      <div class="avatar-container" *ngIf="msg.avatar">
+        <img [src]="msg.avatar ? getAvatarSrc(msg.avatar) : ''" [alt]="msg.username + ' avatar'" class="user-avatar">
       </div>
       <div class="message-content">
         <div class="message-header">
-          <span class="username">{{ message.username }}</span>
-          <span class="timestamp">{{ message.timestamp | date:'HH:mm' }} Uhr</span>
+          <span class="username">{{ msg.username }}</span>
+          <span class="timestamp">{{ msg.timestamp | date:'HH:mm' }} Uhr</span>
         </div>
         <div class="message-text-container">
           <!-- Normaler Text oder Edit-Modus -->
-          <div *ngIf="!message.isEditing" class="message-text">
-            {{ message.text }}
+          <div *ngIf="!msg.isEditing" class="message-text">
+            {{ msg.text }}
           </div>
 
           <!-- Edit-Modus -->
-          <div *ngIf="message.isEditing" class="message-edit-container">
+          <div *ngIf="msg.isEditing" class="message-edit-container">
             <div class="textarea-wrapper">
               <textarea 
-                [(ngModel)]="message.editText" 
+                [(ngModel)]="msg.editText" 
                 class="message-edit-input"
                 cdkTextareaAutosize 
                 cdkAutosizeMinRows="5" 
                 cdkAutosizeMaxRows="5"
-                (keyup.enter)="saveEditedMessage(message)" 
-                (keyup.escape)="cancelEdit(message)"
+                (keyup.enter)="saveEditedMessage(msg)" 
+                (keyup.escape)="cancelEdit(msg)"
                 style="border-radius: 30px;">
               </textarea>
             </div>
 
             <div class="edit-actions">
-              <button class="edit-button cancel" (click)="cancelEdit(message)">
+              <button class="edit-button cancel" (click)="cancelEdit(msg)">
                 Abbrechen
               </button>
-              <button class="edit-button save" (click)="saveEditedMessage(message)">
+              <button class="edit-button save" (click)="saveEditedMessage(msg)">
                 Speichern
               </button>
             </div>
           </div>
 
           <!-- Reaktions-Optionen -->
-          <div class="reaction-options" [class.show]="message.showReactions">
+          <div class="reaction-options" [class.show]="msg.showReactions">
             <div class="quick-reactions">
-              <div class="reaction-emoji" (click)="handleReactionClick($event, message, {emoji: '👍', count: 0, users: []})">👍</div>
-              <div class="reaction-emoji" (click)="handleReactionClick($event, message, {emoji: '❤️', count: 0, users: []})">❤️</div>
-              <div class="reaction-emoji" (click)="handleReactionClick($event, message, {emoji: '😂', count: 0, users: []})">😂</div>
-              <div class="reaction-emoji picker-trigger" (click)="showEmojiPickerForMessage($event, message)">
+              <div class="reaction-emoji" (click)="handleReactionClick($event, msg, {emoji: '👍', count: 0, users: []})">👍</div>
+              <div class="reaction-emoji" (click)="handleReactionClick($event, msg, {emoji: '❤️', count: 0, users: []})">❤️</div>
+              <div class="reaction-emoji" (click)="handleReactionClick($event, msg, {emoji: '😂', count: 0, users: []})">😂</div>
+              <div class="reaction-emoji picker-trigger" (click)="showEmojiPickerForMessage($event, msg)">
                 <mat-icon>add_reaction</mat-icon>
               </div>
-              <div class="reaction-emoji picker-trigger" *ngIf="isCurrentUser(message.userId)"
-                (click)="toggleEditMenu($event, message)">
+              <div class="reaction-emoji picker-trigger" *ngIf="isCurrentUser(msg.userId)"
+                (click)="toggleEditMenu($event, msg)">
                 <mat-icon>more_vert</mat-icon>
               </div>
-              <div class="reaction-emoji picker-trigger" *ngIf="!isDirectMessage && !isCurrentUser(message.userId)"
-                (click)="openThread($event, message)">
+              <div class="reaction-emoji picker-trigger" *ngIf="!isDirectMessage && !isCurrentUser(msg.userId)"
+                (click)="openThread($event, msg)">
                 <mat-icon>comment</mat-icon>
               </div>
             </div>
           </div>
 
           <!-- Emoji Picker -->
-          <div class="message-emoji-picker" *ngIf="message.showEmojiPicker">
+          <div class="message-emoji-picker" *ngIf="msg.showEmojiPicker">
             <div class="emoji-container">
               <div class="emoji" 
                    *ngFor="let emoji of emojis" 
-                   (click)="handleReactionClick($event, message, {emoji: emoji, count: 0, users: []})">
+                   (click)="handleReactionClick($event, msg, {emoji: emoji, count: 0, users: []})">
                 {{ emoji }}
               </div>
             </div>
@@ -82,18 +86,18 @@
 
         <!-- Angezeigte Reaktionen unter der Nachricht -->
         <div class="badge-container">
-          <div class="message-reactions" *ngIf="message.reactions">
-            <button *ngFor="let reaction of groupReactions(message.reactions, message.id)"
+          <div class="message-reactions" *ngIf="msg.reactions">
+            <button *ngFor="let reaction of groupReactions(msg.reactions, msg.id)"
                     class="reaction-badge"
-                    [class.user-reacted]="hasUserReacted(message, reaction.emoji)"
-                    (click)="handleReactionClick($event, message, reaction)"
-                    (mouseover)="handleReactionHover($event, message, reaction)"
-                    (mouseleave)="hideTooltip(message.id + '-' + reaction.emoji)">
+                    [class.user-reacted]="hasUserReacted(msg, reaction.emoji)"
+                    (click)="handleReactionClick($event, msg, reaction)"
+                    (mouseover)="handleReactionHover($event, msg, reaction)"
+                    (mouseleave)="hideTooltip(msg.id + '-' + reaction.emoji)">
               <span class="reaction-emoji">{{ reaction.emoji }}</span>
               <span class="reaction-count">{{ reaction.count }}</span>
               
               <!-- Tooltip -->
-              <div *ngIf="tooltipVisibility[message.id + '-' + reaction.emoji]" 
+              <div *ngIf="tooltipVisibility[msg.id + '-' + reaction.emoji]" 
                    class="reaction-tooltip">
                 <div class="tooltip-content">
                   <div class="emoji-preview">{{ reaction.emoji }}</div>
@@ -108,17 +112,17 @@
           </div>
 
           <!-- Neue Thread-Replies Anzeige -->
-          <div class="thread-replies-badge" *ngIf="!isDirectMessage && getThreadRepliesCount(message.id) > 0"
-            (click)="openThread($event, message)">
-            <span class="replies-count">{{ getThreadRepliesCount(message.id) }}</span>
-            <span *ngIf="getThreadRepliesCount(message.id) === 1">Antwort</span>
-            <span *ngIf="getThreadRepliesCount(message.id) > 1">Antworten</span>
+          <div class="thread-replies-badge" *ngIf="!isDirectMessage && getThreadRepliesCount(msg.id) > 0"
+            (click)="openThread($event, msg)">
+            <span class="replies-count">{{ getThreadRepliesCount(msg.id) }}</span>
+            <span *ngIf="getThreadRepliesCount(msg.id) === 1">Antwort</span>
+            <span *ngIf="getThreadRepliesCount(msg.id) > 1">Antworten</span>
           </div>
         </div>
 
         <!-- Edit Menu - Jetzt innerhalb der message-Schleife -->
-        <div class="edit-menu" *ngIf="message.showEditMenu">
-          <div class="edit-option" (click)="startEditingMessage(message)">
+        <div class="edit-menu" *ngIf="msg.showEditMenu">
+          <div class="edit-option" (click)="startEditingMessage(msg)">
             <mat-icon>edit</mat-icon>
             <span>Nachricht bearbeiten</span>
           </div>

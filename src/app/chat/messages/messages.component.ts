@@ -68,9 +68,15 @@ export class MessagesComponent implements OnInit {
 
   private userSubscription: Subscription;
 
+  // Neue Property hinzufügen
+  private isScrollingToMessage = false;
+
+  // Fügen Sie diese Property zur Klasse hinzu
+  private scrollSubscription!: Subscription;
+
   constructor(
     private firestore: Firestore,
-    private chatService: ChatService,
+    public chatService: ChatService,
     private userService: UserService,
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone,
@@ -108,6 +114,13 @@ export class MessagesComponent implements OnInit {
     if (this.selectedChannel || this.chatService.selectedUser) {
       this.loadMessages();
     }
+
+    // Neue Subscription hinzufügen
+    this.scrollSubscription = this.chatService.scrollToMessage$.subscribe(messageId => {
+      if (messageId) {
+        this.scrollToMessage(messageId);
+      }
+    });
   }
 
   private setupSubscriptions() {
@@ -410,7 +423,7 @@ export class MessagesComponent implements OnInit {
   }
 
   scrollToBottom(): void {
-    if (this.chatContent) {
+    if (this.chatContent && !this.isScrollingToMessage) {
       this.chatContent.nativeElement.scrollTop = this.chatContent.nativeElement.scrollHeight;
     }
   }
@@ -485,5 +498,28 @@ export class MessagesComponent implements OnInit {
     if (this.userSubscription) {
       this.userSubscription.unsubscribe();
     }
+
+    if (this.scrollSubscription) {
+      this.scrollSubscription.unsubscribe();
+    }
+  }
+
+  // Neue Methode hinzufügen
+  scrollToMessage(messageId: string) {
+    setTimeout(() => {
+      const element = document.getElementById(`message-${messageId}`);
+      if (element) {
+        this.isScrollingToMessage = true;
+        element.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' 
+        });
+        
+        // Reset scrolling flag
+        setTimeout(() => {
+          this.isScrollingToMessage = false;
+        }, 1000);
+      }
+    }, 100);
   }
 }

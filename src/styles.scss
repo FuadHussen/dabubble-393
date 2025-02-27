@@ -189,3 +189,40 @@
     flex-direction: column !important;
     gap: 8px !important;
   }
+
+  // Animation für das Hervorheben von Nachrichten
+  @keyframes highlightMessage {
+    0% {
+      background-color: transparent;
+      transform: scale(1);
+    }
+    25% {
+      background-color: rgba(3, 56, 216, 0.2);
+      transform: scale(1.02);
+    }
+    50% {
+      background-color: transparent;
+      transform: scale(1);
+    }
+    75% {
+      background-color: rgba(3, 56, 216, 0.2);
+      transform: scale(1.02);
+    }
+    100% {
+      background-color: transparent;
+      transform: scale(1);
+    }
+  }
+
+  .highlight-message {
+    animation: highlightMessage 2s ease-in-out;  // Sanftere Bewegung
+    border-radius: 8px;
+    position: relative;
+    z-index: 1;
+  }
+
+  // Optional: Hover-Effekt
+  .highlight-message:hover {
+    background-color: rgba(3, 56, 216, 0.05);
+    transition: background-color 0.3s ease;
+  }

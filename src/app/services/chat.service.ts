@@ -23,6 +23,8 @@ export class ChatService {
   private messageSubscription: any;  // Subscription speichern
   private messagesSubject = new BehaviorSubject<Message[]>([]);
   private refreshChannelsSubject = new BehaviorSubject<boolean>(false);
+  private highlightMessageSubject = new BehaviorSubject<string>('');
+  private scrollToMessageSubject = new BehaviorSubject<string>('');
 
   currentChannelId$ = this.currentChannelIdSubject.asObservable();
   isDirectMessage$ = this.isDirectMessageSubject.asObservable();
@@ -34,6 +36,8 @@ export class ChatService {
   threadMessage$ = this.threadMessageSubject.asObservable();
   messages$ = this.messagesSubject.asObservable();
   refreshChannels$ = this.refreshChannelsSubject.asObservable();
+  highlightMessage$ = this.highlightMessageSubject.asObservable();
+  scrollToMessage$ = this.scrollToMessageSubject.asObservable();
 
   constructor(
     private firestore: Firestore,
@@ -285,8 +289,29 @@ export class ChatService {
     }
   }
 
-  async selectChannel(channelName: string) {
-    this.selectedChannelSubject.next(channelName);
+  async selectChannel(channelId: string) {
+    try {
+      // Channel-Daten laden
+      const channelRef = doc(this.firestore, 'channels', channelId);
+      const channelSnap = await getDoc(channelRef);
+      
+      if (channelSnap.exists()) {
+        const channelData = channelSnap.data();
+        
+        // Channel-Name aus den Daten verwenden
+        this.selectedChannelSubject.next(channelData['name']);
+        this.setCurrentChannelId(channelId);
+        this.setIsDirectMessage(false);
+        
+        // Nachrichten für diesen Channel laden
+        await this.loadMessages(channelId, null);
+
+      } else {
+        console.error('❌ Channel nicht gefunden:', channelId);
+      }
+    } catch (error) {
+      console.error('❌ Fehler beim Auswählen des Channels:', error);
+    }
   }
 
   async setIsDirectMessage(isDM: boolean) {
@@ -374,7 +399,6 @@ export class ChatService {
 
   // Methode zum Laden der Nachrichten
   async loadMessages(channelId: string | null, recipientId: string | null) {
-
     // Erst alte Subscription beenden
     if (this.messageSubscription) {
       this.messageSubscription.unsubscribe();
@@ -404,17 +428,33 @@ export class ChatService {
     // Neue Subscription speichern
     this.messageSubscription = collectionData(q).subscribe(messages => {
 
-
       // Deduplizierung der Nachrichten basierend auf ID
       const uniqueMessages = Array.from(
         new Map(messages.map(m => [m['id'], m])).values()
       );
 
-      if (messages.length !== uniqueMessages.length) {
-      }
-
       this.messagesSubject.next(uniqueMessages as Message[]);
     });
+  }
+
+  async openThread(messageId: string) {
+    try {
+      const messageRef = doc(this.firestore, 'messages', messageId);
+      const messageSnap = await getDoc(messageRef);
+      
+      if (messageSnap.exists()) {
+        const messageData = messageSnap.data();
+        this.setThreadMessage({
+          id: messageSnap.id,
+          ...messageData
+        } as Message);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error opening thread:', error);
+      return false;
+    }
   }
 
   // Cleanup Methode
@@ -423,5 +463,85 @@ export class ChatService {
       this.messageSubscription.unsubscribe();
     }
     this.messagesSubject.next([]);
+  }
+
+  setHighlightMessage(messageId: string) {
+    this.highlightMessageSubject.next(messageId);
+    // Reset nach 2 Sekunden
+    setTimeout(() => {
+      this.highlightMessageSubject.next('');
+    }, 2000);
+  }
+
+  triggerScrollToMessage(messageId: string) {
+    this.scrollToMessageSubject.next(messageId);
+    // Highlight die Nachricht
+    this.setHighlightMessage(messageId);
+  }
+
+  // Neue Methode zum Prüfen des Channel-Zugriffs
+  async hasChannelAccess(channelId: string): Promise<boolean> {
+    try {
+      const currentUser = this.auth.currentUser;
+      if (!currentUser) return false;
+
+      // Front-End-Team Channel ist ein Spezialfall
+      if (channelId === 'Front-End-Team') {
+        return true;
+      }
+
+      // Prüfe ob der Channel existiert
+      const channelRef = doc(this.firestore, 'channels', channelId);
+      const channelSnap = await getDoc(channelRef);
+      
+      if (!channelSnap.exists()) {
+        return false;
+      }
+
+      // Prüfe Mitgliedschaft in channelMembers Collection
+      const channelMembersRef = collection(this.firestore, 'channelMembers');
+      const q = query(
+        channelMembersRef,
+        where('userId', '==', currentUser.uid),
+        where('channelId', '==', channelId)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      return !querySnapshot.empty;
+    } catch (error) {
+      console.error('Error checking channel access:', error);
+      return false;
+    }
+  }
+
+  // Neue Methode zum Abrufen aller zugänglichen Channels
+  async getUserAccessibleChannels(): Promise<string[]> {
+    try {
+      const currentUser = this.auth.currentUser;
+      if (!currentUser) return [];
+
+      const accessibleChannels: string[] = ['Front-End-Team']; // Standard-Channel
+
+      // Hole alle Channel-Mitgliedschaften des Users
+      const channelMembersRef = collection(this.firestore, 'channelMembers');
+      const q = query(
+        channelMembersRef,
+        where('userId', '==', currentUser.uid)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      
+      querySnapshot.forEach(doc => {
+        const channelId = doc.data()['channelId'];
+        if (channelId && !accessibleChannels.includes(channelId)) {
+          accessibleChannels.push(channelId);
+        }
+      });
+
+      return accessibleChannels;
+    } catch (error) {
+      console.error('Error getting accessible channels:', error);
+      return ['Front-End-Team']; // Fallback auf Standard-Channel
+    }
   }
 }
