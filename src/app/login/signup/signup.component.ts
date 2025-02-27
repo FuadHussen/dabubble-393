@@ -176,11 +176,6 @@ export class SignupComponent {
   }
 
   enableButton() {
-    console.log('Checkbox Checked:', this.checkboxIsCkecked);
-    console.log('Name Filled:', this.isNameFilled);
-    console.log('Email Filled:', this.isEmailFilled);
-    console.log('Password Filled:', this.isPasswordFilled);
-
     this.isFilled =
       this.checkboxIsCkecked &&
       this.isPasswordFilled &&

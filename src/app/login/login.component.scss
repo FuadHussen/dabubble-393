@@ -31,7 +31,7 @@ $color-error: #ed1e79;
 }
 
 .background-fade {
-  width: 100%;
+  width: 100% !important;
   height: 100vh;
   background: linear-gradient(1.46deg, #313ae6 1.22%, $color-accent 98.76%);
   position: absolute;
@@ -44,7 +44,7 @@ $color-error: #ed1e79;
 
 .logo-container {
   display: flex;
-  align-items: center;
+  justify-content: center;
   gap: 10px;
   z-index: 20;
 }

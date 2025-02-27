@@ -2,8 +2,7 @@
 .startseite {
     padding: 20px 20px 0px 20px;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    justify-content: center;
     overflow: hidden;
     background-color: #eceefe;
     font-family: 'Nunito', sans-serif;
@@ -13,16 +12,31 @@
   .logo-container {
     display: flex;
     align-items: center;
-    gap:15px
+    gap: 10px;
+    z-index: 20;
   }
   
   .logo {
-    width: 100px;
-    height: 100px;
+    height: 70px;
+    width: 70px;
   }
   
   .logo-name {
+    font-family: Nunito;
     font-size: 46px;
+    font-weight: 700;
+    z-index: 18;
+    display: inline-block;
+    white-space: nowrap;
+    overflow: hidden;
+    height: 70px;
+    line-height: 70px;
+  
+    @media (max-width: 500px) {
+      font-size: 24px;
+      height: 30px;
+      line-height: 30px;
+    }
   }
 
 .choose-avatar-container {
@@ -67,27 +81,28 @@
 }
 
 h1 {
+  font-size: 24px !important;
+  font-weight: 700;
+  line-height: 38.4px;
+  text-align: start;   
+  color: #444df2;
+  margin: 0px 0px 16px 0px;
   font-family: 'Nunito', sans-serif!important;
 }
 
 h2 {
-  font-size: 46px;
+  font-size: 24px !important;
   font-weight: 700;
-  line-height: 55.2px;
-  text-underline-position: from-font;
-  text-decoration-skip-ink: none;
   color: #444df2;
   margin: 0px 0px 16px 0px;
   font-family: 'Nunito', sans-serif!important;
 }
 
 h3 {
-    font-size: 32px;
+    font-size: 20px !important;
     font-weight: 700;
     line-height: 38.4px;
-    text-align: start;
-    text-underline-position: from-font;
-    text-decoration-skip-ink: none;    
+    text-align: start;   
     color: #444df2;
     margin: 0px 0px 16px 0px;
     font-family: 'Nunito', sans-serif!important;
@@ -95,6 +110,16 @@ h3 {
 
 h4 {
   font-size: 20px;
+  font-weight: 700;
+  text-align: start;
+  color: #000000;
+  margin: 0;
+  margin-bottom: 16px;
+  font-family: 'Nunito', sans-serif!important;
+}
+
+p {
+  font-size: 18px;
   font-weight: 400;
   text-align: start;
   color: #000000;
@@ -108,16 +133,16 @@ h4 {
     max-width: 100%;
 
     h2 {
-      font-size: 32px;
+      font-size: 24px!important;
     }
 
     h3 {
-      font-size: 24px;
+      font-size: 24px!important;
     }
   }
 
   .choose-avatar-container {
-    padding: 24px;
+    padding: 24px!important;
   }
 
   .form {
@@ -127,10 +152,10 @@ h4 {
 
 @media (max-width: 480px) {
   .choose-avatar-container {
-    padding: 16px;
+    padding: 16px!important;
   }
 
   .form {
-    padding: 16px;
+    padding: 16px!important;
   }
 }
