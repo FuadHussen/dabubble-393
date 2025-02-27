@@ -19,7 +19,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { AudioService } from '../services/audio.service';
 import { trigger, state, style, animate, transition } from '@angular/animations';
-import { ThreadComponent } from './thread/thread.component';
 import { Message } from '../models/message.model';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { AvatarService } from '../services/avatar.service';
@@ -46,7 +45,6 @@ import { RecipientSearchHandler } from './recipient-search.handler';
     MessagesComponent,
     AddMemberDialogComponent,
     MemberListDialogComponent,
-    ThreadComponent,
     NavbarComponent
   ],
   templateUrl: './chat.component.html',
@@ -337,11 +335,6 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy, AfterVie
     this.showChat = false;
     this.isNewChat = false;
     this.backClicked.emit();
-  }
-
-  openThread(message: Message) {
-    this.threadVisible = true;
-    this.chatService.setThreadMessage(message);
   }
 
   closeThread() {

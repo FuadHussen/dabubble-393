@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, ChangeDetectorRef, OnDestroy, ViewChild, ElementRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -57,6 +57,7 @@ export class ThreadComponent implements OnInit, OnDestroy {
   @Input() message: Message | null = null;
   @Input() isMobile: boolean = false;
   @Output() closeThread = new EventEmitter<void>();
+  @ViewChild('replyTextarea') replyTextarea!: ElementRef;
 
   replies: Message[] = [];
   replyText: string = '';
@@ -75,13 +76,16 @@ export class ThreadComponent implements OnInit, OnDestroy {
   // Add a map to cache user data
   private userCache: { [userId: string]: any } = {};
 
+  private shouldFocusTextarea = false;
+
   constructor(
     private chatService: ChatService,
     private auth: Auth,
     private firestore: Firestore,
     private cdr: ChangeDetectorRef,
     private avatarService: AvatarService,
-    private userService: UserService
+    private userService: UserService,
+    private ngZone: NgZone
   ) {
     this.chatService.getCurrentUser().then(user => {
       this.currentUser = user;
@@ -145,6 +149,17 @@ export class ThreadComponent implements OnInit, OnDestroy {
     
     // Add to unsubscribes for cleanup
     this.unsubscribes.push(() => userDataSub.unsubscribe());
+
+    // Füge diese neue Subscription hinzu
+    const threadMessageSub = this.chatService.threadMessage$.subscribe(message => {
+      if (message) {
+        this.shouldFocusTextarea = true;
+        this.focusTextarea();
+      }
+    });
+    
+    // Füge zur Cleanup-Liste hinzu
+    this.unsubscribes.push(() => threadMessageSub.unsubscribe());
   }
 
   addReaction(message: Message, emoji: string) {
@@ -527,6 +542,26 @@ export class ThreadComponent implements OnInit, OnDestroy {
     } catch (error) {
       console.error(`Error fetching user data for ${userId}:`, error);
       return null;
+    }
+  }
+
+  // Add this method
+  focusTextarea() {
+    // Use NgZone to ensure this runs after view initialization
+    this.ngZone.runOutsideAngular(() => {
+      setTimeout(() => {
+        if (this.replyTextarea?.nativeElement) {
+          this.replyTextarea.nativeElement.focus();
+        }
+      });
+    });
+  }
+
+  // Modify the existing ngAfterViewChecked lifecycle hook or add it if it doesn't exist
+  ngAfterViewChecked() {
+    if (this.shouldFocusTextarea && this.replyTextarea?.nativeElement) {
+      this.focusTextarea();
+      this.shouldFocusTextarea = false;
     }
   }
 }

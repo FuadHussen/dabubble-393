@@ -78,7 +78,9 @@
       <button mat-icon-button (click)="toggleEmojiPicker()">
         <mat-icon>sentiment_satisfied_alt</mat-icon>
       </button>
-      <textarea [(ngModel)]="replyText" placeholder="Antworten..."
+      <textarea #replyTextarea
+        [(ngModel)]="replyText" 
+        placeholder="Antworten..."
         (keydown.enter)="$event.preventDefault(); sendReply()">
       </textarea>
       <button mat-icon-button (click)="sendReply()">

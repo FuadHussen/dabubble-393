@@ -197,14 +197,6 @@
     <div class="chat-content" [class.hidden]="threadVisible && isMobile">
       <!-- Your existing chat content -->
     </div>
-    
-    <app-thread 
-      *ngIf="threadMessage$ | async" 
-      [message]="threadMessage$ | async"
-      [isMobile]="isMobile"
-      (closeThread)="closeThread()"
-      [@threadSlide]="threadVisible ? 'visible' : 'hidden'">
-    </app-thread>
   </div>
 </div>
 
