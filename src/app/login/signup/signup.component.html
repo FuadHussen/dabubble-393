@@ -5,7 +5,7 @@
   </div>
 
   <div class="main-container">
-    <div class="form">
+    <form class="form" autocomplete="off">
       <div class="arrow-back">
         <img
           (click)="navigateToLogin()"
@@ -31,6 +31,7 @@
             placeholder="Name und Nachname"
             type="text"
             name="name"
+            autocomplete="off"
             (ngModel)="(userName)"
             (focus)="onFocus('userName')"
             (blur)="onBlur('userName')"
@@ -38,8 +39,8 @@
           />
         </div>
         <div class="error-message">
-          <p *ngIf="isNameTyped && !isNameFilled">
-            *Bitte einen Vor und Nachname
+          <p *ngIf="isNameTyped && nameErrorMessage">
+            {{ nameErrorMessage }}
           </p>
         </div>
 
@@ -52,6 +53,7 @@
             name="email"
             required
             email
+            autocomplete="off"
             placeholder="beispielname@email.com"
             (ngModel)="(userEmail)"
             (focus)="onFocus('userEmail')"
@@ -60,8 +62,8 @@
           />
         </div>
         <div class="error-message">
-          <p *ngIf="isEmailTyped && !isEmailFilled">
-            *Diese E-Mail-Adresse ist leider ungültig.
+          <p *ngIf="isEmailTyped && emailErrorMessage">
+            {{ emailErrorMessage }}
           </p>
         </div>
 
@@ -74,6 +76,7 @@
             name="password"
             required
             minlength="6"
+            autocomplete="new-password"
             placeholder="Passwort"
             (ngModel)="(userPassword)"
             (focus)="onFocus('userPassword')"
@@ -92,13 +95,14 @@
           />
         </div>
 
-        <div class="error-message">
-          <p>
-            {{ isPasswordErrorText }}
-          </p>
-          <div class="error-bar" [ngClass]="passwordStrengthClass">
-            {{ passwordStrengthClassText }}
-          </div>
+        <div class="password-requirements" *ngIf="userPassword.length > 0 && !isPasswordFilled">
+          <p class="password-hint">Dein Passwort muss:</p>
+          <ul>
+            <li [ngClass]="{'fulfilled': isLongEnough()}">Mindestens 8 Zeichen lang sein</li>
+            <li [ngClass]="{'fulfilled': hasLetters()}">Mindestens einen Buchstaben enthalten</li>
+            <li [ngClass]="{'fulfilled': hasNumbers()}">Mindestens eine Zahl enthalten</li>
+            <li [ngClass]="{'fulfilled': hasSpecialChars()}">Mindestens ein Sonderzeichen enthalten</li>
+          </ul>
         </div>
 
         <div class="legal-notice">
@@ -122,14 +126,14 @@
           * = pflichtfelder
           <button
             (click)="createUser()"
-            [disabled]="!isFilled"
-            [ngClass]="{ 'primary-btn': isFilled, 'disabled-btn': !isFilled }"
+            class="primary-btn"
+            type="button"
           >
             Weiter
           </button>
         </div>
       </div>
-    </div>
+    </form>
   </div>
   <app-footer></app-footer>
 </div>

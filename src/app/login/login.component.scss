@@ -227,7 +227,7 @@ $color-error: #ed1e79;
       }
 
       .error-message {
-        height: 20px;
+        margin-top: 8px;
 
         p {
           font-family: Nunito;
@@ -405,7 +405,7 @@ $color-error: #ed1e79;
 
 @media (max-width: 1175px) {
   .signupBox {
-    top: auto;
+    top: 80%;
     bottom: 12px !important;
     left: 50%;
     right: auto;

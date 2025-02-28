@@ -13,6 +13,7 @@ import {
 } from '@angular/fire/firestore';
 import { Router } from '@angular/router';
 import { UserService } from '../../services/user.service';
+import { FirebaseError } from 'firebase/app';
 
 @Component({
   selector: 'app-signup',
@@ -54,6 +55,33 @@ export class SignupComponent {
   passwordStrengthClass: string = '';
   passwordStrengthClassText: string = '';
 
+  // Neue Fehlermeldungen für jedes Feld
+  nameErrorMessage: string = '';
+  emailErrorMessage: string = '';
+  passwordErrorMessage: string = '';
+
+  ngOnInit() {
+    // Verhindere Standardvalidierung
+    const inputs = document.querySelectorAll('input');
+    inputs.forEach(input => {
+      input.addEventListener('invalid', (e: Event) => {
+        e.preventDefault();
+        // Stattdessen deine eigene Validierung starten
+        this.validateField(input.name);
+      });
+    });
+  }
+
+  validateField(fieldName: string): void {
+    if (fieldName === 'userName') {
+      this.validateName();
+    } else if (fieldName === 'userEmail') {
+      this.validateEmail();
+    } else if (fieldName === 'userPassword') {
+      this.validatePassword();
+    }
+  }
+
   arrowBack(state: string) {
     if (state === 'hover') {
       this.arrowBackSrc = 'assets/img/arrow-back-active.png';
@@ -73,26 +101,22 @@ export class SignupComponent {
   }
 
   onBlur(field: string): void {
-    if (field === 'userName' && this.userName.trim().split(/\s+/).length > 1) {
-      this.isNameTyped = true;
+    if (field === 'userName') {
       this.userNameSrc = 'assets/img/person.png';
-      this.isNameFilled = true;
-    } else if (field === 'userEmail' && !this.userEmail) {
-      this.isEmailTyped = true;
+      this.isNameTyped = true;
+      this.validateName();
+    } else if (field === 'userEmail') {
       this.userEmailSrc = 'assets/img/mail.png';
+      this.isEmailTyped = true;
+      this.validateEmail();
     } else if (field === 'userPassword') {
       this.userPasswordSrc = this.userPassword
         ? 'assets/img/lock-active.png'
         : 'assets/img/lock.png';
-
-      if (this.userPassword.length < 6) {
-        this.isPasswordErrorText = 'Passwort zu kurz (min. 6 Zeichen)';
-      } else {
-        this.passwordStrengthClass = '';
-        this.isPasswordErrorText = '';
-        this.passwordStrengthClassText = '';
-      }
+      this.isPasswordTyped = true;
+      this.validatePassword();
     }
+    this.enableButton();
   }
 
   onInput(field: string, event: Event): void {
@@ -102,62 +126,99 @@ export class SignupComponent {
       this.userNameSrc = value
         ? 'assets/img/person-active.png'
         : 'assets/img/person.png';
-      if (this.userName.trim().split(' ').length >= 2) {
-        this.isNameTyped = true;
-        this.isNameFilled = true;
-      } else {
-        this.isNameTyped = false;
-        this.isNameFilled = false;
+      if (this.isNameTyped) {
+        this.validateName();
       }
     } else if (field === 'userEmail') {
       this.userEmail = value;
       this.userEmailSrc = value
         ? 'assets/img/mail-active.png'
         : 'assets/img/mail.png';
-      const emailPattern = /\S+@\S+\.\S+/;
-      this.isEmailFilled = emailPattern.test(this.userEmail);
+      if (this.isEmailTyped) {
+        this.validateEmail();
+      }
     } else if (field === 'userPassword') {
       this.userPassword = value;
       this.userPasswordSrc = value
         ? 'assets/img/lock-active.png'
         : 'assets/img/lock.png';
-      this.checkPasswordStrength();
+      
+      // Immer validieren, unabhängig von isPasswordTyped
+      this.validatePassword();
     }
     this.enableButton();
   }
 
-  checkPasswordStrength(): void {
+  // Neue Validierungsfunktionen
+  validateName(): void {
+    // Prüfe ob der Name leer ist
+    if (!this.userName.trim()) {
+      this.nameErrorMessage = '*Bitte geben Sie Ihren Namen ein.';
+      this.isNameFilled = false;
+      return;
+    }
+
+    // Prüfe ob der Name mindestens aus zwei Wörtern besteht (Vor- und Nachname)
+    const nameParts = this.userName.trim().split(/\s+/);
+    if (nameParts.length < 2) {
+      this.nameErrorMessage = '*Bitte geben Sie Vor- und Nachnamen ein.';
+      this.isNameFilled = false;
+      return;
+    }
+
+    // Prüfe auf ungültige Zeichen
+    const nameRegex = /^[A-Za-zÄäÖöÜüß\s-]+$/;
+    if (!nameRegex.test(this.userName)) {
+      this.nameErrorMessage = '*Name darf nur Buchstaben, Leerzeichen und Bindestriche enthalten.';
+      this.isNameFilled = false;
+      return;
+    }
+
+    // Name ist gültig
+    this.nameErrorMessage = '';
+    this.isNameFilled = true;
+  }
+
+  validateEmail(): void {
+    // Prüfe ob die E-Mail leer ist
+    if (!this.userEmail.trim()) {
+      this.emailErrorMessage = '*Bitte geben Sie eine E-Mail-Adresse ein.';
+      this.isEmailFilled = false;
+      return;
+    }
+
+    // Prüfe auf ein gültiges E-Mail-Format
+    // Strengeres Regex für E-Mail-Validierung
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(this.userEmail)) {
+      this.emailErrorMessage = '*Bitte geben Sie eine gültige E-Mail-Adresse ein (z.B. name@beispiel.de).';
+      this.isEmailFilled = false;
+      return;
+    }
+
+    // E-Mail ist gültig
+    this.emailErrorMessage = '';
+    this.isEmailFilled = true;
+  }
+
+  validatePassword(): void {
+    // Wenn kein Passwort, dann isPasswordFilled auf false und raus
+    if (!this.userPassword) {
+      this.isPasswordFilled = false;
+      return;
+    }
+
+    // Alle Bedingungen direkt prüfen
+    const isLongEnough = this.userPassword.length >= 8;
     const hasLetters = /[A-Za-z]/.test(this.userPassword);
     const hasNumbers = /\d/.test(this.userPassword);
-    const hasSpecialChars = /[@$!%*?&]/.test(this.userPassword);
-    const isMinLength = this.userPassword.length >= 6;
-
-    if (!isMinLength) {
-      this.isPasswordErrorText = 'Passwort zu kurz (min. 6 Zeichen)';
-      this.passwordStrengthClass = '';
-      this.passwordStrengthClassText = '';
-      this.isPasswordFilled = false;
-    }if (isMinLength && hasLetters && !hasNumbers && !hasSpecialChars) {
-      this.passwordStrengthClass = 'weak';
-      this.passwordStrengthClassText = 'schwach';
-      this.isPasswordErrorText = 'Passwort Ziel erfüllt, Sicherheit:';
-      this.isPasswordFilled = true;
-    } else if (isMinLength && hasLetters && hasNumbers && !hasSpecialChars) {
-      this.passwordStrengthClass = 'medium';
-      this.passwordStrengthClassText = 'mittel';
-      this.isPasswordErrorText = 'Passwort Ziel erfüllt, Sicherheit:';
-      this.isPasswordFilled = true;
-    } else if (isMinLength && hasLetters && hasNumbers && hasSpecialChars) {
-      this.passwordStrengthClass = 'strong';
-      this.passwordStrengthClassText = 'stark';
-      this.isPasswordErrorText = 'Passwort Ziel erfüllt, Sicherheit:';
-      this.isPasswordFilled = true;
-    } else {
-      this.passwordStrengthClass = '';
-      this.isPasswordErrorText = '';
-      this.passwordStrengthClassText = '';
-      this.isPasswordFilled = true;
-    }
+    const hasSpecialChars = /[@$!%*?&\-_+=#.,]/.test(this.userPassword);
+    
+    // Sofort isPasswordFilled setzen, je nachdem ob alle Bedingungen erfüllt sind
+    this.isPasswordFilled = isLongEnough && hasLetters && hasNumbers && hasSpecialChars;
+    
+    // Keine weiteren Verzweigungen notwendig - wir wollen nur, dass der Container
+    // verschwindet, wenn alle Bedingungen erfüllt sind
   }
 
   togglePasswordVisibility(): void {
@@ -184,7 +245,31 @@ export class SignupComponent {
   }
 
   async createUser() {
-    if (this.isFilled) {
+    // Alle Felder validieren, wenn sie noch nicht ausgefüllt wurden
+    if (!this.isNameTyped) {
+      this.isNameTyped = true;
+      this.validateName();
+    }
+    
+    if (!this.isEmailTyped) {
+      this.isEmailTyped = true;
+      this.validateEmail();
+    }
+    
+    if (!this.isPasswordTyped) {
+      this.isPasswordTyped = true;
+      this.validatePassword();
+    }
+    
+    // Überprüfen der Checkbox
+    if (!this.checkboxIsCkecked) {
+      // Hier kann man eine Meldung hinzufügen, falls gewünscht
+      alert('Bitte stimme der Datenschutzerklärung zu, um fortzufahren.');
+      return;
+    }
+
+    // Nur fortfahren, wenn alle Validierungen bestanden wurden
+    if (this.isNameFilled && this.isEmailFilled && this.isPasswordFilled && this.checkboxIsCkecked) {
       try {
         const auth = getAuth();
         const userCredential = await createUserWithEmailAndPassword(
@@ -205,6 +290,17 @@ export class SignupComponent {
         this.router.navigate(['/choose-avatar']);
       } catch (error) {
         console.error('Fehler beim Erstellen des Benutzers:', error);
+        
+        if (error instanceof FirebaseError) {
+          if (error.code === 'auth/email-already-in-use') {
+            this.emailErrorMessage = '*Diese E-Mail-Adresse wird bereits verwendet.';
+            this.isEmailFilled = false;
+          } else {
+            alert(`Fehler beim Erstellen des Kontos: ${error.message}`);
+          }
+        } else {
+          alert('Fehler beim Erstellen des Kontos. Bitte versuchen Sie es erneut.');
+        }
       }
     }
   }
@@ -228,4 +324,22 @@ export class SignupComponent {
   navigateToPrivacyPolicy() {
     this.router.navigate(['/privacy-policy']);
   }
+
+  // Hilfsmethoden für die Passwortvalidierung im Template
+  isLongEnough(): boolean {
+    return this.userPassword.length >= 8;
+  }
+
+  hasLetters(): boolean {
+    return /[A-Za-z]/.test(this.userPassword);
+  }
+
+  hasNumbers(): boolean {
+    return /\d/.test(this.userPassword);
+  }
+
+  hasSpecialChars(): boolean {
+    return /[@$!%*?&\-_+=#.,]/.test(this.userPassword);
+  }
 }
+  // Hilfsmethode zum Aufrufen der richtigen Validierungsfunktion

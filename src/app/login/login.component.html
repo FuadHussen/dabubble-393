@@ -4,20 +4,12 @@
 
 
     <div class="logo-container" [@logoContainerAnimation]="containerState">
-      <img
-        src="assets/img/logo-without-text.png"
-        alt="Logo"
-        class="logo"
-        [@logoAnimation]="logoState"
-      />
+      <img src="assets/img/logo-without-text.png" alt="Logo" class="logo" [@logoAnimation]="logoState" />
       <div class="hiddenBox">
-        <span
-          [ngClass]="{
+        <span [ngClass]="{
             'textcontainer-black-text': introPlayed,
             'textcontainer-animated-text': !introPlayed
-          }"
-          >DABubble</span
-        >
+          }">DABubble</span>
       </div>
     </div>
   </div>
@@ -36,18 +28,9 @@
       <div class="inputs-container">
         <div class="email-input">
           <img [src]="userEmailSrc" alt="mail" />
-          <input
-            type="email"
-            id="email"
-            name="email"
-            required
-            placeholder="beispielname@email.com"
-            [(ngModel)]="userEmail"
-            #emailInput="ngModel"
-            (focus)="onFocus('userEmail')"
-            (blur)="onBlur('userEmail')"
-            (input)="onInput('userEmail', $event)"
-          />
+          <input type="email" id="email" name="email" required placeholder="beispielname@email.com"
+            [(ngModel)]="userEmail" #emailInput="ngModel" (focus)="onFocus('userEmail')" (blur)="onBlur('userEmail')"
+            (input)="onInput('userEmail', $event)" />
         </div>
         <div class="error-message">
           <p *ngIf="emailNotExist">*Diese E-Mail-Adresse existiert nicht.</p>
@@ -55,29 +38,15 @@
         <!-- Password Input -->
         <div class="password-input">
           <img [src]="userPasswordSrc" alt="lock" />
-          <input
-            [type]="isPasswordVisible ? 'text' : 'password'"
-            id="password"
-            name="password"
-            required
-            minlength="6"
-            placeholder="Passwort"
-            (ngModel)="(userPassword)"
-            (focus)="onFocus('userPassword')"
-            (blur)="onBlur('userPassword')"
-            (input)="onInput('userPassword', $event)"
-          />
+          <input [type]="isPasswordVisible ? 'text' : 'password'" id="password" name="password" required minlength="6"
+            placeholder="Passwort" (ngModel)="(userPassword)" (focus)="onFocus('userPassword')"
+            (blur)="onBlur('userPassword')" (input)="onInput('userPassword', $event)" />
 
-          <img
-            *ngIf="userPassword.length > 0"
-            (click)="togglePasswordVisibility()"
-            [src]="
+          <img *ngIf="userPassword.length > 0" (click)="togglePasswordVisibility()" [src]="
               isPasswordVisible
                 ? 'assets/img/eye-open.png'
                 : 'assets/img/eye-closed.png'
-            "
-            alt="Passwort anzeigen/verstecken"
-          />
+            " alt="Passwort anzeigen/verstecken" />
         </div>
 
         <div class="error-message">
@@ -87,9 +56,7 @@
         </div>
       </div>
 
-      <a (click)="navigateToForgotPassword()" class="link-text"
-        >Passwort vergessen?</a
-      >
+      <a (click)="navigateToForgotPassword()" class="link-text">Passwort vergessen?</a>
 
       <div class="line-container">
         <div class="gray-line"></div>
@@ -104,11 +71,8 @@
 
       <!-- Buttons -->
       <div class="buttons-container">
-        <button
-          (click)="loginSucess()"
-          [disabled]="!isFilled"
-          [ngClass]="{ 'primary-btn': isFilled, 'disabled-btn': !isFilled }"
-        >
+        <button (click)="loginSucess()" [disabled]="!isFilled"
+          [ngClass]="{ 'primary-btn': isFilled, 'disabled-btn': !isFilled }">
           Anmelden
         </button>
         <button (click)="guestSucess()" class="secondary-btn">
@@ -123,8 +87,7 @@
       <p>Neu bei DABubble?</p>
       <span (click)="navigateToSignUp()" class="signup">Konto erstellen</span>
     </div>
+    <app-footer *ngIf="isMobile"></app-footer>
   </div>
-
   <app-footer *ngIf="!isMobile"></app-footer>
 </div>
-<app-footer *ngIf="isMobile"></app-footer>
