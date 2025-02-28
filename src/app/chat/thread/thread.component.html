@@ -1,7 +1,6 @@
 <div class="thread-container" [@slideInOut]>
   <div class="thread-header">
     <div class="header-left">
-
       <div class="header-content">
         <h2>Thread</h2>
         <span class="subtitle"># {{ message?.channelId }}</span>
@@ -13,52 +12,61 @@
     </button>
   </div>
 
-  <div class="thread-content">
+  <div class="thread-content" #threadContent>
     <!-- Gruppierte Nachrichten -->
     <div *ngFor="let group of messageGroups">
-      <div class="date-divider">
+      <div class="date-divider" *ngIf="group && group.date">
         <div class="line"></div>
         <span class="date-label">{{ group.date }}</span>
         <div class="line"></div>
       </div>
 
       <!-- Messages in dieser Gruppe -->
-      <div *ngFor="let msg of group.messages" class="message" [class.highlight-message]="(chatService.highlightMessage$ | async) === msg.id" [class.guest]="isCurrentUser(msg.userId)"
-        (mouseover)="showReactionOptions($event, msg)" (mouseleave)="hideReactionOptions($event, msg)">
-        <div class="avatar-container">
-          <img [src]="getAvatarSrc(msg.avatar)" [alt]="msg.username + ' avatar'" class="user-avatar">
-        </div>
-        <div class="message-content">
-          <div class="message-header">
-            <span class="username">{{ msg.username }}</span>
-            <span class="timestamp">{{ convertTimestamp(msg.timestamp) | date:'HH:mm' }} Uhr</span>
+      <div *ngFor="let msg of group.messages">
+        <!-- Message Container -->
+        <div class="message"
+          [id]="msg.id"
+          [class.highlight-message]="(chatService.highlightMessage$ | async) === msg.id"
+          [class.guest]="isCurrentUser(msg.userId)" 
+          (mouseover)="showReactionOptions($event, msg)"
+          (mouseleave)="hideReactionOptions($event, msg)">
+          <div class="avatar-container">
+            <img [src]="getAvatarSrc(msg.avatar)" [alt]="msg.username + ' avatar'" class="user-avatar">
           </div>
-          <div class="message-text">{{ msg.text }}</div>
+          <div class="message-content">
+            <div class="message-header">
+              <span class="username">{{ msg.username }}</span>
+              <span class="timestamp">{{ convertTimestamp(msg.timestamp) | date:'HH:mm' }} Uhr</span>
+            </div>
+            <div class="message-text">{{ msg.text }}</div>
+          </div>
         </div>
-      </div>
 
-      <!-- Emoji Picker mit korrigierter Position -->
-      <div class="reaction-container" *ngFor="let msg of group.messages" [class.guest]="isCurrentUser(msg.userId)">
-        <div class="message-emoji-picker" *ngIf="msg.showEmojiPicker">
-          <button mat-icon-button class="close-emoji-picker" (click)="closeEmojiPicker()">
-            <mat-icon>close</mat-icon>
-          </button>
-          <div class="emoji-container">
-            <div class="emoji" *ngFor="let emoji of emojis"
-              (click)="handleReactionClick($event, msg, {emoji: emoji, count: 0, users: []})">
-              {{ emoji }}
+        <!-- Reaction Container (jetzt außerhalb des message div) -->
+        <div class="reaction-container" [class.guest]="isCurrentUser(msg.userId)">
+          <mat-icon (click)="toggleReactionPicker(msg)">add_reaction</mat-icon>
+
+          <!-- Emoji Picker mit korrigierter Position -->
+          <div class="message-emoji-picker" *ngIf="msg.showEmojiPicker">
+            <button mat-icon-button class="close-emoji-picker" (click)="closeEmojiPicker()">
+              <mat-icon>close</mat-icon>
+            </button>
+            <div class="emoji-container">
+              <div class="emoji" *ngFor="let emoji of emojis"
+                (click)="handleReactionClick($event, msg, {emoji: emoji, count: 0, users: []})">
+                {{ emoji }}
+              </div>
             </div>
           </div>
-        </div>
-        <div class="reaction-container" *ngFor="let msg of group.messages" [class.guest]="isCurrentUser(msg.userId)">
-          <mat-icon (click)="toggleReactionPicker(msg)">add_reaction</mat-icon>
+
           <!-- Angezeigte Reaktionen -->
           <div class="message-reactions" *ngIf="msg.reactions && msg.reactions.length > 0">
-            <button *ngFor="let reaction of groupReactions(msg.reactions, msg.id)" class="reaction-badge"
-              [class.user-reacted]="hasUserReacted(msg, reaction.emoji)"
-              (click)="handleReactionClick($event, msg, reaction)"
-              (mouseover)="handleReactionHover($event, msg, reaction)"
-              (mouseleave)="hideTooltip(msg.id + '-' + reaction.emoji)">
+            <button *ngFor="let reaction of groupReactions(msg.reactions, msg.id)" 
+                    class="reaction-badge"
+                    [class.user-reacted]="hasUserReacted(msg, reaction.emoji)"
+                    (click)="handleReactionClick($event, msg, reaction)"
+                    (mouseover)="handleReactionHover($event, msg, reaction)"
+                    (mouseleave)="hideTooltip(msg.id + '-' + reaction.emoji)">
               <span class="reaction-emoji">{{ reaction.emoji }}</span>
               <span class="reaction-count">{{ reaction.count }}</span>
               
@@ -78,7 +86,8 @@
           </div>
         </div>
       </div>
-      <!-- Replies count nur nach der Original-Nachricht -->
+
+      <!-- Replies count -->
       <div class="replies-count" *ngIf="group.isOriginalMessage && replies.length > 0">
         {{ replies.length }} {{ replies.length === 1 ? 'Antwort' : 'Antworten' }}
       </div>
@@ -97,21 +106,19 @@
         (keydown.enter)="$event.preventDefault(); sendReply()">
       </textarea>
       <!-- Emoji Picker -->
-    <div class="message-emoji-picker" *ngIf="showEmojiPicker">
-      <button mat-icon-button class="close-emoji-picker" (click)="closeEmojiPicker()">
-        <mat-icon>close</mat-icon>
-      </button>
-      <div class="emoji-container">
-        <span *ngFor="let emoji of emojis" class="emoji" (click)="addEmoji(emoji)">
-          {{ emoji }}
-        </span>
+      <div class="message-emoji-picker" *ngIf="showEmojiPicker">
+        <button mat-icon-button class="close-emoji-picker" (click)="closeEmojiPicker()">
+          <mat-icon>close</mat-icon>
+        </button>
+        <div class="emoji-container">
+          <span *ngFor="let emoji of emojis" class="emoji" (click)="addEmoji(emoji)">
+            {{ emoji }}
+          </span>
+        </div>
       </div>
-    </div>
       <button mat-icon-button (click)="sendReply()">
         <mat-icon>send</mat-icon>
       </button>
     </div>
-
-    
   </div>
 </div>

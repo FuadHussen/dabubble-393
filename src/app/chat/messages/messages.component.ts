@@ -130,6 +130,10 @@ export class MessagesComponent implements OnInit {
       this.selectedChannel = channel;
       this.isDirectMessage = false;
       
+      // Thread schließen wenn Channel wechselt
+      this.selectedThread = null;
+      this.chatService.setThreadMessage(null);
+      
       if (channel) {
         this.loadUsers().then(() => {
           this.loadMessages();
@@ -141,6 +145,10 @@ export class MessagesComponent implements OnInit {
       this.messages = [];
       this.messageGroups = [];
       this.isDirectMessage = true;
+      
+      // Thread schließen wenn DM wechselt
+      this.selectedThread = null;
+      this.chatService.setThreadMessage(null);
       
       if (userId) {
         this.loadUsers().then(() => {
@@ -334,8 +342,28 @@ export class MessagesComponent implements OnInit {
 
   openThread(event: Event, message: Message) {
     event.stopPropagation();
-    this.selectedThread = message;
-    this.chatService.setThreadMessage(message);
+    
+    // Wenn der gleiche Thread angeklickt wird, nichts tun
+    if (this.selectedThread?.id === message.id) {
+      return;
+    }
+
+    // Wenn ein anderer Thread bereits geöffnet ist
+    if (this.selectedThread) {
+      // Zuerst den aktuellen Thread zurücksetzen
+      this.selectedThread = null;
+      this.chatService.setThreadMessage(null);
+      
+      // Kurze Verzögerung, dann den neuen Thread öffnen
+      setTimeout(() => {
+        this.selectedThread = message;
+        this.chatService.setThreadMessage(message);
+      }, 100);
+    } else {
+      // Wenn kein Thread offen ist, direkt öffnen
+      this.selectedThread = message;
+      this.chatService.setThreadMessage(message);
+    }
   }
 
   async sendReply(threadMessage: Message, replyText: string) {

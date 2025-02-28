@@ -6,7 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { Firestore, collection, query, where, orderBy, onSnapshot, doc, getDoc, Timestamp, updateDoc } from '@angular/fire/firestore';
 import { Message } from '../../models/message.model';
 import { ChatService } from './../../services/chat.service';
-import { Auth } from '@angular/fire/auth';
+import { Auth, onAuthStateChanged } from '@angular/fire/auth';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { AvatarService } from '../../services/avatar.service';
 import { UserService } from '../../services/user.service';
@@ -58,6 +58,7 @@ export class ThreadComponent implements OnInit, OnDestroy {
   @Input() isMobile: boolean = false;
   @Output() closeThread = new EventEmitter<void>();
   @ViewChild('replyTextarea') replyTextarea!: ElementRef;
+  @ViewChild('threadContent') private threadContent!: ElementRef;
 
   replies: Message[] = [];
   replyText: string = '';
@@ -93,9 +94,14 @@ export class ThreadComponent implements OnInit, OnDestroy {
     this.chatService.getCurrentUser().then(user => {
       this.currentUser = user;
     });
+    this.messageGroups = [];
+    this.replies = [];
   }
 
   ngOnInit() {
+    // Stelle sicher, dass messageGroups immer initialisiert ist
+    this.messageGroups = [];
+    
     this.loadReplies();
     
     // Replace the existing user data subscription with this improved version
@@ -163,6 +169,32 @@ export class ThreadComponent implements OnInit, OnDestroy {
     
     // Füge zur Cleanup-Liste hinzu
     this.unsubscribes.push(() => threadMessageSub.unsubscribe());
+
+    // Neue Subscription für das Scroll-Event
+    const scrollSub = this.chatService.scrollToMessage$.subscribe(messageId => {
+      if (messageId) {
+        setTimeout(() => {
+          const element = document.getElementById(messageId);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
+      }
+    });
+    
+    // Zur Cleanup-Liste hinzufügen
+    this.unsubscribes.push(() => scrollSub.unsubscribe());
+
+    // Neuer Auth State Listener
+    const authUnsubscribe = onAuthStateChanged(this.auth, (user) => {
+      if (!user) {
+        // User hat sich ausgeloggt
+        this.close();
+      }
+    });
+
+    // Zur Cleanup-Liste hinzufügen
+    this.unsubscribes.push(authUnsubscribe);
   }
 
   addReaction(message: Message, emoji: string) {
@@ -193,19 +225,22 @@ export class ThreadComponent implements OnInit, OnDestroy {
     const groups: { [key: string]: Message[] } = {};
 
     messages.forEach(message => {
-      const date = this.convertTimestamp(message.timestamp);
-      const dateStr = date.toLocaleDateString('de-DE', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long'
-      });
+      if (message && message.timestamp) {  // Prüfen, ob timestamp existiert
+        const date = this.convertTimestamp(message.timestamp);
+        const dateStr = date.toLocaleDateString('de-DE', {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long'
+        });
 
-      if (!groups[dateStr]) {
-        groups[dateStr] = [];
+        if (!groups[dateStr]) {
+          groups[dateStr] = [];
+        }
+        groups[dateStr].push(message);
       }
-      groups[dateStr].push(message);
     });
 
+    // Sicherstellen, dass alle Gruppen eine date-Eigenschaft haben
     this.messageGroups = Object.keys(groups).map(date => ({
       date,
       messages: groups[date],
@@ -217,6 +252,9 @@ export class ThreadComponent implements OnInit, OnDestroy {
   async loadReplies() {
     if (this.message) {
       try {
+        // Initialisiere messageGroups als leeres Array
+        this.messageGroups = [];
+        
         // Echtzeit-Listener für die Original-Nachricht
         const originalMessageRef = doc(this.firestore, 'messages', this.message.id);
         const unsubscribeOriginal = onSnapshot(originalMessageRef, async (docSnapshot) => {
@@ -236,7 +274,12 @@ export class ThreadComponent implements OnInit, OnDestroy {
             
             this.message = originalMessageData;
             
-            // Erstelle die Gruppe für die Original-Nachricht
+            // Sicherheitsprüfung hinzufügen
+            if (!this.messageGroups) {
+              this.messageGroups = [];
+            }
+            
+            // Stelle sicher, dass originalMessageGroup gültig ist
             const originalMessageGroup = {
               date: this.convertTimestamp(originalMessageData.timestamp).toLocaleDateString('de-DE', {
                 weekday: 'long',
@@ -248,7 +291,7 @@ export class ThreadComponent implements OnInit, OnDestroy {
               avatar: originalMessageData.avatar || ''
             };
 
-            // Wenn es bereits Gruppen gibt, ersetze die erste (Original-Nachricht)
+            // Defensive Prüfung bei der Aktualisierung
             if (this.messageGroups.length > 0) {
               this.messageGroups[0] = originalMessageGroup;
             } else {
@@ -293,8 +336,14 @@ export class ThreadComponent implements OnInit, OnDestroy {
           this.messageGroups = [this.messageGroups[0], ...replyGroups];
           
           this.cdr.detectChanges();
+          
+          // Hier zum Ende scrollen, nachdem die Nachrichten geladen wurden
+          this.scrollToBottom();
         });
         this.unsubscribes.push(unsubscribeReplies);
+
+        // Sicherstellen, dass messageGroups korrekt initialisiert wird
+        this.messageGroups = this.messageGroups.filter(group => group && group.date);
 
       } catch (error) {
         console.error('Error loading thread:', error);
@@ -352,6 +401,9 @@ export class ThreadComponent implements OnInit, OnDestroy {
 
         await this.chatService.sendMessage(replyData);
         this.replyText = '';
+        
+        // Nach dem Senden zum Ende scrollen
+        this.scrollToBottom();
       } catch (error) {
         console.error('Error sending reply:', error);
       }
@@ -370,6 +422,9 @@ export class ThreadComponent implements OnInit, OnDestroy {
   close() {
     this.unsubscribes.forEach(unsubscribe => unsubscribe());
     this.unsubscribes = [];
+    this.messageGroups = []; // Leeres Array statt null
+    this.replies = [];       
+    this.message = null;     
     this.closeThread.emit();
   }
 
@@ -536,7 +591,7 @@ export class ThreadComponent implements OnInit, OnDestroy {
   }
 
   getAvatarSrc(avatar: string | null | undefined): string {
-    if (!avatar) return 'assets/img/avatars/default-avatar.png';
+    if (!avatar) return '';
     
     if (this.avatarService.isGoogleAvatar(avatar) || avatar.startsWith('http')) {
       return this.avatarService.transformGooglePhotoUrl(avatar);
@@ -598,5 +653,43 @@ export class ThreadComponent implements OnInit, OnDestroy {
 
   getTooltipPosition(tooltipKey: string) {
     return this.tooltipPositions[tooltipKey] || { top: 0, left: 0 };
+  }
+
+  // Verbesserte scrollToBottom Methode
+  scrollToBottom(): void {
+    if (!this.threadContent) return;
+    
+    setTimeout(() => {
+      try {
+        // Überprüfen, ob messageGroups und messages vorhanden sind
+        if (this.messageGroups && this.messageGroups.length > 0) {
+          let lastGroup = this.messageGroups[this.messageGroups.length - 1];
+          
+          if (lastGroup && lastGroup.messages && lastGroup.messages.length > 0) {
+            const lastMessageId = lastGroup.messages[lastGroup.messages.length - 1].id;
+            const lastMessageElement = document.getElementById(lastMessageId);
+            
+            if (lastMessageElement) {
+              lastMessageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
+              return;
+            }
+          }
+        }
+        
+        // Fallback: Scroll zum Container-Ende
+        this.threadContent.nativeElement.scrollTo({
+          top: this.threadContent.nativeElement.scrollHeight,
+          behavior: 'smooth'
+        });
+      } catch (error) {
+        console.warn('Scroll error:', error);
+        // Letzter Fallback
+        try {
+          this.threadContent.nativeElement.scrollTop = this.threadContent.nativeElement.scrollHeight;
+        } catch (e) {
+          console.error('Final scroll fallback failed:', e);
+        }
+      }
+    }, 100);
   }
 }

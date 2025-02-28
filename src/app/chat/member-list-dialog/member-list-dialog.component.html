@@ -12,8 +12,8 @@
           <div class="member-item" 
                *ngFor="let member of members"
                (click)="showProfile(member)">
-            <img [src]="member.avatar ? getAvatarSrc(member.avatar) : ''" 
-                 [alt]="member.username + ' avatar'"
+            <img [src]="getAvatarSrc(member.avatar)" 
+                 [alt]="member.username + 's avatar'"
                  class="member-avatar">
             <span class="member-name">{{ member.username }}</span>
             <span class="creator-badge" *ngIf="member.isCreator">Ersteller</span>

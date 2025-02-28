@@ -216,7 +216,7 @@ export class UserProfileSettingsComponent implements OnInit {
   }
 
   getAvatarUrl(avatar: string | null): string {
-    if (!avatar) return 'assets/img/avatars/default-avatar.png';
+    if (!avatar) return '';
     
     if (avatar.startsWith('http')) {
       return avatar;

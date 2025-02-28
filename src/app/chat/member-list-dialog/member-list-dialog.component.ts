@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -6,6 +6,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { ProfileInfoComponent } from '../profile-info/profile-info.component';
 import { Firestore, doc, getDoc } from '@angular/fire/firestore';
 import { AvatarService } from '../../services/avatar.service';
+import { UserService } from '../../services/user.service';
+import { Subscription } from 'rxjs';
+
 interface Member {
   uid: string;
   username: string;
@@ -22,7 +25,7 @@ interface Member {
   templateUrl: './member-list-dialog.component.html',
   styleUrls: ['./member-list-dialog.component.scss']
 })
-export class MemberListDialogComponent implements OnInit, OnChanges {
+export class MemberListDialogComponent implements OnInit, OnChanges, OnDestroy {
   @Input() isOpen = false;
   @Input() members: Member[] = [];
   @Input() channelId: string = '';
@@ -31,11 +34,28 @@ export class MemberListDialogComponent implements OnInit, OnChanges {
 
   selectedMember: Member | null = null;
   private creatorId: string | null = null;
+  private userSubscription: Subscription;
 
   constructor(
     private firestore: Firestore,
-    private avatarService: AvatarService
-  ) {}
+    private avatarService: AvatarService,
+    private userService: UserService
+  ) {
+    this.userSubscription = this.userService.userData$.subscribe(updatedUserData => {
+      if (updatedUserData && updatedUserData.uid) {
+        this.members = this.members.map(member => {
+          if (member.uid === updatedUserData.uid) {
+            return {
+              ...member,
+              username: updatedUserData.username || member.username,
+              avatar: updatedUserData.avatar || member.avatar
+            };
+          }
+          return member;
+        });
+      }
+    });
+  }
 
   async ngOnInit() {
     if (this.channelId) {
@@ -108,13 +128,19 @@ export class MemberListDialogComponent implements OnInit, OnChanges {
     this.onMessageStarted();
   }
 
-  getAvatarSrc(avatar: string | null): string {
+  getAvatarSrc(avatar: string | null | undefined): string {
     if (!avatar) return '';
     
-    if (this.avatarService.isGoogleAvatar(avatar)) {
+    if (this.avatarService.isGoogleAvatar(avatar) || avatar.startsWith('http')) {
       return this.avatarService.transformGooglePhotoUrl(avatar);
     }
     
     return 'assets/img/avatars/' + avatar;
+  }
+
+  ngOnDestroy() {
+    if (this.userSubscription) {
+      this.userSubscription.unsubscribe();
+    }
   }
 }
