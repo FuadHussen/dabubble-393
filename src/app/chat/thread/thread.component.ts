@@ -255,6 +255,9 @@ export class ThreadComponent implements OnInit, OnDestroy {
         // Initialisiere messageGroups als leeres Array
         this.messageGroups = [];
         
+        // Speichere die Original-Nachricht separat
+        let originalMessageGroup: MessageGroup | null = null;
+        
         // Echtzeit-Listener für die Original-Nachricht
         const originalMessageRef = doc(this.firestore, 'messages', this.message.id);
         const unsubscribeOriginal = onSnapshot(originalMessageRef, async (docSnapshot) => {
@@ -274,13 +277,8 @@ export class ThreadComponent implements OnInit, OnDestroy {
             
             this.message = originalMessageData;
             
-            // Sicherheitsprüfung hinzufügen
-            if (!this.messageGroups) {
-              this.messageGroups = [];
-            }
-            
-            // Stelle sicher, dass originalMessageGroup gültig ist
-            const originalMessageGroup = {
+            // Erstelle die original message group
+            originalMessageGroup = {
               date: this.convertTimestamp(originalMessageData.timestamp).toLocaleDateString('de-DE', {
                 weekday: 'long',
                 day: 'numeric',
@@ -290,60 +288,13 @@ export class ThreadComponent implements OnInit, OnDestroy {
               isOriginalMessage: true,
               avatar: originalMessageData.avatar || ''
             };
-
-            // Defensive Prüfung bei der Aktualisierung
-            if (this.messageGroups.length > 0) {
-              this.messageGroups[0] = originalMessageGroup;
-            } else {
-              this.messageGroups = [originalMessageGroup];
-            }
             
-            this.cdr.detectChanges();
+            // Lade Antworten erst nachdem die Original-Nachricht geladen wurde
+            this.loadRepliesForOriginalMessage(originalMessageGroup);
           }
         });
+        
         this.unsubscribes.push(unsubscribeOriginal);
-
-        // Echtzeit-Listener für die Antworten
-        const messagesRef = collection(this.firestore, 'messages');
-        const q = query(
-          messagesRef,
-          where('threadId', '==', this.message.id),
-          orderBy('timestamp', 'asc')
-        );
-
-        const unsubscribeReplies = onSnapshot(q, async (snapshot) => {
-          // Use getUserData for each reply
-          this.replies = await Promise.all(
-            snapshot.docs.map(async (docSnapshot) => {
-              const messageData = docSnapshot.data();
-              
-              // Use getUserData helper
-              const userData = await this.getUserData(messageData['userId']);
-              
-              return {
-                id: docSnapshot.id,
-                ...messageData,
-                avatar: userData?.avatar,
-                username: userData?.username || messageData['username']
-              } as Message;
-            })
-          );
-
-          // Gruppiere die Antworten nach Datum
-          const replyGroups = this.groupRepliesByDate(this.replies);
-          
-          // Behalte die Original-Nachricht-Gruppe und füge die Antwort-Gruppen hinzu
-          this.messageGroups = [this.messageGroups[0], ...replyGroups];
-          
-          this.cdr.detectChanges();
-          
-          // Hier zum Ende scrollen, nachdem die Nachrichten geladen wurden
-          this.scrollToBottom();
-        });
-        this.unsubscribes.push(unsubscribeReplies);
-
-        // Sicherstellen, dass messageGroups korrekt initialisiert wird
-        this.messageGroups = this.messageGroups.filter(group => group && group.date);
 
       } catch (error) {
         console.error('Error loading thread:', error);
@@ -351,29 +302,94 @@ export class ThreadComponent implements OnInit, OnDestroy {
     }
   }
 
-  private groupRepliesByDate(replies: Message[]): MessageGroup[] {
-    const groups: { [key: string]: Message[] } = {};
+  // Neue Methode zum Laden der Antworten
+  private async loadRepliesForOriginalMessage(originalMessageGroup: MessageGroup) {
+    if (!this.message) return;
+    
+    try {
+      const messagesRef = collection(this.firestore, 'messages');
+      const q = query(
+        messagesRef,
+        where('threadId', '==', this.message.id),
+        orderBy('timestamp', 'asc')
+      );
 
+      const unsubscribeReplies = onSnapshot(q, async (snapshot) => {
+        // Alle Antworten laden mit Benutzerinformationen
+        this.replies = await Promise.all(
+          snapshot.docs.map(async (docSnapshot) => {
+            const messageData = docSnapshot.data();
+            const userId = messageData['userId'];
+            const userData = await this.getUserData(userId);
+            
+            return {
+              id: docSnapshot.id,
+              ...messageData,
+              avatar: userData?.avatar,
+              username: userData?.username || messageData['username']
+            } as Message;
+          })
+        );
+
+        // Gruppiere die Antworten nach Datum
+        const replyGroups = this.groupRepliesByDate(this.replies);
+        // WICHTIG: Zuerst die Original-Nachricht-Gruppe, dann die Antwort-Gruppen
+        this.messageGroups = [originalMessageGroup, ...replyGroups];
+        this.messageGroups.forEach((group, i) => {
+          const isOriginal = group.isOriginalMessage ? '(Original)' : '';
+          group.messages.forEach(msg => {
+          });
+        });
+        
+        this.cdr.detectChanges();
+        
+        // Nach dem Laden zum Ende scrollen
+        this.scrollToBottom();
+      });
+      
+      this.unsubscribes.push(unsubscribeReplies);
+      
+    } catch (error) {
+      console.error('Error loading replies:', error);
+    }
+  }
+
+  private groupRepliesByDate(replies: Message[]): MessageGroup[] {
+    if (!replies || replies.length === 0) {
+      return [];
+    }
+    const groups: { [key: string]: Message[] } = {};
     replies.forEach(message => {
+      // Sicherheitscheck für gültige Nachricht und Timestamp
+      if (!message || !message.timestamp) {
+        console.warn('Ungültige Nachricht ohne Timestamp:', message);
+        return; // Skip this message
+      }
+      
       const date = this.convertTimestamp(message.timestamp);
       const dateStr = date.toLocaleDateString('de-DE', {
         weekday: 'long',
         day: 'numeric',
         month: 'long'
       });
-
+      
       if (!groups[dateStr]) {
         groups[dateStr] = [];
       }
       groups[dateStr].push(message);
     });
 
-    return Object.keys(groups).map(date => ({
+    const result = Object.keys(groups).map(date => ({
       date,
       messages: groups[date],
       isOriginalMessage: false,
       avatar: ''
     }));
+
+    result.forEach(group => {
+    });
+    
+    return result;
   }
 
   async sendReply() {
@@ -387,7 +403,6 @@ export class ThreadComponent implements OnInit, OnDestroy {
         const replyData = {
           text: this.replyText.trim(),
           userId: this.currentUser.uid,
-          // Verwende die richtige Reihenfolge für den Username mit Index-Notation
           username: userData?.['displayName'] ||
             userData?.['username'] ||
             this.currentUser['username'] ||

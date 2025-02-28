@@ -343,9 +343,12 @@ export class MessagesComponent implements OnInit {
   openThread(event: Event, message: Message) {
     event.stopPropagation();
     
-    // Wenn der gleiche Thread angeklickt wird, nichts tun
-    if (this.selectedThread?.id === message.id) {
-      return;
+    // Neue verbesserte Logik - Prüfe zusätzlich, ob der Thread tatsächlich angezeigt wird
+    const threadElement = document.querySelector('.thread-container');
+    const isThreadVisible = threadElement && window.getComputedStyle(threadElement).display !== 'none';
+    
+    if (this.selectedThread?.id === message.id && isThreadVisible) {
+      return; // Nur abbrechen, wenn der Thread mit der gleichen ID bereits angezeigt wird
     }
 
     // Wenn ein anderer Thread bereits geöffnet ist
