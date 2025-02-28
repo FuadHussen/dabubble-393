@@ -11,6 +11,7 @@ import { AddChannelMembersComponent } from './add-channel-members/add-channel-me
 import { collection, addDoc, query, where, getDocs } from '@angular/fire/firestore';
 import { Auth } from '@angular/fire/auth';
 import { Firestore } from '@angular/fire/firestore';
+import { ChatService } from '../../../services/chat.service';
 
 @Component({
   selector: 'app-add-new-channel',
@@ -38,7 +39,8 @@ export class AddNewChannelComponent {
     private dialog: MatDialog,
     private firestore: Firestore,
     private auth: Auth,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private chatService: ChatService
   ) {}
 
   onClose(): void {
@@ -60,7 +62,7 @@ export class AddNewChannelComponent {
   }
 
   async onCreate() {
-    this.errorMessage = null; // Zurücksetzen der Fehlermeldung
+    this.errorMessage = null;
     
     if (!this.channelName.trim()) {
       this.errorMessage = "Der Kanalname darf nicht leer sein.";
@@ -78,7 +80,7 @@ export class AddNewChannelComponent {
         return;
       }
       
-      // Wenn der Name nicht existiert, öffne den Dialog für Mitglieder
+      // Dialog für Mitglieder öffnen
       const dialogRef = this.dialog.open(AddChannelMembersComponent, {
         width: '500px',
         data: { 
@@ -98,29 +100,35 @@ export class AddNewChannelComponent {
               name: this.channelName,
               description: this.description,
               createdBy: currentUserId,
-              createdAt: new Date()
+              createdAt: new Date(),
+              members: [currentUserId, ...result.members] // Speichere aktuelle Mitglieder
             });
 
-            // Channelmitglieder hinzufügen
+            // Nur aktuelle ausgewählte Mitglieder hinzufügen
             const channelMembersRef = collection(this.firestore, 'channelMembers');
             
             // Ersteller als erstes Mitglied hinzufügen
             await addDoc(channelMembersRef, {
               channelId: channelDoc.id,
               userId: currentUserId,
-              joinedAt: new Date()
+              joinedAt: new Date(),
+              active: true // Neues Feld für aktive Mitgliedschaft
             });
 
             // Dann die ausgewählten Mitglieder hinzufügen
             for (const userId of result.members) {
-              if (userId !== currentUserId) { // Verhindere Duplikate
+              if (userId !== currentUserId) {
                 await addDoc(channelMembersRef, {
                   channelId: channelDoc.id,
                   userId: userId,
-                  joinedAt: new Date()
+                  joinedAt: new Date(),
+                  active: true // Neues Feld für aktive Mitgliedschaft
                 });
               }
             }
+
+            // ChatService über die Änderung informieren
+            this.chatService.triggerChannelsRefresh();
 
             // Erfolgsbenachrichtigung anzeigen
             this.showSuccessMessage(`Kanal '${this.channelName}' erfolgreich erstellt`);
