@@ -21,7 +21,7 @@ $color-error: #ed1e79;
 }
 
 .startSide {
-  padding: 20px 20px 0px 20px;
+  // padding: 20px 20px 0px 20px;
   display: flex;
   justify-content: flex-end;
   align-items: center;
@@ -405,7 +405,7 @@ $color-error: #ed1e79;
 
 @media (max-width: 1175px) {
   .signupBox {
-    top: 80%;
+    top: 83%;
     bottom: 12px !important;
     left: 50%;
     right: auto;

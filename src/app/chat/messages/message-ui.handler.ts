@@ -36,6 +36,7 @@ export class MessageUIHandler {
     if (!target.querySelector('.message-emoji-picker:hover')) {
       message.showReactions = false;
       message.showEmojiPicker = false;
+      message.showEditMenu = false;
     }
   }
 

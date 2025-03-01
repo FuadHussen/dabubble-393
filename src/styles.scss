@@ -226,3 +226,46 @@
     background-color: rgba(3, 56, 216, 0.05);
     transition: background-color 0.3s ease;
   }
+
+  // ... existing code ...
+
+// Scrollbar-Anpassungen für alle Elemente
+* {
+  // Für Firefox
+  scrollbar-width: thin;
+  scrollbar-color: #444DF2 rgba(236, 238, 254, 0.5);
+  
+  // Für Webkit-Browser (Chrome, Safari, neuere Edge-Versionen)
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(236, 238, 254, 0.5);
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background-color: #444DF2;
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: #3339c7;
+  }
+}
+
+// Optional: Spezifische Scrollbar-Anpassung für Elemente mit Overflow
+.main-container, .overflow-container {
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background-color: #444DF2;
+    border-radius: 4px;
+  }
+}
